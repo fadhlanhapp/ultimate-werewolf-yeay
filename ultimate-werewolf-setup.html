@@ -160,11 +160,11 @@
       <div class="ref-row"><span class="ref-name">Apprentice Seer</span><span class="ref-desc">Becomes the Seer if the Seer is eliminated. Until then, has no power.</span></div>
       <div class="ref-row"><span class="ref-name">Aura Seer</span><span class="ref-desc">Each night, learns only the alignment (good/evil) of one player, not their exact role.</span></div>
       <div class="ref-row"><span class="ref-name">Mentalist</span><span class="ref-desc">Each night, learns whether two chosen players are on the same team or different teams.</span></div>
-      <div class="ref-row"><span class="ref-name">Revealer</span><span class="ref-desc">Once per game at night, can publicly flip over one player's card to reveal their role to everyone.</span></div>
+      <div class="ref-row"><span class="ref-name">Revealer</span><span class="ref-desc">Once per game at night, publicly flips one player's card. Whether good or evil is revealed, the Revealer dies.</span></div>
       <div class="ref-row"><span class="ref-name">Bodyguard</span><span class="ref-desc">Each night, protects one player from the werewolves. Cannot protect the same person twice in a row.</span></div>
       <div class="ref-row"><span class="ref-name">Hunter</span><span class="ref-desc">When eliminated (day or night), immediately shoots and eliminates one other player of their choice.</span></div>
       <div class="ref-row"><span class="ref-name">Huntress</span><span class="ref-desc">Like the Hunter but can also use her shot proactively once per game at night before being eliminated.</span></div>
-      <div class="ref-row"><span class="ref-name">Witch</span><span class="ref-desc">2 one-use potions: one to save the werewolves' victim, one to kill any player.</span></div>
+      <div class="ref-row"><span class="ref-name">Witch</span><span class="ref-desc">Each night, may save the werewolves' victim OR eliminate any player (one action per night).</span></div>
       <div class="ref-row"><span class="ref-name">Mason</span><span class="ref-desc">Wakes with the other Mason(s) and recognises them as confirmed villagers.</span></div>
       <div class="ref-row"><span class="ref-name">Drunk</span><span class="ref-desc">Starts the game not knowing their role. At the start of day 3, the Moderator reveals their true role.</span></div>
       <div class="ref-row"><span class="ref-name">Diseased</span><span class="ref-desc">If eliminated by werewolves, the werewolves skip their kill the following night.</span></div>
@@ -189,20 +189,22 @@
   </div>
 
   <script>
-  // ── Role definitions ──────────────────────────────────────────────────────
+  // ── Role definitions with balance weights ──────────────────────────────────
+  // Negative weight = favors evil, Positive weight = favors village
+  // Balance target: total weight should be near 0 per setup
   var ROLES = {
-    // Evil
+    // Evil (negative weights)
     werewolf:    { name:"Werewolf",    team:"evil",    tag:"Evil",    weight:-9,  desc:"Wakes each night to silently choose a victim to eliminate." },
     alphawolf:   { name:"Alpha Wolf",  team:"evil",    tag:"Evil",    weight:-9,  desc:"A werewolf who, once per game, can convert a villager into a new werewolf instead of killing." },
     wolfcub:     { name:"Wolf Cub",    team:"evil",    tag:"Evil",    weight:-8,  desc:"A werewolf. If eliminated, werewolves kill two players the following night." },
     minion:      { name:"Minion",      team:"evil",    tag:"Evil",    weight:-6,  desc:"Knows the werewolves. Wins if any werewolf survives to the end." },
     lycan:       { name:"Lycan",       team:"evil",    tag:"Evil",    weight:-1,  desc:"Appears as Werewolf when seen by the Seer, but is actually on the evil team." },
     sorceress:   { name:"Sorceress",   team:"evil",    tag:"Evil",    weight:-3,  desc:"Each night, picks a player to learn if they are the Seer. Wins with the werewolf team." },
-    // Village
+    // Village (positive weights)
     mysticseer:  { name:"Mystic Seer", team:"village", tag:"Village", weight:9,   desc:"Each night, learns the true role of one player AND the alignment of a second. Powerful Seer variant." },
     mentalist:   { name:"Mentalist",   team:"village", tag:"Village", weight:6,   desc:"Each night, picks two players and learns if they are on the same team or different teams." },
-    revealer:    { name:"Revealer",    team:"village", tag:"Village", weight:4,   desc:"Once per game, publicly flips one player's card to reveal their role to all." },
-    witch:       { name:"Witch",       team:"village", tag:"Village", weight:4,   desc:"2 one-use potions: save the werewolves' victim, or kill any player." },
+    revealer:    { name:"Revealer",    team:"village", tag:"Village", weight:2,   desc:"Once per game at night, publicly flips one player's card. Whether good or evil is revealed, the Revealer dies." },
+    witch:       { name:"Witch",       team:"village", tag:"Village", weight:4,   desc:"Each night, may save the werewolves victim OR eliminate any player (one action per night)." },
     appseer:     { name:"Apprentice Seer", team:"village", tag:"Village", weight:4, desc:"Becomes the Seer if the Seer is eliminated. Has no power until then." },
     drunk:       { name:"Drunk",       team:"village", tag:"Village", weight:4,   desc:"Does not know their role at the start. On day 3, the Moderator reveals it." },
     hunter:      { name:"Hunter",      team:"village", tag:"Village", weight:3,   desc:"When eliminated, immediately shoots and eliminates one other player." },
@@ -218,11 +220,11 @@
     mason:       { name:"Mason",       team:"village", tag:"Village", weight:2,   desc:"Wakes with the other Mason(s) and recognises them as confirmed villagers." },
     spellcaster: { name:"Spellcaster", team:"village", tag:"Village", weight:1,   desc:"Once per game, silences a player for one full day — they cannot speak." },
     cupid:       { name:"Cupid",       team:"village", tag:"Village", weight:3,   desc:"Night 1: links two players as lovers. If one dies, the other dies too." },
-    // Neutral
+    pacifist:    { name:"Pacifist",    team:"village", tag:"Village", weight:-1,  desc:"Must vote to eliminate someone each day — cannot abstain. Wins with the village." },
+    // Neutral (variable weights)
     troublemaker:{ name:"Troublemaker",team:"neutral", tag:"Neutral", weight:0,   desc:"One night per game, stirs up trouble by calling for players to be eliminated the following day." },
     doppelganger:{ name:"Doppelganger",team:"neutral", tag:"Neutral", weight:-2,  desc:"Night 1: copies another player's role. Activates when that player dies." },
     madbomber:   { name:"Mad Bomber",  team:"neutral", tag:"Neutral", weight:-2,  desc:"When eliminated, all adjacent players are also eliminated." },
-    pacifist:    { name:"Pacifist",    team:"village", tag:"Village", weight:-1,  desc:"Must vote to eliminate someone each day — cannot abstain. Wins with the village." },
     curse:       { name:"Curse",       team:"neutral", tag:"Neutral", weight:-3,  desc:"If targeted by werewolves at night, becomes a werewolf instead of dying." },
     cultleader:  { name:"Cult Leader", team:"neutral", tag:"Neutral", weight:0,   desc:"Each night, recruits one player into their cult. Wins alone if all survivors are cult members." }
   };
@@ -240,7 +242,7 @@
     14: { evil:["werewolf","werewolf","werewolf","alphawolf","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason"] }
   };
 
-  // Extra variants for randomization
+  // Extra variants for randomization (balance-aware)
   var EVIL_VARIANTS   = ["alphawolf","wolfcub","lycan","sorceress"];
   var VILLAGE_VARIANTS= ["mysticseer","mentalist","revealer","drunk","pi","prince","toughguy","auraseer","huntress","diseased","spellcaster","cupid","priest"];
   var NEUTRAL_POOL    = ["troublemaker","doppelganger","madbomber","curse","cultleader"];
