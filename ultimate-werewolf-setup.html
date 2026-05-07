@@ -430,10 +430,10 @@
     // Summary bar
     var summary = document.getElementById("summary");
     summary.innerHTML =
-      "<span class="sum-evil">Evil: " + evilCount + "</span>" +
-      "<span class="sum-village">Village: " + villageCount + "</span>" +
-      (neutralCount ? "<span class="sum-neutral">Third Party: " + neutralCount + "</span>" : "") +
-      "<span style="color:#888;font-family:sans-serif;">Total: " + count + " cards</span>";
+      '<span class="sum-evil">Evil: ' + evilCount + '</span>' +
+      '<span class="sum-village">Village: ' + villageCount + '</span>' +
+      (neutralCount ? '<span class="sum-neutral">Third Party: ' + neutralCount + '</span>' : '') +
+      '<span style="color:#888;font-family:sans-serif;">Total: ' + count + ' cards</span>';
 
     // Night Order
     var nightOrder = buildNightOrder(evilKeys, villageKeys, neutralKeys);
