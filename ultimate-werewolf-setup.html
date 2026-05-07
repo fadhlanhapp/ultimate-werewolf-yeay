@@ -169,7 +169,7 @@
       <div class="ref-row"><span class="ref-name">Drunk</span><span class="ref-desc">Starts the game not knowing their role. At the start of day 3, the Moderator reveals their true role.</span></div>
       <div class="ref-row"><span class="ref-name">Diseased</span><span class="ref-desc">If eliminated by werewolves, the werewolves skip their kill the following night.</span></div>
       <div class="ref-row"><span class="ref-name">Prince</span><span class="ref-desc">The first time the village votes to eliminate the Prince, the Moderator reveals the role and the vote is cancelled.</span></div>
-      <div class="ref-row"><span class="ref-name">Tough Guy</span><span class="ref-desc">When eliminated by werewolves, survives until the next day phase before being removed from play.</span></div>
+      <div class="ref-row"><span class="ref-name">Tough Guy</span><span class="ref-desc">When eliminated by werewolves, survives until the next day before being removed from play.</span></div>
       <div class="ref-row"><span class="ref-name">Priest</span><span class="ref-desc">Can bless a player each night. A blessed player is immune to werewolf attack for one night.</span></div>
       <div class="ref-row"><span class="ref-name">PI (Private Investigator)</span><span class="ref-desc">Each night, picks two players and learns if at least one of them is a werewolf.</span></div>
       <div class="ref-row"><span class="ref-name">Spellcaster</span><span class="ref-desc">Once per game, silences a player for one full day — that player cannot speak during the day phase.</span></div>
@@ -227,24 +227,23 @@
     cultleader:  { name:"Cult Leader", team:"neutral", tag:"Neutral", weight:0,   desc:"Each night, recruits one player into their cult. Wins alone if all survivors are cult members." }
   };
 
-  // ── Pool per player count: [evil keys], [village keys], [neutral keys] ───
-  // neutral = optional extras. Balanced by weight sum target ~0 after assigning core roles.
+  // ── Core pools per player count: [evil keys], [village keys] ───
   var POOLS = {
-    6:  { evil:["werewolf"],               village:["seer","hunter","bodyguard"],              neutral:["troublemaker"] },
-    7:  { evil:["werewolf","werewolf"],     village:["seer","hunter","bodyguard"],              neutral:["troublemaker"] },
-    8:  { evil:["werewolf","wolfcub"],      village:["seer","hunter","bodyguard","witch"],       neutral:["troublemaker"] },
-    9:  { evil:["werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","mason","mason"], neutral:[] },
-    10: { evil:["werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","witch","mason","mason"], neutral:["troublemaker"] },
-    11: { evil:["werewolf","werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","witch","mason","mason"], neutral:["troublemaker"] },
-    12: { evil:["werewolf","werewolf","wolfcub","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason"], neutral:["troublemaker"] },
-    13: { evil:["werewolf","werewolf","werewolf","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason","priest"], neutral:["troublemaker"] },
-    14: { evil:["werewolf","werewolf","werewolf","alphawolf","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason"], neutral:["troublemaker","curse"] }
+    6:  { evil:["werewolf"],               village:["seer","hunter","bodyguard"] },
+    7:  { evil:["werewolf","werewolf"],     village:["seer","hunter","bodyguard"] },
+    8:  { evil:["werewolf","wolfcub"],      village:["seer","hunter","bodyguard","witch"] },
+    9:  { evil:["werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","mason","mason"] },
+    10: { evil:["werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","witch","mason","mason"] },
+    11: { evil:["werewolf","werewolf","werewolf","minion"], village:["seer","hunter","bodyguard","witch","mason","mason"] },
+    12: { evil:["werewolf","werewolf","wolfcub","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason"] },
+    13: { evil:["werewolf","werewolf","werewolf","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason","priest"] },
+    14: { evil:["werewolf","werewolf","werewolf","alphawolf","minion"], village:["seer","appseer","hunter","bodyguard","witch","mason","mason"] }
   };
 
-  // Extra pool to randomly swap in for variety (same-team weight-neutral swaps)
+  // Extra variants for randomization
   var EVIL_VARIANTS   = ["alphawolf","wolfcub","lycan","sorceress"];
   var VILLAGE_VARIANTS= ["mysticseer","mentalist","revealer","drunk","pi","prince","toughguy","auraseer","huntress","diseased","spellcaster","cupid","priest"];
-  var NEUTRAL_VARIANTS= ["doppelganger","madbomber","cultleader","curse"];
+  var NEUTRAL_POOL    = ["troublemaker","doppelganger","madbomber","curse","cultleader"];
 
   var currentCount = null;
 
@@ -270,7 +269,7 @@
     var pool = JSON.parse(JSON.stringify(POOLS[count])); // deep copy
     var evilKeys    = pool.evil.slice();
     var villageKeys = pool.village.slice();
-    var neutralKeys = pool.neutral.slice();
+    var neutralKeys = [];
 
     // Random variation: occasionally swap one village role with a variant (30% chance each slot)
     villageKeys = villageKeys.map(function(k) {
@@ -294,15 +293,15 @@
       return k;
     });
 
-    // Optionally add a third party (25% chance, only if count >= 9)
-    var hasThirdParty = neutralKeys.length > 0;
-    if (!hasThirdParty && count >= 9 && Math.random() < 0.25) {
-      var already2 = evilKeys.concat(villageKeys).concat(neutralKeys);
-      var nc = NEUTRAL_VARIANTS.filter(function(x){ return already2.indexOf(x) === -1; });
-      if (nc.length) {
-        var chosen = pickRandom(nc);
-        // Cult leader needs extra player — only at 11+
-        if (chosen === "cultleader" && count < 11) chosen = pickRandom(nc.filter(function(x){return x!=="cultleader";}));
+    // Add third party (40% chance for 9+, 60% for 11+)
+    var thirdPartyChance = count >= 11 ? 0.60 : (count >= 9 ? 0.40 : 0);
+    if (Math.random() < thirdPartyChance) {
+      var already2 = evilKeys.concat(villageKeys);
+      var candidates = NEUTRAL_POOL.filter(function(x){ return already2.indexOf(x) === -1; });
+      if (candidates.length) {
+        var chosen = pickRandom(candidates);
+        // Cult leader needs extra capacity — only at 11+
+        if (chosen === "cultleader" && count < 11) chosen = pickRandom(candidates.filter(function(x){return x!=="cultleader";}));
         if (chosen) {
           neutralKeys.push(chosen);
           // Remove one villager to keep count
