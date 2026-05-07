@@ -82,6 +82,18 @@
     .sum-village { background: #eafaf1; color: #27ae60; border: 1px solid #2ecc71; }
     .sum-neutral { background: #f5eef8; color: #8e44ad; border: 1px solid #9b59b6; }
 
+    /* Night Order Section */
+    .night-section { margin-top: 20px; border-top: 2px solid #eee; padding-top: 14px; }
+    .night-title { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #555; margin-bottom: 10px; }
+    .night-sequence { display: flex; flex-direction: column; gap: 6px; }
+    .night-step {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 6px 10px; border-left: 3px solid #999; background: #f9f9f9; font-size: 11px; border-radius: 3px;
+    }
+    .night-step-num { font-weight: bold; min-width: 20px; color: #666; }
+    .night-step-role { font-weight: bold; }
+    .night-step-action { color: #555; flex: 1; }
+
     /* Win conditions */
     .win-section { margin-top: 20px; border-top: 2px solid #eee; padding-top: 14px; }
     .win-title { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #555; margin-bottom: 10px; }
@@ -137,6 +149,7 @@
     <div class="result-sub" id="resultSub"></div>
     <div id="roleList"></div>
     <div class="summary" id="summary"></div>
+    <div class="night-section" id="nightSection"></div>
     <div class="win-section" id="winSection"></div>
   </div>
 
@@ -189,44 +202,66 @@
   </div>
 
   <script>
-  // ── Role definitions with balance weights ──────────────────────────────────
+  // ── Role definitions with balance weights and night order ──────────────────
   // Negative weight = favors evil, Positive weight = favors village
-  // Balance target: total weight should be near 0 per setup
+  // nightOrder: sequence priority (lower = wakes first)
   var ROLES = {
     // Evil (negative weights)
-    werewolf:    { name:"Werewolf",    team:"evil",    tag:"Evil",    weight:-9,  desc:"Wakes each night to silently choose a victim to eliminate." },
-    alphawolf:   { name:"Alpha Wolf",  team:"evil",    tag:"Evil",    weight:-9,  desc:"A werewolf who, once per game, can convert a villager into a new werewolf instead of killing." },
-    wolfcub:     { name:"Wolf Cub",    team:"evil",    tag:"Evil",    weight:-8,  desc:"A werewolf. If eliminated, werewolves kill two players the following night." },
-    minion:      { name:"Minion",      team:"evil",    tag:"Evil",    weight:-6,  desc:"Knows the werewolves. Wins if any werewolf survives to the end." },
-    lycan:       { name:"Lycan",       team:"evil",    tag:"Evil",    weight:-1,  desc:"Appears as Werewolf when seen by the Seer, but is actually on the evil team." },
-    sorceress:   { name:"Sorceress",   team:"evil",    tag:"Evil",    weight:-3,  desc:"Each night, picks a player to learn if they are the Seer. Wins with the werewolf team." },
+    werewolf:    { name:"Werewolf",    team:"evil",    tag:"Evil",    weight:-9,  nightOrder:1,  desc:"Wakes each night to silently choose a victim to eliminate." },
+    alphawolf:   { name:"Alpha Wolf",  team:"evil",    tag:"Evil",    weight:-9,  nightOrder:2,  desc:"A werewolf who, once per game, can convert a villager into a new werewolf instead of killing." },
+    wolfcub:     { name:"Wolf Cub",    team:"evil",    tag:"Evil",    weight:-8,  nightOrder:1,  desc:"A werewolf. If eliminated, werewolves kill two players the following night." },
+    minion:      { name:"Minion",      team:"evil",    tag:"Evil",    weight:-6,  nightOrder:3,  desc:"Knows the werewolves. Wins if any werewolf survives to the end." },
+    lycan:       { name:"Lycan",       team:"evil",    tag:"Evil",    weight:-1,  nightOrder:99, desc:"Appears as Werewolf when seen by the Seer, but is actually on the evil team." },
+    sorceress:   { name:"Sorceress",   team:"evil",    tag:"Evil",    weight:-3,  nightOrder:4,  desc:"Each night, picks a player to learn if they are the Seer. Wins with the werewolf team." },
     // Village (positive weights)
-    mysticseer:  { name:"Mystic Seer", team:"village", tag:"Village", weight:9,   desc:"Each night, learns the true role of one player AND the alignment of a second. Powerful Seer variant." },
-    mentalist:   { name:"Mentalist",   team:"village", tag:"Village", weight:6,   desc:"Each night, picks two players and learns if they are on the same team or different teams." },
-    revealer:    { name:"Revealer",    team:"village", tag:"Village", weight:2,   desc:"Once per game at night, publicly flips one player's card. Whether good or evil is revealed, the Revealer dies." },
-    witch:       { name:"Witch",       team:"village", tag:"Village", weight:4,   desc:"Each night, may save the werewolves victim OR eliminate any player (one action per night)." },
-    appseer:     { name:"Apprentice Seer", team:"village", tag:"Village", weight:4, desc:"Becomes the Seer if the Seer is eliminated. Has no power until then." },
-    drunk:       { name:"Drunk",       team:"village", tag:"Village", weight:4,   desc:"Does not know their role at the start. On day 3, the Moderator reveals it." },
-    hunter:      { name:"Hunter",      team:"village", tag:"Village", weight:3,   desc:"When eliminated, immediately shoots and eliminates one other player." },
-    diseased:    { name:"Diseased",    team:"village", tag:"Village", weight:3,   desc:"If killed by werewolves, werewolves skip their kill the following night." },
-    pi:          { name:"PI",          team:"village", tag:"Village", weight:3,   desc:"Each night, picks two players and learns if at least one is a werewolf." },
-    prince:      { name:"Prince",      team:"village", tag:"Village", weight:3,   desc:"First time voted out, the Moderator reveals the role and the vote is cancelled." },
-    toughguy:    { name:"Tough Guy",   team:"village", tag:"Village", weight:3,   desc:"When killed by werewolves, survives until the next day before being removed." },
-    auraseer:    { name:"Aura Seer",   team:"village", tag:"Village", weight:3,   desc:"Each night, learns only the alignment (good/evil) of one player." },
-    huntress:    { name:"Huntress",    team:"village", tag:"Village", weight:3,   desc:"Like the Hunter, but can also use her shot proactively once per game at night." },
-    bodyguard:   { name:"Bodyguard",   team:"village", tag:"Village", weight:3,   desc:"Each night, protects one player. Cannot protect the same person twice in a row." },
-    priest:      { name:"Priest",      team:"village", tag:"Village", weight:3,   desc:"Each night, blesses a player, making them immune to werewolf attack for that night." },
-    seer:        { name:"Seer",        team:"village", tag:"Village", weight:7,   desc:"Each night, secretly learns the true role of one chosen player." },
-    mason:       { name:"Mason",       team:"village", tag:"Village", weight:2,   desc:"Wakes with the other Mason(s) and recognises them as confirmed villagers." },
-    spellcaster: { name:"Spellcaster", team:"village", tag:"Village", weight:1,   desc:"Once per game, silences a player for one full day — they cannot speak." },
-    cupid:       { name:"Cupid",       team:"village", tag:"Village", weight:3,   desc:"Night 1: links two players as lovers. If one dies, the other dies too." },
-    pacifist:    { name:"Pacifist",    team:"village", tag:"Village", weight:-1,  desc:"Must vote to eliminate someone each day — cannot abstain. Wins with the village." },
+    mysticseer:  { name:"Mystic Seer", team:"village", tag:"Village", weight:9,   nightOrder:5,  desc:"Each night, learns the true role of one player AND the alignment of a second. Powerful Seer variant." },
+    mentalist:   { name:"Mentalist",   team:"village", tag:"Village", weight:6,   nightOrder:7,  desc:"Each night, picks two players and learns if they are on the same team or different teams." },
+    revealer:    { name:"Revealer",    team:"village", tag:"Village", weight:2,   nightOrder:8,  desc:"Once per game at night, publicly flips one player's card. Whether good or evil is revealed, the Revealer dies." },
+    witch:       { name:"Witch",       team:"village", tag:"Village", weight:4,   nightOrder:10, desc:"Each night, may save the werewolves victim OR eliminate any player (one action per night)." },
+    appseer:     { name:"Apprentice Seer", team:"village", tag:"Village", weight:4, nightOrder:5, desc:"Becomes the Seer if the Seer is eliminated. Has no power until then." },
+    drunk:       { name:"Drunk",       team:"village", tag:"Village", weight:4,   nightOrder:99, desc:"Does not know their role at the start. On day 3, the Moderator reveals it." },
+    hunter:      { name:"Hunter",      team:"village", tag:"Village", weight:3,   nightOrder:99, desc:"When eliminated, immediately shoots and eliminates one other player." },
+    diseased:    { name:"Diseased",    team:"village", tag:"Village", weight:3,   nightOrder:99, desc:"If killed by werewolves, werewolves skip their kill the following night." },
+    pi:          { name:"PI",          team:"village", tag:"Village", weight:3,   nightOrder:9,  desc:"Each night, picks two players and learns if at least one is a werewolf." },
+    prince:      { name:"Prince",      team:"village", tag:"Village", weight:3,   nightOrder:99, desc:"First time voted out, the Moderator reveals the role and the vote is cancelled." },
+    toughguy:    { name:"Tough Guy",   team:"village", tag:"Village", weight:3,   nightOrder:99, desc:"When killed by werewolves, survives until the next day before being removed." },
+    auraseer:    { name:"Aura Seer",   team:"village", tag:"Village", weight:3,   nightOrder:6,  desc:"Each night, learns only the alignment (good/evil) of one player." },
+    huntress:    { name:"Huntress",    team:"village", tag:"Village", weight:3,   nightOrder:11, desc:"Like the Hunter, but can also use her shot proactively once per game at night." },
+    bodyguard:   { name:"Bodyguard",   team:"village", tag:"Village", weight:3,   nightOrder:12, desc:"Each night, protects one player. Cannot protect the same person twice in a row." },
+    priest:      { name:"Priest",      team:"village", tag:"Village", weight:3,   nightOrder:13, desc:"Each night, blesses a player, making them immune to werewolf attack for that night." },
+    seer:        { name:"Seer",        team:"village", tag:"Village", weight:7,   nightOrder:5,  desc:"Each night, secretly learns the true role of one chosen player." },
+    mason:       { name:"Mason",       team:"village", tag:"Village", weight:2,   nightOrder:99, desc:"Wakes with the other Mason(s) and recognises them as confirmed villagers." },
+    spellcaster: { name:"Spellcaster", team:"village", tag:"Village", weight:1,   nightOrder:14, desc:"Once per game, silences a player for one full day — they cannot speak." },
+    cupid:       { name:"Cupid",       team:"village", tag:"Village", weight:3,   nightOrder:15, desc:"Night 1: links two players as lovers. If one dies, the other dies too." },
+    pacifist:    { name:"Pacifist",    team:"village", tag:"Village", weight:-1,  nightOrder:99, desc:"Must vote to eliminate someone each day — cannot abstain. Wins with the village." },
     // Neutral (variable weights)
-    troublemaker:{ name:"Troublemaker",team:"neutral", tag:"Neutral", weight:0,   desc:"One night per game, stirs up trouble by calling for players to be eliminated the following day." },
-    doppelganger:{ name:"Doppelganger",team:"neutral", tag:"Neutral", weight:-2,  desc:"Night 1: copies another player's role. Activates when that player dies." },
-    madbomber:   { name:"Mad Bomber",  team:"neutral", tag:"Neutral", weight:-2,  desc:"When eliminated, all adjacent players are also eliminated." },
-    curse:       { name:"Curse",       team:"neutral", tag:"Neutral", weight:-3,  desc:"If targeted by werewolves at night, becomes a werewolf instead of dying." },
-    cultleader:  { name:"Cult Leader", team:"neutral", tag:"Neutral", weight:0,   desc:"Each night, recruits one player into their cult. Wins alone if all survivors are cult members." }
+    troublemaker:{ name:"Troublemaker",team:"neutral", tag:"Neutral", weight:0,   nightOrder:16, desc:"One night per game, stirs up trouble by calling for players to be eliminated the following day." },
+    doppelganger:{ name:"Doppelganger",team:"neutral", tag:"Neutral", weight:-2,  nightOrder:17, desc:"Night 1: copies another player's role. Activates when that player dies." },
+    madbomber:   { name:"Mad Bomber",  team:"neutral", tag:"Neutral", weight:-2,  nightOrder:99, desc:"When eliminated, all adjacent players are also eliminated." },
+    curse:       { name:"Curse",       team:"neutral", tag:"Neutral", weight:-3,  nightOrder:99, desc:"If targeted by werewolves at night, becomes a werewolf instead of dying." },
+    cultleader:  { name:"Cult Leader", team:"neutral", tag:"Neutral", weight:0,   nightOrder:18, desc:"Each night, recruits one player into their cult. Wins alone if all survivors are cult members." }
+  };
+
+  // ── Night order action descriptions ────────────────────────────────────────
+  var NIGHT_ACTIONS = {
+    1:  "Werewolves gather and silently choose a victim to kill",
+    2:  "Alpha Wolf can convert a villager into a werewolf (once per game)",
+    3:  "Minion privately communicates with the Moderator if needed",
+    4:  "Sorceress selects a player to learn if they are the Seer",
+    5:  "Seer / Mystic Seer / Apprentice Seer view the true role of chosen player(s)",
+    6:  "Aura Seer learns the alignment (good/evil) of a chosen player",
+    7:  "Mentalist learns if two chosen players are on the same team",
+    8:  "Revealer flips one player's card publicly (then dies)",
+    9:  "PI learns if at least one of two chosen players is a werewolf",
+    10: "Witch saves the werewolves' victim OR eliminates a player",
+    11: "Huntress can proactively use her shot (once per game)",
+    12: "Bodyguard protects one player from werewolf attack",
+    13: "Priest blesses a player to make them immune for the night",
+    14: "Spellcaster silences a chosen player (once per game)",
+    15: "Cupid links two players as lovers (once, on Night 1 only)",
+    16: "Troublemaker stirs up trouble for the next day vote",
+    17: "Doppelganger copies another player's role (Night 1 only)",
+    18: "Cult Leader recruits one player into the cult"
   };
 
   // ── Core pools per player count: [evil keys], [village keys] ───
@@ -273,7 +308,7 @@
     var villageKeys = pool.village.slice();
     var neutralKeys = [];
 
-    // Random variation: occasionally swap one village role with a variant (30% chance each slot)
+    // Random variation: occasionally swap one village role with a variant (35% chance each slot)
     villageKeys = villageKeys.map(function(k) {
       if (k === "mason") return k; // always keep masons paired
       if (Math.random() < 0.35) {
@@ -284,7 +319,7 @@
       return k;
     });
 
-    // Random variation: occasionally swap one evil role (20% chance)
+    // Random variation: occasionally swap one evil role (25% chance)
     evilKeys = evilKeys.map(function(k) {
       if (k !== "werewolf") return k; // only swap plain werewolves
       if (Math.random() < 0.25) {
@@ -326,9 +361,30 @@
     renderResult(count, evilKeys, villageKeys, neutralKeys);
   }
 
+  function buildNightOrder(evilKeys, villageKeys, neutralKeys) {
+    var allKeys = evilKeys.concat(villageKeys).concat(neutralKeys);
+    var unique = {};
+    allKeys.forEach(function(k) { unique[k] = true; });
+    
+    // Build list of unique roles that act at night
+    var actingRoles = [];
+    for (var k in unique) {
+      if (ROLES[k] && ROLES[k].nightOrder < 99) {
+        actingRoles.push(k);
+      }
+    }
+    
+    // Sort by nightOrder priority
+    actingRoles.sort(function(a, b) {
+      return ROLES[a].nightOrder - ROLES[b].nightOrder;
+    });
+    
+    return actingRoles;
+  }
+
   function renderResult(count, evilKeys, villageKeys, neutralKeys) {
-    document.getElementById("resultTitle").textContent = count + " Players \u2014 Card Setup";
-    document.getElementById("resultSub").textContent   = "Deal one card face-down to each player. \u21bb Use reroll for a different setup.";
+    document.getElementById("resultTitle").textContent = count + " Players — Card Setup";
+    document.getElementById("resultSub").textContent   = "Deal one card face-down to each player. ↻ Use reroll for a different setup.";
     document.getElementById("result").style.display = "block";
 
     var roleList = document.getElementById("roleList");
@@ -361,7 +417,7 @@
         var tag  = document.createElement("span"); tag.className  = "tag tag-" + r.team; tag.textContent = r.tag;
         var name = document.createElement("span"); name.className = "role-name"; name.textContent = r.name;
         var desc = document.createElement("span"); desc.className = "role-desc"; desc.textContent = r.desc;
-        var cnt  = document.createElement("span"); cnt.className  = "role-count"; cnt.textContent  = "\u00d7" + entry.qty;
+        var cnt  = document.createElement("span"); cnt.className  = "role-count"; cnt.textContent  = "×" + entry.qty;
         left.appendChild(tag); left.appendChild(name);
         row.appendChild(left); row.appendChild(desc); row.appendChild(cnt);
         roleList.appendChild(row);
@@ -374,10 +430,32 @@
     // Summary bar
     var summary = document.getElementById("summary");
     summary.innerHTML =
-      "<span class=\"sum-evil\">Evil: " + evilCount + "</span>" +
-      "<span class=\"sum-village\">Village: " + villageCount + "</span>" +
-      (neutralCount ? "<span class=\"sum-neutral\">Third Party: " + neutralCount + "</span>" : "") +
-      "<span style=\"color:#888;font-family:sans-serif;\">Total: " + count + " cards</span>";
+      "<span class="sum-evil">Evil: " + evilCount + "</span>" +
+      "<span class="sum-village">Village: " + villageCount + "</span>" +
+      (neutralCount ? "<span class="sum-neutral">Third Party: " + neutralCount + "</span>" : "") +
+      "<span style="color:#888;font-family:sans-serif;">Total: " + count + " cards</span>";
+
+    // Night Order
+    var nightOrder = buildNightOrder(evilKeys, villageKeys, neutralKeys);
+    var nightSection = document.getElementById("nightSection");
+    nightSection.innerHTML = "";
+    
+    if (nightOrder.length > 0) {
+      var nightTitle = document.createElement("div"); nightTitle.className = "night-title"; nightTitle.textContent = "Night Order";
+      nightSection.appendChild(nightTitle);
+      
+      var nightSeq = document.createElement("div"); nightSeq.className = "night-sequence";
+      nightOrder.forEach(function(roleKey, idx) {
+        var r = ROLES[roleKey];
+        var step = document.createElement("div"); step.className = "night-step";
+        var stepNum = document.createElement("span"); stepNum.className = "night-step-num"; stepNum.textContent = (idx + 1) + ".";
+        var stepRole = document.createElement("span"); stepRole.className = "night-step-role"; stepRole.textContent = r.name + ":";
+        var stepAction = document.createElement("span"); stepAction.className = "night-step-action"; stepAction.textContent = NIGHT_ACTIONS[r.nightOrder];
+        step.appendChild(stepNum); step.appendChild(stepRole); step.appendChild(stepAction);
+        nightSeq.appendChild(step);
+      });
+      nightSection.appendChild(nightSeq);
+    }
 
     // Win conditions
     var winSection = document.getElementById("winSection");
