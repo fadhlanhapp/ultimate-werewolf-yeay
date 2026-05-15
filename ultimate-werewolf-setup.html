@@ -131,7 +131,7 @@ function setupGame(count) {
   var gameKey = "game-"+gameState.id;
   localStorage.setItem(gameKey, JSON.stringify(gameState));
   
-  var fbData = {count:count, roles:roles, evil:pool.e.length, village:pool.v.length, neutral:(pool.n||[]).length, balance:balance, players:{}};
+  var fbData = {count:count, roles:roles, evil:pool.e.length, village:pool.v.length, neutral:(pool.n||[]).length, balance:balance, players:{}, id:gameState.id};
   firebaseDb.ref("games/"+gameState.id).set(fbData);
   
   setupFirebaseListener(gameState.id);
@@ -333,26 +333,10 @@ function joinGame(gid) {
   g.players[pid] = {name:name, role:g.roles[rndx]};
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
-  localStorage.setItem("gid-shared", gid);
+  localStorage.setItem("gid-shared", g.id);
   
-  var fbGameId = gid.replace(/^uw-/, '');
-  if(gid.startsWith('uw-')) {
-    fbGameId = gid;
-  } else {
-    fbGameId = gid;
-  }
-  
-  var games = firebaseDb.ref("games");
-  games.once('value', function(snapshot){
-    snapshot.forEach(function(child){
-      var gameData = child.val();
-      if(gameData && gameData.count === g.count && JSON.stringify(gameData.roles) === JSON.stringify(g.roles)){
-        firebaseDb.ref("games/"+child.key+"/players/"+pid).set({name:name, role:g.roles[rndx]});
-        localStorage.setItem("gid-shared", child.key);
-        setupPlayerFirebaseListener(child.key, pid);
-      }
-    });
-  });
+  firebaseDb.ref("games/"+g.id+"/players/"+pid).set({name:name, role:g.roles[rndx]});
+  setupPlayerFirebaseListener(g.id, pid);
   
   showPlayerView();
 }
