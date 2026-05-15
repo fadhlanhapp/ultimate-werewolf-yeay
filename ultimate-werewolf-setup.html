@@ -2,256 +2,289 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Ultimate Werewolf - Online Setup</title>
+  <title>Ultimate Werewolf</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Georgia, serif; font-size: 13px; color: #1a1a1a; background: #f5f5f0;
-      display: flex; flex-direction: column; align-items: center; padding: 32px 20px; min-height: 100vh; }
-    h1 { font-size: 22px; margin-bottom: 4px; letter-spacing: 1px; text-align: center; }
-    .subtitle { color: #666; font-style: italic; font-size: 12px; margin-bottom: 6px; text-align: center; }
-    .note { font-size: 11px; color: #c0392b; background: #fdecea; border: 1px solid #e74c3c;
-      border-radius: 4px; padding: 5px 14px; margin-bottom: 24px; text-align: center; }
+      display: flex; flex-direction: column; align-items: center; padding: 32px 20px; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .subtitle { color: #666; font-style: italic; font-size: 12px; margin-bottom: 6px; }
     .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
     .tab-btn { padding: 8px 16px; border: 2px solid #bbb; border-radius: 6px; background: #fff;
-      cursor: pointer; font-family: Georgia, serif; font-size: 13px; font-weight: bold; }
-    .tab-btn.active { background: #2b2b2b; color: #fff; border-color: #2b2b2b; }
-    .tab-content { display: none; max-width: 560px; width: 100%; }
+      cursor: pointer; font-size: 13px; font-weight: bold; }
+    .tab-btn.active { background: #2b2b2b; color: #fff; }
+    .tab-content { display: none; max-width: 700px; }
     .tab-content.active { display: block; }
-    .input-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 28px; }
-    .input-label { font-size: 15px; font-weight: bold; }
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
     .btn { width: 44px; height: 44px; border: 2px solid #bbb; border-radius: 6px; background: #fff;
-      font-size: 15px; font-family: Georgia, serif; font-weight: bold; cursor: pointer; color: #333; }
-    .btn:hover { border-color: #555; background: #f0f0f0; }
-    .btn.active { background: #2b2b2b; color: #fff; border-color: #2b2b2b; }
-    .action-btn { padding: 8px 20px; margin-top: 8px; border: 2px solid #2b2b2b; border-radius: 6px;
-      background: #fff; font-size: 13px; font-family: Georgia, serif; cursor: pointer; display: inline-block; }
+      font-weight: bold; cursor: pointer; font-family: Georgia; }
+    .btn:hover { border-color: #555; }
+    .btn.active { background: #2b2b2b; color: #fff; }
+    .action-btn { padding: 8px 20px; margin-right: 8px; border: 2px solid #2b2b2b; border-radius: 6px;
+      background: #fff; cursor: pointer; font-weight: bold; font-family: Georgia; }
     .action-btn:hover { background: #2b2b2b; color: #fff; }
     .action-btn-green { border-color: #27ae60; color: #27ae60; }
     .action-btn-green:hover { background: #27ae60; color: #fff; }
-    #result { width: 100%; max-width: 560px; background: #fff; border: 1px solid #ddd;
-      border-radius: 8px; padding: 22px 26px; display: none; }
-    .result-title { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
-    .result-sub { font-size: 11px; color: #888; margin-bottom: 16px; }
-    .share-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin: 12px 0; }
-    .share-label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666; margin-bottom: 6px; }
-    .share-link { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px;
-      font-size: 11px; word-break: break-all; font-family: monospace; margin-bottom: 6px; }
-    .share-buttons { display: flex; gap: 6px; }
-    .share-buttons button { padding: 4px 12px; font-size: 11px; border: 1px solid #ccc;
-      border-radius: 4px; background: #fff; cursor: pointer; }
-    .player-panel { max-width: 600px; width: 100%; text-align: center; }
-    .role-display { background: #fff; border: 2px solid #ddd; border-radius: 8px;
-      padding: 40px 30px; margin: 20px 0; font-size: 18px; }
-    .role-name { font-size: 28px; font-weight: bold; margin: 20px 0; color: #2b2b2b; }
-    .role-team-evil { color: #c0392b; }
-    .role-team-village { color: #27ae60; }
-    .role-team-neutral { color: #8e44ad; }
-    .role-desc { font-size: 12px; color: #555; margin: 20px 0; line-height: 1.6; text-align: left;
-      background: #f9f9f9; padding: 15px; border-radius: 4px; }
-    .player-name-input { font-size: 16px; padding: 10px; border: 2px solid #ddd;
-      border-radius: 4px; width: 100%; max-width: 300px; margin-bottom: 12px; }
+    #result { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 22px; display: none; }
+    .role-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+    .role-name { font-weight: bold; min-width: 120px; }
+    .role-desc { flex: 1; font-size: 12px; }
+    .tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-right: 6px; font-weight: bold; }
+    .tag-evil { background: #fdecea; color: #c0392b; }
+    .tag-village { background: #eafaf1; color: #27ae60; }
+    .tag-neutral { background: #f5eef8; color: #8e44ad; }
+    .summary { display: flex; gap: 12px; justify-content: center; font-size: 12px; flex-wrap: wrap; margin: 12px 0; }
+    .night-order { background: #fff9e6; border: 1px solid #f39c12; border-radius: 6px; padding: 12px; margin: 12px 0; }
+    .night-step { display: flex; gap: 10px; padding: 8px; border-left: 3px solid #f39c12; margin-bottom: 6px; font-size: 11px; }
+    .share-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin: 12px 0; display: none; }
+    .share-link { background: #fff; border: 1px solid #ddd; padding: 8px; font-family: monospace; font-size: 11px; word-break: break-all; margin-bottom: 8px; }
+    .player-name-input { font-size: 16px; padding: 10px; border: 2px solid #ddd; border-radius: 4px; width: 100%; max-width: 300px; margin-bottom: 12px; }
     .players-list { background: #fff; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; }
-    .player-item { display: flex; justify-content: space-between; align-items: center;
-      padding: 12px; border-bottom: 1px solid #e0e0e0; gap: 12px; }
-    .player-item:last-child { border-bottom: none; }
-    .player-info { flex: 1; text-align: left; }
-    .player-name { font-weight: bold; }
-    .player-role { font-size: 11px; color: #666; }
-    .player-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-family: sans-serif; font-weight: bold; }
-    .tag-evil { background: #fdecea; color: #c0392b; border: 1px solid #e74c3c; }
-    .tag-village { background: #eafaf1; color: #27ae60; border: 1px solid #2ecc71; }
-    .tag-neutral { background: #f5eef8; color: #8e44ad; border: 1px solid #9b59b6; }
-    .role-row { display: flex; align-items: baseline; justify-content: space-between;
-      padding: 7px 0; border-bottom: 1px dotted #e0e0e0; gap: 8px; }
-    .role-row:last-child { border-bottom: none; }
-    .role-left { display: flex; align-items: baseline; gap: 7px; min-width: 155px; }
-    .tag { font-size: 10px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; font-family: sans-serif; }
-    .summary { margin-top: 16px; padding-top: 10px; border-top: 1px solid #ddd;
-      display: flex; gap: 10px; justify-content: center; font-size: 11px; flex-wrap: wrap; }
-    .summary span { padding: 3px 10px; border-radius: 12px; font-family: sans-serif; }
-    .sum-evil { background: #fdecea; color: #c0392b; border: 1px solid #e74c3c; }
-    .sum-village { background: #eafaf1; color: #27ae60; border: 1px solid #2ecc71; }
-    .sum-neutral { background: #f5eef8; color: #8e44ad; border: 1px solid #9b59b6; }
+    .player-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+    .role-display { background: #fff; border: 2px solid #ddd; border-radius: 8px; padding: 40px; margin: 20px 0; text-align: center; }
+    .role-name-big { font-size: 28px; font-weight: bold; margin: 20px 0; }
+    .role-desc-big { font-size: 12px; margin: 20px 0; background: #f9f9f9; padding: 15px; border-radius: 4px; }
+    .warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px 12px; margin: 8px 0; color: #856404; font-size: 12px; }
   </style>
 </head>
 <body>
-  <h1>Ultimate Werewolf</h1>
-  <p class="subtitle">Digital Setup Generator - No Cards Needed!</p>
+  <h1>🐺 Ultimate Werewolf</h1>
+  <p class="subtitle">Digital Setup - Balanced & Exciting</p>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="mod">📋 Moderator Setup</button>
-    <button class="tab-btn" data-tab="player">👤 Player Join</button>
+    <button class="tab-btn active" id="modBtn">📋 Moderator</button>
+    <button class="tab-btn" id="playerBtn">👤 Join</button>
   </div>
 
-  <div id="mod" class="tab-content active">
-    <p class="note">🎲 Generate a setup and share the link</p>
-    <div class="input-section">
-      <span class="input-label">Players (excluding you)?</span>
-      <div class="btn-row" id="btnRow"></div>
-    </div>
-    <div id="result">
-      <div class="result-title"></div>
-      <div class="result-sub"></div>
-      <div class="share-box" style="display:none" id="shareBox">
-        <div class="share-label">📤 Share This Link:</div>
-        <div class="share-link" id="shareLink"></div>
-        <div class="share-buttons">
-          <button onclick="copyLink()">Copy</button>
-          <button onclick="shareLink()">Share</button>
-        </div>
-      </div>
-      <div id="roleList"></div>
-      <div id="summary" class="summary"></div>
-      <div id="playerList"></div>
-    </div>
+  <div id="modTab" class="tab-content active">
+    <p style="text-align:center;color:#666;margin-bottom:16px;">Select players to generate balanced setup</p>
+    <div class="btn-row" id="btnRow"></div>
+    <div id="result"></div>
   </div>
 
-  <div id="player" class="tab-content player-panel">
-    <p class="note">👤 Enter your name to see your role</p>
+  <div id="playerTab" class="tab-content">
+    <p style="text-align:center;color:#666;margin-bottom:16px;">Enter name to receive role</p>
     <div id="playerView"></div>
   </div>
 
   <script>
-var APP = {
-  roles: {werewolf:{n:"Werewolf",t:"evil",d:"Kill at night"},seer:{n:"Seer",t:"village",d:"See roles at night"},hunter:{n:"Hunter",t:"village",d:"Shoot when dead"},bodyguard:{n:"Bodyguard",t:"village",d:"Protect at night"},witch:{n:"Witch",t:"village",d:"Save or eliminate"},mason:{n:"Mason",t:"village",d:"Know other Masons"},minion:{n:"Minion",t:"evil",d:"Knows werewolves"},alphawolf:{n:"Alpha Wolf",t:"evil",d:"Convert villager once"},wolfcub:{n:"Wolf Cub",t:"evil",d:"Double kill if dies"},prince:{n:"Prince",t:"village",d:"Vote cancel first time"},drunk:{n:"Drunk",t:"village",d:"Learn role day 3"},diseased:{n:"Diseased",t:"village",d:"Skip kill if eaten"},priest:{n:"Priest",t:"village",d:"Bless player"},huntress:{n:"Huntress",t:"village",d:"Shoot proactively"},toughguy:{n:"Tough Guy",t:"village",d:"Survive 1 night"},pi:{n:"PI",t:"village",d:"Check werewolf"},auraseer:{n:"Aura Seer",t:"village",d:"See alignment"},mentalist:{n:"Mentalist",t:"village",d:"Compare players"},revealer:{n:"Revealer",t:"village",d:"Flip card, then die"},appseer:{n:"Apprentice Seer",t:"village",d:"Become Seer"},spellcaster:{n:"Spellcaster",t:"village",d:"Silence player"},cupid:{n:"Cupid",t:"village",d:"Link lovers N1"},pacifist:{n:"Pacifist",t:"village",d:"Must vote daily"},mysticseer:{n:"Mystic Seer",t:"village",d:"See 2 players"},troublemaker:{n:"Troublemaker",t:"neutral",d:"Stir trouble"},sorceress:{n:"Sorceress",t:"evil",d:"Find Seer"},lycan:{n:"Lycan",t:"evil",d:"Appear as wolf"},doppelganger:{n:"Doppelganger",t:"neutral",d:"Copy role"},madbomber:{n:"Mad Bomber",t:"neutral",d:"Bomb adjacent"},curse:{n:"Curse",t:"neutral",d:"Become wolf if eaten"},cultleader:{n:"Cult Leader",t:"neutral",d:"Recruit nightly"}},
-  pools:{6:{e:["werewolf"],v:["seer","hunter","bodyguard"]},7:{e:["werewolf","werewolf"],v:["seer","hunter","bodyguard"]},8:{e:["werewolf","wolfcub"],v:["seer","hunter","bodyguard","witch"]},9:{e:["werewolf","werewolf","minion"],v:["seer","hunter","bodyguard","mason","mason"]},10:{e:["werewolf","werewolf","minion"],v:["seer","hunter","bodyguard","witch","mason","mason"]},11:{e:["werewolf","werewolf","werewolf","minion"],v:["seer","hunter","bodyguard","witch","mason","mason"]},12:{e:["werewolf","werewolf","wolfcub","minion"],v:["seer","appseer","hunter","bodyguard","witch","mason","mason"]},13:{e:["werewolf","werewolf","werewolf","minion"],v:["seer","appseer","hunter","bodyguard","witch","mason","mason","priest"]},14:{e:["werewolf","werewolf","werewolf","alphawolf","minion"],v:["seer","appseer","hunter","bodyguard","witch","mason","mason"]}},
-  gameState: null,
+var ROLES = {werewolf:{n:"Werewolf",t:"evil",w:-9,no:1,d:"Point to eliminate at night. Wins with evil."},alphawolf:{n:"Alpha Wolf",t:"evil",w:-9,no:2,d:"Once per game, convert village to werewolf."},wolfcub:{n:"Wolf Cub",t:"evil",w:-8,no:1,d:"If killed, werewolves get double kill next night."},minion:{n:"Minion",t:"evil",w:-6,no:3,d:"Knows werewolves. Wins with evil."},sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, learn if target is Seer."},lycan:{n:"Lycan",t:"evil",w:-1,no:99,d:"Appears as werewolf to Seer. Secretly evil."},seer:{n:"Seer",t:"village",w:7,no:5,d:"Each night, learn one player's true role."},mysticseer:{n:"Mystic Seer",t:"village",w:9,no:5,d:"Learn true role of one, alignment of another."},appseer:{n:"Apprentice Seer",t:"village",w:4,no:99,d:"Becomes Seer if Seer dies."},mentalist:{n:"Mentalist",t:"village",w:6,no:7,d:"Learn if two players are same team."},auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, learn alignment (good/evil)."},pi:{n:"PI",t:"village",w:3,no:9,d:"Learn if one of two is werewolf."},revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Flip card once per game, then die."},witch:{n:"Witch",t:"village",w:4,no:10,d:"Save victim OR eliminate player."},hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When killed, shoot one player."},huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, also on day death."},bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Protect one from werewolves each night."},priest:{n:"Priest",t:"village",w:3,no:13,d:"Bless player for immunity."},spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once, silence player for one day."},cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: link two lovers (die together)."},mason:{n:"Mason",t:"village",w:2,no:99,d:"Know other Masons."},prince:{n:"Prince",t:"village",w:3,no:99,d:"First vote cancels, role revealed."},toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive werewolf kill until next day."},diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If eaten, skip werewolves' next kill."},drunk:{n:"Drunk",t:"village",w:4,no:99,d:"Don't know role. Learn on day 3."},pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"Must vote daily. Wins with village."},troublemaker:{n:"Troublemaker",t:"neutral",w:0,no:16,d:"Stir trouble for next day vote."},doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Copy role night 1, gain when they die."},madbomber:{n:"Mad Bomber",t:"neutral",w:-2,no:99,d:"Eliminated = chain explosion."},curse:{n:"Curse",t:"neutral",w:-3,no:99,d:"If werewolves eat you, become wolf."},cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Recruit nightly. Win if all cultists."}};
+var POOLS = {6:{e:["werewolf"],v:["seer","hunter","bodyguard"]},7:{e:["werewolf","werewolf"],v:["seer","hunter","mason"]},8:{e:["werewolf","wolfcub"],v:["seer","mentalist","bodyguard","witch"]},9:{e:["werewolf","werewolf","minion"],v:["seer","hunter","bodyguard","mason","mason"]},10:{e:["werewolf","werewolf","minion"],v:["seer","hunter","bodyguard","witch","mason","mason"]},11:{e:["werewolf","werewolf","werewolf","minion"],v:["mysticseer","hunter","bodyguard","witch","mason","mason"],n:["troublemaker"]},12:{e:["werewolf","werewolf","wolfcub","minion"],v:["seer","appseer","hunter","bodyguard","witch","mason","mason"],n:["doppelganger"]},13:{e:["werewolf","werewolf","werewolf","minion"],v:["mysticseer","appseer","huntress","bodyguard","witch","mason","priest"],n:["curse"]},14:{e:["werewolf","werewolf","werewolf","alphawolf","minion"],v:["seer","appseer","hunter","bodyguard","witch","mason","cupid"],n:["cultleader"]}};
+var NIGHT_ACTIONS = {1:"Werewolves kill",2:"Alpha converts",3:"Minion checks",4:"Sorceress seeks",5:"Seers view",6:"Aura learns",7:"Mentalist compares",8:"Revealer flips",9:"PI checks",10:"Witch acts",11:"Huntress shoots",12:"Bodyguard protects",13:"Priest blesses",14:"Spellcaster silences",15:"Cupid links",16:"Troublemaker stirs",17:"Doppelganger copies",18:"Cult recruits"};
+var gameState = null;
+
+function setupGame(count) {
+  var pool = JSON.parse(JSON.stringify(POOLS[count]));
+  var roles = pool.e.concat(pool.v).concat(pool.n || []);
+  var balance = 0;
+  for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
+  gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
+  showSetup(pool);
+}
+
+function showSetup(pool) {
+  var gameKey = "game-"+gameState.id;
+  localStorage.setItem(gameKey, JSON.stringify(gameState));
   
-  init() {
-    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', e => {
-      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-      const tab = e.target.dataset.tab;
-      document.getElementById(tab).classList.add('active');
-      e.target.classList.add('active');
-      if (tab === 'player') this.showPlayerView();
-    }));
-    
-    for (let i = 6; i <= 14; i++) {
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.textContent = i;
-      b.onclick = () => this.setupGame(i);
-      document.getElementById('btnRow').appendChild(b);
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('game')) {
-      setTimeout(() => {
-        document.querySelector('[data-tab="player"]').click();
-      }, 100);
-    }
-  },
+  var html = "<h3 style='margin-bottom:12px;'>"+gameState.count+" Players (Balance: "+(gameState.balance>=0?"+":"")+gameState.balance+")</h3>";
+  html += "<div class='summary'><span class='tag tag-evil'>Evil: "+gameState.evil+"</span><span class='tag tag-village'>Village: "+gameState.village+"</span>";
+  if(gameState.neutral > 0) html += "<span class='tag tag-neutral'>Neutral: "+gameState.neutral+"</span>";
+  html += "</div>";
   
-  setupGame(count) {
-    const pool = JSON.parse(JSON.stringify(this.pools[count]));
-    this.gameState = { id: 'uw-' + Date.now(), count, players: {}, roles: pool.e.concat(pool.v) };
-    this.showSetup(pool);
-  },
-  
-  showSetup(pool) {
-    const evil = pool.e.length, village = pool.v.length, total = evil + village;
-    document.querySelector('#result .result-title').textContent = this.gameState.count + ' Players';
-    document.querySelector('#result .result-sub').textContent = 'Setup complete';
-    document.getElementById('result').style.display = 'block';
-    
-    let html = '<div class="summary">' +
-      '<span class="sum-evil">Evil: ' + evil + '</span>' +
-      '<span class="sum-village">Village: ' + village + '</span>' +
-      '</div>';
-    
-    pool.e.concat(pool.v).forEach(rk => {
-      const r = this.roles[rk];
-      html += '<div class="role-row"><div class="role-left"><span class="tag tag-' + r.t + '">' + r.t.toUpperCase() + '</span><span class="role-name">' + r.n + '</span></div><span class="role-desc">' + r.d + '</span></div>';
-    });
-    
-    document.getElementById('roleList').innerHTML = html;
-    
-    if (this.gameState) {
-      localStorage.setItem('game-' + this.gameState.id, JSON.stringify(this.gameState));
-      const url = window.location.origin + window.location.pathname + '?game=' + this.gameState.id;
-      document.getElementById('shareLink').textContent = url;
-      document.getElementById('shareBox').style.display = 'block';
-      this.showPlayerList();
-    }
-  },
-  
-  showPlayerList() {
-    const players = this.gameState.players;
-    const html = Object.keys(players).length > 0 ?
-      Object.entries(players).map(([k, p]) => {
-        const r = this.roles[p.role];
-        return '<div class="player-item"><div class="player-info"><div class="player-name">' + p.name + '</div><div class="player-role">' + r.n + '</div></div><span class="player-tag tag-' + r.t + '">' + r.t + '</span></div>';
-      }).join('') :
-      '<div style="padding:20px;text-align:center;color:#888;">Waiting for players...</div>';
-    document.getElementById('playerList').innerHTML = '<h3 style="margin-top:20px;margin-bottom:12px;">Players (' + Object.keys(players).length + '/' + this.gameState.count + ')</h3><div class="players-list">' + html + '</div>';
-  },
-  
-  showPlayerView() {
-    const params = new URLSearchParams(window.location.search);
-    const gid = params.get('game');
-    if (!gid) {
-      document.getElementById('playerView').innerHTML = '<p style="color:#888">Ask moderator for link</p>';
-      return;
-    }
-    const gdata = localStorage.getItem('game-' + gid);
-    if (!gdata) {
-      document.getElementById('playerView').innerHTML = '<p style="color:#888">Game expired</p>';
-      return;
-    }
-    const g = JSON.parse(gdata);
-    const pid = localStorage.getItem('pid-' + gid);
-    
-    if (!pid) {
-      document.getElementById('playerView').innerHTML = 
-        '<input type="text" class="player-name-input" id="pname" placeholder="Your name">' +
-        '<button class="action-btn action-btn-green" onclick="APP.joinGame(\'' + gid + '\')">Join</button>';
-    } else {
-      const p = g.players[pid];
-      const r = this.roles[p.role];
-      document.getElementById('playerView').innerHTML = 
-        '<div class="role-display">' +
-        '<div style="font-size:14px;margin-bottom:12px;">Player: <strong>' + p.name + '</strong></div>' +
-        '<div class="role-name role-team-' + r.t + '">' + r.n + '</div>' +
-        '<div class="role-desc">' + r.d + '</div>' +
-        '<button class="action-btn" onclick="APP.leaveGame(\'' + gid + '\')">Leave</button>' +
-        '</div>';
-    }
-  },
-  
-  joinGame(gid) {
-    const name = document.getElementById('pname').value.trim();
-    if (!name) { alert('Enter name'); return; }
-    const gdata = localStorage.getItem('game-' + gid);
-    const g = JSON.parse(gdata);
-    const pid = 'p' + Date.now();
-    const rndx = Math.floor(Math.random() * g.roles.length);
-    g.players[pid] = { name, role: g.roles[rndx] };
-    localStorage.setItem('game-' + gid, JSON.stringify(g));
-    localStorage.setItem('pid-' + gid, pid);
-    this.showPlayerView();
-    if (this.gameState && this.gameState.id === gid) this.showPlayerList();
-  },
-  
-  leaveGame(gid) {
-    localStorage.removeItem('pid-' + gid);
-    this.showPlayerView();
+  html += "<h4 style='margin:16px 0 12px;'>Roles in this game:</h4>";
+  for(var i = 0; i < gameState.roles.length; i++) {
+    var rk = gameState.roles[i];
+    var r = ROLES[rk];
+    html += "<div class='role-row'><div class='tag tag-"+r.t+"'>"+r.t.toUpperCase().substr(0,3)+"</div><div class='role-name'>"+r.n+"</div><div class='role-desc'>"+r.d+"</div></div>";
   }
-};
+  
+  var nightRoles = [];
+  for(var i = 0; i < gameState.roles.length; i++) {
+    if(ROLES[gameState.roles[i]].no < 99) {
+      nightRoles.push(gameState.roles[i]);
+    }
+  }
+  
+  if(nightRoles.length > 0) {
+    nightRoles.sort(function(a,b){return ROLES[a].no - ROLES[b].no;});
+    html += "<div class='night-order'><div style='font-weight:bold;margin-bottom:8px;'>Night Order (Who wakes when):</div>";
+    for(var i = 0; i < nightRoles.length; i++) {
+      var rk = nightRoles[i];
+      var r = ROLES[rk];
+      html += "<div class='night-step'><strong>"+r.no+".</strong> <strong>"+r.n+":</strong> "+NIGHT_ACTIONS[r.no]+"</div>";
+    }
+    html += "</div>";
+  }
+  
+  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  html += "<div class='share-box' style='display:block;'><div style='font-size:11px;font-weight:bold;margin-bottom:6px;'>SHARE THIS LINK WITH PLAYERS:</div><div class='share-link'>"+url+"</div>";
+  html += "<button class='action-btn' onclick='copyLink()'>Copy</button> ";
+  if(navigator.share) {
+    html += "<button class='action-btn' onclick='shareLink()'>Share</button>";
+  }
+  html += "</div>";
+  
+  html += "<h4 style='margin:16px 0 12px;'>Connected Players ("+Object.keys(gameState.players).length+"/"+gameState.count+")</h4>";
+  if(Object.keys(gameState.players).length > 0) {
+    html += "<div class='players-list'>";
+    for(var pid in gameState.players) {
+      var p = gameState.players[pid];
+      var r = ROLES[p.role];
+      html += "<div class='player-item'><div><strong>"+p.name+"</strong><div style='font-size:10px;color:#666;'>"+r.n+"</div></div><span class='tag tag-"+r.t+"'>"+r.t+"</span></div>";
+    }
+    html += "</div>";
+  } else {
+    html += "<div style='padding:20px;text-align:center;color:#888;'>Waiting for players...</div>";
+  }
+  
+  var btns = "<button class='action-btn action-btn-green' onclick='refreshPlayers()'>Refresh Players</button> ";
+  btns += "<button class='action-btn' onclick='setupGame("+gameState.count+")'>Reroll Setup</button> ";
+  btns += "<button class='action-btn' onclick='endGame()' style='border-color:#c0392b;color:#c0392b;'>End Game</button>";
+  
+  document.getElementById("result").innerHTML = html + "<div style='margin-top:16px;'>"+btns+"</div>";
+  document.getElementById("result").style.display = "block";
+}
+
+function refreshPlayers() {
+  var gameKey = "game-"+gameState.id;
+  var stored = localStorage.getItem(gameKey);
+  if(stored) {
+    gameState = JSON.parse(stored);
+    var pool = POOLS[gameState.count];
+    showSetup(pool);
+  }
+}
+
+function endGame() {
+  if(confirm("End this game? Players will no longer be able to join.")) {
+    localStorage.removeItem("game-"+gameState.id);
+    gameState = null;
+    document.getElementById("result").innerHTML = "<div class='warning'>Game ended. Create a new one to play again.</div>";
+    document.getElementById("result").style.display = "block";
+  }
+}
 
 function copyLink() {
-  const link = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(link).then(() => alert('Copied!'));
+  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  navigator.clipboard.writeText(url).then(function() { alert("Link copied!"); });
 }
 
 function shareLink() {
-  const link = document.getElementById('shareLink').textContent;
-  if (navigator.share) navigator.share({ title: 'Ultimate Werewolf', url: link });
-  else alert('Copy manually');
+  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  navigator.share({title:"Werewolf Game",url:url});
 }
 
-document.addEventListener('DOMContentLoaded', () => APP.init());
+function showPlayerView() {
+  var params = new URLSearchParams(window.location.search);
+  var gid = params.get("game");
+  var html = "";
+  if(!gid) {
+    html = "<p style='color:#888;'>Ask moderator for game link</p>";
+  } else {
+    var gameKey = "game-"+gid;
+    var gdata = localStorage.getItem(gameKey);
+    if(!gdata) {
+      html = "<p style='color:#c0392b;font-weight:bold;'>Game expired or link invalid</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
+    } else {
+      var g = JSON.parse(gdata);
+      var pid = localStorage.getItem("pid-"+gid);
+      if(!pid) {
+        html = "<input type='text' class='player-name-input' id='pname' placeholder='Your name'>";
+        html += "<button class='action-btn action-btn-green' onclick='joinGame(\""+gid+"\")'>Join Game</button>";
+      } else {
+        var p = g.players[pid];
+        var r = ROLES[p.role];
+        var color = r.t === "evil" ? "c0392b" : (r.t === "village" ? "27ae60" : "8e44ad");
+        html = "<div class='role-display'><div>Player: <strong>"+p.name+"</strong></div>";
+        html += "<div class='role-name-big' style='color:#"+color+"'>"+r.n+"</div>";
+        html += "<div class='role-desc-big'>"+r.d+"</div>";
+        html += "<button class='action-btn' onclick='leaveGame(\""+gid+"\")'>Leave Game</button></div>";
+      }
+    }
+  }
+  document.getElementById("playerView").innerHTML = html;
+}
+
+function joinGame(gid) {
+  var name = document.getElementById("pname").value.trim();
+  if(!name) { alert("Enter your name"); return; }
+  var gameKey = "game-"+gid;
+  var gdata = localStorage.getItem(gameKey);
+  if(!gdata) { alert("Game expired"); return; }
+  var g = JSON.parse(gdata);
+  var pid = "p"+Date.now();
+  var rndx = Math.floor(Math.random() * g.roles.length);
+  g.players[pid] = {name:name, role:g.roles[rndx]};
+  localStorage.setItem(gameKey, JSON.stringify(g));
+  localStorage.setItem("pid-"+gid, pid);
+  showPlayerView();
+}
+
+function leaveGame(gid) {
+  localStorage.removeItem("pid-"+gid);
+  showPlayerView();
+}
+
+document.getElementById("modBtn").onclick = function() {
+  document.getElementById("modTab").classList.add("active");
+  document.getElementById("playerTab").classList.remove("active");
+  document.getElementById("modBtn").classList.add("active");
+  document.getElementById("playerBtn").classList.remove("active");
+  
+  var params = new URLSearchParams(window.location.search);
+  var gid = params.get("game");
+  if(gid && !gameState) {
+    var gameKey = "game-"+gid;
+    var gdata = localStorage.getItem(gameKey);
+    if(gdata) {
+      gameState = JSON.parse(gdata);
+      var pool = POOLS[gameState.count];
+      showSetup(pool);
+    }
+  }
+};
+
+document.getElementById("playerBtn").onclick = function() {
+  document.getElementById("playerTab").classList.add("active");
+  document.getElementById("modTab").classList.remove("active");
+  document.getElementById("playerBtn").classList.add("active");
+  document.getElementById("modBtn").classList.remove("active");
+  showPlayerView();
+};
+
+function initPage() {
+  if(window.pageInitialized) return;
+  window.pageInitialized = true;
+  
+  for(var i = 6; i <= 14; i++) {
+    (function(n) {
+      var b = document.createElement("button");
+      b.className = "btn";
+      b.textContent = n;
+      b.onclick = function() {
+        if(gameState) {
+          if(!confirm("End current game and start new one?")) return;
+          localStorage.removeItem("game-"+gameState.id);
+        }
+        document.querySelectorAll(".btn").forEach(function(x){x.classList.remove("active");});
+        b.classList.add("active");
+        setupGame(n);
+      };
+      document.getElementById("btnRow").appendChild(b);
+    })(i);
+  }
+  
+  var params = new URLSearchParams(window.location.search);
+  if(params.get("game")) {
+    setTimeout(function(){document.getElementById("playerBtn").click();}, 100);
+  }
+}
+
+if(document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPage);
+} else {
+  initPage();
+}
   </script>
 </body>
 </html>
