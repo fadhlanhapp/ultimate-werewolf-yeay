@@ -90,6 +90,24 @@ var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var supabase = null;
 
 // REST API functions as fallback
+function supabaseInsertGame(game) {
+  if(supabase) {
+    return supabase.from('games').insert([game]);
+  } else {
+    // Fallback to REST API (remove auto-generated id field)
+    console.log("Using REST API to insert game");
+    return fetch(SUPABASE_URL + "/rest/v1/games", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey": SUPABASE_KEY
+      },
+      body: JSON.stringify(game)
+    }).then(r => r.json());
+  }
+}
+
 function supabaseInsertPlayer(player) {
   if(supabase) {
     return supabase.from('players').insert([player]);
@@ -181,8 +199,9 @@ function setupGame(count) {
   isModeratorView = true;
   
   // Save to Supabase (async, no await)
-  if(supabase) {
-    supabase.from('games').insert([{
+  if(supabase || SUPABASE_KEY) {
+    console.log("Saving game to Supabase:", gameState.id);
+    supabaseInsertGame({
       id: gameState.id,
       count: count,
       roles: JSON.stringify(roles),
@@ -190,7 +209,7 @@ function setupGame(count) {
       village: pool.v.length,
       neutral: pool.n ? pool.n.length : 0,
       balance: balance
-    }]).catch(function(error) {
+    }).catch(function(error) {
       console.error("Error creating game:", error);
     });
   }
@@ -498,11 +517,10 @@ function joinGame(gid) {
   
   // Try to save to Supabase if available
   if(supabase || SUPABASE_KEY) {
-    console.log("Saving player to Supabase:", {id: pid, game_id: g.id, name: name});
+    console.log("Saving player to Supabase:", {player_id: pid, game_id: g.id, name: name});
     supabaseInsertPlayer({
-      id: pid,
-      game_id: g.id,
       player_id: pid,
+      game_id: g.id,
       name: name,
       role: g.roles[rndx]
     }).then(function(response) {
