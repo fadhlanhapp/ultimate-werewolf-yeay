@@ -100,7 +100,8 @@ function supabaseInsertPlayer(player) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + SUPABASE_KEY
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey": SUPABASE_KEY
       },
       body: JSON.stringify(player)
     }).then(r => r.json());
@@ -115,7 +116,8 @@ function supabaseSelectPlayers(gameId) {
     console.log("Using REST API to fetch players");
     return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + gameId, {
       headers: {
-        "Authorization": "Bearer " + SUPABASE_KEY
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey": SUPABASE_KEY
       }
     }).then(r => r.json()).then(data => ({data: data, error: null}));
   }
