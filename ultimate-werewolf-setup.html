@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Ultimate Werewolf</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Try multiple CDN sources for Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="console.log('Supabase loaded from jsdelivr')"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Georgia, serif; font-size: 13px; color: #1a1a1a; background: #f5f5f0;
@@ -88,13 +89,45 @@ var SUPABASE_URL = "https://ratzaofhzddtzyvtwle.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdHphYW9maHpkZHR6dnl0d2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTA3OTAsImV4cCI6MjA5NDM4Njc5MH0.Q9ZngA_jHY6u1bXRqD51mA-my7wcID01zQS1BRznkZk";
 var supabase = null;
 
+// REST API functions as fallback
+function supabaseInsertPlayer(player) {
+  if(supabase) {
+    return supabase.from('players').insert([player]);
+  } else {
+    // Fallback to REST API
+    console.log("Using REST API to insert player");
+    return fetch(SUPABASE_URL + "/rest/v1/players", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      body: JSON.stringify(player)
+    }).then(r => r.json());
+  }
+}
+
+function supabaseSelectPlayers(gameId) {
+  if(supabase) {
+    return supabase.from('players').select('*').eq('game_id', gameId);
+  } else {
+    // Fallback to REST API
+    console.log("Using REST API to fetch players");
+    return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + gameId, {
+      headers: {
+        "Authorization": "Bearer " + SUPABASE_KEY
+      }
+    }).then(r => r.json()).then(data => ({data: data, error: null}));
+  }
+}
+
 function initSupabase() {
   if(window.supabase && window.supabase.createClient) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("✓ Supabase initialized successfully");
+    console.log("✓ Supabase SDK initialized successfully");
     return true;
   } else {
-    console.log("✗ Supabase SDK not available yet");
+    console.log("✗ Supabase SDK not available - will use REST API fallback");
     return false;
   }
 }
@@ -234,9 +267,9 @@ function refreshPlayers() {
   
   console.log("Refreshing players for game:", gameState.id);
   
-  if(supabase) {
+  if(supabase || SUPABASE_KEY) {
     // Always fetch fresh data from Supabase (priority)
-    supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
+    supabaseSelectPlayers(gameState.id).then(function(response) {
       var data = response.data;
       var error = response.error;
       
@@ -288,6 +321,7 @@ function subscribeToPlayers() {
   
   // Start auto-refresh polling only for moderators (every 2 seconds)
   if(isModeratorView) {
+    console.log("Starting auto-polling for moderator (2s interval)");
     if(autoRefreshTimer) {
       clearInterval(autoRefreshTimer);
     }
@@ -296,8 +330,11 @@ function subscribeToPlayers() {
     }, 2000);
   }
   
-  // Also try Supabase real-time subscription if available
-  if(!supabase) return;
+  // Also try Supabase real-time subscription if SDK is available
+  if(!supabase) {
+    console.log("Supabase SDK not available, using polling only");
+    return;
+  }
   
   // Unsubscribe from previous subscription
   if(playersSubscription) {
@@ -458,26 +495,26 @@ function joinGame(gid) {
   localStorage.setItem(gameKey, JSON.stringify(g));
   
   // Try to save to Supabase if available
-  if(supabase) {
-    console.log("Inserting player to Supabase:", {id: pid, game_id: g.id, name: name, role: g.roles[rndx]});
-    supabase.from('players').insert([{
+  if(supabase || SUPABASE_KEY) {
+    console.log("Saving player to Supabase:", {id: pid, game_id: g.id, name: name});
+    supabaseInsertPlayer({
       id: pid,
       game_id: g.id,
       player_id: pid,
       name: name,
       role: g.roles[rndx]
-    }]).then(function(response) {
+    }).then(function(response) {
       console.log("Supabase insert response:", response);
       if(response.error) {
         console.error("Supabase error:", response.error);
       } else {
-        console.log("Player saved to Supabase successfully");
+        console.log("✓ Player saved to Supabase successfully");
       }
     }).catch(function(error) {
       console.error("Error joining game on Supabase:", error);
     });
   } else {
-    console.log("Supabase not available - only saving to localStorage");
+    console.log("Supabase not available - only saved to localStorage");
   }
   
   showPlayerView();
