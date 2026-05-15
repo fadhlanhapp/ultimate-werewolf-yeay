@@ -440,5 +440,13 @@ if(document.readyState === "loading") {
   initPage();
 }
   </script>
+  <script>
+// Ensure buttons are created even if first script had issues
+setTimeout(function() {
+  if(!window.pageInitialized && typeof initPage === 'function') {
+    initPage();
+  }
+}, 100);
+  </script>
 </body>
 </html>
