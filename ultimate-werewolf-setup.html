@@ -111,15 +111,15 @@ function decodeGameState(encoded) {
   }
 }
 
-async function setupGame(count) {
+function setupGame(count) {
   var pool = JSON.parse(JSON.stringify(POOLS[count]));
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
   gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
   
-  // Save to Supabase
-  var { error } = await supabase.from('games').insert([{
+  // Save to Supabase (async, no await)
+  supabase.from('games').insert([{
     id: gameState.id,
     count: count,
     roles: JSON.stringify(roles),
@@ -127,9 +127,9 @@ async function setupGame(count) {
     village: pool.v.length,
     neutral: pool.n ? pool.n.length : 0,
     balance: balance
-  }]);
-  
-  if(error) { console.error("Error creating game:", error); return; }
+  }]).catch(function(error) {
+    console.error("Error creating game:", error);
+  });
   
   // Also save to localStorage for offline fallback
   localStorage.setItem("game-"+gameState.id, JSON.stringify(gameState));
@@ -200,27 +200,32 @@ function showSetup(pool) {
   document.getElementById("result").style.display = "block";
 }
 
-async function refreshPlayers() {
+function refreshPlayers() {
   if(!gameState || !gameState.id) return;
   
   // Fetch from Supabase
-  var { data, error } = await supabase.from('players').select('*').eq('game_id', gameState.id);
-  
-  if(error) {
-    console.error("Error fetching players:", error);
-    return;
-  }
-  
-  // Rebuild gameState.players from Supabase data
-  gameState.players = {};
-  if(data) {
-    for(var i = 0; i < data.length; i++) {
-      gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
+  supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
+    var data = response.data;
+    var error = response.error;
+    
+    if(error) {
+      console.error("Error fetching players:", error);
+      return;
     }
-  }
-  
-  var pool = POOLS[gameState.count];
-  showSetup(pool);
+    
+    // Rebuild gameState.players from Supabase data
+    gameState.players = {};
+    if(data) {
+      for(var i = 0; i < data.length; i++) {
+        gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
+      }
+    }
+    
+    var pool = POOLS[gameState.count];
+    showSetup(pool);
+  }).catch(function(error) {
+    console.error("Error fetching players:", error);
+  });
 }
 
 function subscribeToPlayers() {
@@ -245,11 +250,13 @@ function subscribeToPlayers() {
     .subscribe();
 }
 
-async function endGame() {
+function endGame() {
   if(confirm("End this game? Players will no longer be able to join.")) {
     if(gameState && gameState.id) {
-      // Delete from Supabase
-      await supabase.from('games').delete().eq('id', gameState.id);
+      // Delete from Supabase (async, no await)
+      supabase.from('games').delete().eq('id', gameState.id).catch(function(error) {
+        console.error("Error ending game:", error);
+      });
       
       // Also clear localStorage
       localStorage.removeItem("game-"+gameState.id);
@@ -325,7 +332,7 @@ function showPlayerView() {
   document.getElementById("playerView").innerHTML = html;
 }
 
-async function joinGame(gid) {
+function joinGame(gid) {
   var name = document.getElementById("pname").value.trim();
   if(!name) { alert("Enter your name"); return; }
   
@@ -356,26 +363,26 @@ async function joinGame(gid) {
   var pid = "p"+Date.now();
   var rndx = Math.floor(Math.random() * g.roles.length);
   
-  // Save to Supabase
-  var { error } = await supabase.from('players').insert([{
+  // Save to Supabase (async, no await)
+  supabase.from('players').insert([{
     id: pid,
     game_id: g.id,
     player_id: pid,
     name: name,
     role: g.roles[rndx]
-  }]);
-  
-  if(error) { alert("Error joining game: "+error.message); return; }
-  
-  // Save to localStorage for offline fallback
-  g.players[pid] = {name:name, role:g.roles[rndx]};
-  localStorage.setItem("game-shared", JSON.stringify(g));
-  localStorage.setItem("pid-shared", pid);
-  localStorage.setItem("gid-shared", g.id);
-  var gameKey = "game-"+g.id;
-  localStorage.setItem(gameKey, JSON.stringify(g));
-  
-  showPlayerView();
+  }]).then(function() {
+    // Save to localStorage for offline fallback
+    g.players[pid] = {name:name, role:g.roles[rndx]};
+    localStorage.setItem("game-shared", JSON.stringify(g));
+    localStorage.setItem("pid-shared", pid);
+    localStorage.setItem("gid-shared", g.id);
+    var gameKey = "game-"+g.id;
+    localStorage.setItem(gameKey, JSON.stringify(g));
+    
+    showPlayerView();
+  }).catch(function(error) {
+    alert("Error joining game: "+error.message);
+  });
 }
 
 
