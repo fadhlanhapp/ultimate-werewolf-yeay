@@ -131,13 +131,24 @@ function supabaseSelectPlayers(gameId) {
     return supabase.from('players').select('*').eq('game_id', gameId);
   } else {
     // Fallback to REST API
-    console.log("Using REST API to fetch players");
+    console.log("Using REST API to fetch players for game:", gameId);
     return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + gameId, {
       headers: {
         "Authorization": "Bearer " + SUPABASE_KEY,
-        "apikey": SUPABASE_KEY
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
       }
-    }).then(r => r.json()).then(data => ({data: data, error: null}));
+    }).then(function(r) {
+      console.log("REST API response status:", r.status);
+      if(!r.ok) {
+        console.error("REST API error:", r.status, r.statusText);
+        return {data: null, error: {message: "API returned " + r.status}};
+      }
+      return r.json().then(data => {console.log("Parsed players data:", data); return {data: data, error: null};});
+    }).catch(function(err) {
+      console.error("Fetch failed:", err);
+      return {data: null, error: err};
+    });
   }
 }
 
@@ -188,17 +199,54 @@ function decodeGameState(encoded) {
   }
 }
 
+function randomizeRoles(evilCount, villageCount, neutralCount) {
+  // Get all available roles by team
+  var allEvil = [], allVillage = [], allNeutral = [];
+  for(var key in ROLES) {
+    if(ROLES[key].t === 'evil') allEvil.push(key);
+    else if(ROLES[key].t === 'village') allVillage.push(key);
+    else if(ROLES[key].t === 'neutral') allNeutral.push(key);
+  }
+  
+  // Fisher-Yates shuffle
+  function shuffle(arr) {
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = a[i];
+      a[i] = a[j];
+      a[j] = temp;
+    }
+    return a;
+  }
+  
+  var shuffledEvil = shuffle(allEvil).slice(0, evilCount);
+  var shuffledVillage = shuffle(allVillage).slice(0, villageCount);
+  var shuffledNeutral = neutralCount > 0 ? shuffle(allNeutral).slice(0, neutralCount) : [];
+  
+  return {e: shuffledEvil, v: shuffledVillage, n: shuffledNeutral};
+}
+
 function rerollGameRoles() {
   if(!gameState) return;
-  var pool = JSON.parse(JSON.stringify(POOLS[gameState.count]));
+  var originalPool = POOLS[gameState.count];
+  var evilCount = originalPool.e.length;
+  var villageCount = originalPool.v.length;
+  var neutralCount = (originalPool.n || []).length;
+  
+  // Get randomized roles
+  var pool = randomizeRoles(evilCount, villageCount, neutralCount);
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
+  
   gameState.roles = roles;
   gameState.evil = pool.e.length;
   gameState.village = pool.v.length;
   gameState.neutral = (pool.n||[]).length;
   gameState.balance = balance;
+  
+  console.log("Rerolled roles:", roles);
   localStorage.setItem("game-"+gameState.id, JSON.stringify(gameState));
   showSetup(pool);
 }
@@ -310,24 +358,17 @@ function refreshPlayers() {
       var data = response.data;
       var error = response.error;
       
-      console.log("Supabase fetch response:", {data: data, error: error});
+      console.log("Supabase fetch response:", {hasData: !!data, error: error, count: data ? data.length : 0});
       
-      if(error) {
-        console.error("Error fetching players from Supabase:", error);
-        // Fall back to localStorage
-        var gameKey = "game-"+gameState.id;
-        var stored = localStorage.getItem(gameKey);
-        if(stored) {
-          gameState = JSON.parse(stored);
-        }
-      } else {
+      if(error || !data) {
+        console.error("Error or no data from Supabase:", error);
+        console.log("Will still show UI, but players may not load");
+      } else if(Array.isArray(data)) {
         // Rebuild gameState.players from Supabase data
         gameState.players = {};
-        if(data) {
-          console.log("Found "+data.length+" players from Supabase");
-          for(var i = 0; i < data.length; i++) {
-            gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
-          }
+        console.log("Found "+data.length+" players from Supabase");
+        for(var i = 0; i < data.length; i++) {
+          gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
         }
         
         // Also update localStorage so other tabs see it
@@ -339,6 +380,9 @@ function refreshPlayers() {
       showSetup(pool);
     }).catch(function(error) {
       console.error("Error fetching players:", error);
+      // Still show UI even if fetch fails
+      var pool = POOLS[gameState.count];
+      showSetup(pool);
     });
   } else {
     console.log("Supabase not available - using localStorage only");
