@@ -207,6 +207,18 @@ function showSetup(pool) {
 function refreshPlayers() {
   if(!gameState || !gameState.id) return;
   
+  if(!supabase) {
+    // Fall back to localStorage if Supabase not available
+    var gameKey = "game-"+gameState.id;
+    var stored = localStorage.getItem(gameKey);
+    if(stored) {
+      gameState = JSON.parse(stored);
+      var pool = POOLS[gameState.count];
+      showSetup(pool);
+    }
+    return;
+  }
+  
   // Fetch from Supabase
   supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
     var data = response.data;
@@ -233,7 +245,7 @@ function refreshPlayers() {
 }
 
 function subscribeToPlayers() {
-  if(!gameState || !gameState.id) return;
+  if(!gameState || !gameState.id || !supabase) return;
   
   // Unsubscribe from previous subscription
   if(playersSubscription) {
@@ -367,26 +379,28 @@ function joinGame(gid) {
   var pid = "p"+Date.now();
   var rndx = Math.floor(Math.random() * g.roles.length);
   
-  // Save to Supabase (async, no await)
-  supabase.from('players').insert([{
-    id: pid,
-    game_id: g.id,
-    player_id: pid,
-    name: name,
-    role: g.roles[rndx]
-  }]).then(function() {
-    // Save to localStorage for offline fallback
-    g.players[pid] = {name:name, role:g.roles[rndx]};
-    localStorage.setItem("game-shared", JSON.stringify(g));
-    localStorage.setItem("pid-shared", pid);
-    localStorage.setItem("gid-shared", g.id);
-    var gameKey = "game-"+g.id;
-    localStorage.setItem(gameKey, JSON.stringify(g));
-    
-    showPlayerView();
-  }).catch(function(error) {
-    alert("Error joining game: "+error.message);
-  });
+  // Save to localStorage first (always works)
+  g.players[pid] = {name:name, role:g.roles[rndx]};
+  localStorage.setItem("game-shared", JSON.stringify(g));
+  localStorage.setItem("pid-shared", pid);
+  localStorage.setItem("gid-shared", g.id);
+  var gameKey = "game-"+g.id;
+  localStorage.setItem(gameKey, JSON.stringify(g));
+  
+  // Try to save to Supabase if available
+  if(supabase) {
+    supabase.from('players').insert([{
+      id: pid,
+      game_id: g.id,
+      player_id: pid,
+      name: name,
+      role: g.roles[rndx]
+    }]).catch(function(error) {
+      console.error("Error joining game on Supabase:", error);
+    });
+  }
+  
+  showPlayerView();
 }
 
 
