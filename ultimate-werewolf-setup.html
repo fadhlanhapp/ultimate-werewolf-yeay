@@ -125,6 +125,8 @@ function setupGame(count) {
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
   gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
+  var gameKey = "game-"+gameState.id;
+  localStorage.setItem(gameKey, JSON.stringify(gameState));
   showSetup(pool);
 }
 
@@ -194,9 +196,20 @@ function refreshPlayers() {
   var stored = localStorage.getItem(gameKey);
   if(stored) {
     gameState = JSON.parse(stored);
-    var pool = POOLS[gameState.count];
-    showSetup(pool);
   }
+  
+  var sharedGame = localStorage.getItem("game-shared");
+  if(sharedGame) {
+    try {
+      var shared = JSON.parse(sharedGame);
+      if(shared.count === gameState.count) {
+        gameState.players = shared.players;
+      }
+    } catch(e) {}
+  }
+  
+  var pool = POOLS[gameState.count];
+  showSetup(pool);
 }
 
 function endGame() {
@@ -274,13 +287,23 @@ function joinGame(gid) {
   
   var g = null;
   var params = new URLSearchParams(window.location.search);
-  if(params.get("g")) {
-    g = decodeGameState(gid);
-  } else if(params.get("game")) {
-    var gameKey = "game-"+gid;
-    var stored = localStorage.getItem(gameKey);
-    if(stored) { 
-      g = JSON.parse(stored); 
+  
+  var sharedGame = localStorage.getItem("game-shared");
+  if(sharedGame) {
+    try {
+      g = JSON.parse(sharedGame);
+    } catch(e) {}
+  }
+  
+  if(!g) {
+    if(params.get("g")) {
+      g = decodeGameState(gid);
+    } else if(params.get("game")) {
+      var gameKey = "game-"+gid;
+      var stored = localStorage.getItem(gameKey);
+      if(stored) { 
+        g = JSON.parse(stored); 
+      }
     }
   }
   
