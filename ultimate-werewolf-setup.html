@@ -97,6 +97,7 @@ var NIGHT_ACTIONS = {1:"Werewolves kill",2:"Alpha converts",3:"Minion checks",4:
 var gameState = null;
 var playersSubscription = null;
 var autoRefreshTimer = null;
+var isModeratorView = false;
 
 function encodeGameState(gs) {
   var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
@@ -120,6 +121,9 @@ function setupGame(count) {
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
   gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
+  
+  // This is the moderator creating a game
+  isModeratorView = true;
   
   // Save to Supabase (async, no await)
   if(supabase) {
@@ -256,13 +260,15 @@ function refreshPlayers() {
 function subscribeToPlayers() {
   if(!gameState || !gameState.id) return;
   
-  // Start auto-refresh polling (fetch players every 2 seconds)
-  if(autoRefreshTimer) {
-    clearInterval(autoRefreshTimer);
+  // Start auto-refresh polling only for moderators (every 2 seconds)
+  if(isModeratorView) {
+    if(autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
+    }
+    autoRefreshTimer = setInterval(function() {
+      refreshPlayers();
+    }, 2000);
   }
-  autoRefreshTimer = setInterval(function() {
-    refreshPlayers();
-  }, 2000);
   
   // Also try Supabase real-time subscription if available
   if(!supabase) return;
@@ -283,7 +289,9 @@ function subscribeToPlayers() {
         filter: 'game_id=eq.'+gameState.id
       }, (payload) => {
         console.log("Player update received:", payload);
-        refreshPlayers();
+        if(isModeratorView) {
+          refreshPlayers();
+        }
       })
       .subscribe();
   } catch(err) {
@@ -411,6 +419,9 @@ function joinGame(gid) {
   
   var pid = "p"+Date.now();
   var rndx = Math.floor(Math.random() * g.roles.length);
+  
+  // This is a player joining, not moderator
+  isModeratorView = false;
   
   // Save to localStorage first (always works)
   g.players[pid] = {name:name, role:g.roles[rndx]};
