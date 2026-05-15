@@ -101,8 +101,10 @@ var firebaseConfig = {
   measurementId: "G-7CNPDZFNNM"
 };
 
-firebase.initializeApp(firebaseConfig);
-firebaseDb = firebase.database();
+if(typeof firebase !== "undefined" && firebase.initializeApp) {
+  firebase.initializeApp(firebaseConfig);
+  firebaseDb = firebase.database();
+}
 
 function encodeGameState(gs) {
   var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
