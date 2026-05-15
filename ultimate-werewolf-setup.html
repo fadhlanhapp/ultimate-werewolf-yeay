@@ -202,6 +202,7 @@ function decodeGameState(encoded) {
 function randomizeRoles(evilCount, villageCount, neutralCount) {
   // Get all available roles by team
   var allEvil = [], allVillage = [], allNeutral = [];
+  var mandatoryRoles = ["werewolf", "alphawolf", "lonewolf", "vampire"];
   for(var key in ROLES) {
     if(ROLES[key].t === 'evil') allEvil.push(key);
     else if(ROLES[key].t === 'village') allVillage.push(key);
@@ -220,7 +221,26 @@ function randomizeRoles(evilCount, villageCount, neutralCount) {
     return a;
   }
   
-  var shuffledEvil = shuffle(allEvil).slice(0, evilCount);
+  // Ensure at least one mandatory evil role is selected
+  var shuffledEvil = [];
+  var optionalEvil = allEvil.filter(function(role) { return mandatoryRoles.indexOf(role) === -1; });
+  var availableMandatory = mandatoryRoles.filter(function(role) { return allEvil.indexOf(role) !== -1; });
+  
+  if(evilCount > 0 && availableMandatory.length > 0) {
+    // Pick one mandatory role
+    var mandatoryPick = shuffle(availableMandatory)[0];
+    shuffledEvil.push(mandatoryPick);
+    
+    // Fill remaining evil slots with random roles (excluding the mandatory one already picked)
+    if(evilCount > 1) {
+      var remaining = allEvil.filter(function(role) { return role !== mandatoryPick; });
+      shuffledEvil = shuffledEvil.concat(shuffle(remaining).slice(0, evilCount - 1));
+    }
+  } else {
+    // Fallback if no mandatory roles available
+    shuffledEvil = shuffle(allEvil).slice(0, evilCount);
+  }
+  
   var shuffledVillage = shuffle(allVillage).slice(0, villageCount);
   var shuffledNeutral = neutralCount > 0 ? shuffle(allNeutral).slice(0, neutralCount) : [];
   
