@@ -127,10 +127,12 @@ function setupGame(count) {
   var gameKey = "game-"+gameState.id;
   localStorage.setItem(gameKey, JSON.stringify(gameState));
   
-  var fbData = {count:count, roles:roles, evil:pool.e.length, village:pool.v.length, neutral:(pool.n||[]).length, balance:balance, players:{}, id:gameState.id};
-  firebaseDb.ref("games/"+gameState.id).set(fbData);
+  if(firebaseDb) {
+    var fbData = {count:count, roles:roles, evil:pool.e.length, village:pool.v.length, neutral:(pool.n||[]).length, balance:balance, players:{}, id:gameState.id};
+    firebaseDb.ref("games/"+gameState.id).set(fbData);
+    setupFirebaseListener(gameState.id);
+  }
   
-  setupFirebaseListener(gameState.id);
   showSetup(pool);
 }
 
