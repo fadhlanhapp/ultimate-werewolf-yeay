@@ -76,7 +76,7 @@
     .share-link {
       background: #fff; border: 1px solid #ddd; border-radius: 4px;
       padding: 8px 10px; font-size: 11px; word-break: break-all;
-      font-family: monospace; margin-bottom: 6px;
+      font-family: monospace; margin-bottom: 6px; max-height: 80px; overflow-y: auto;
     }
     .share-buttons { display: flex; gap: 6px; }
     .share-buttons button { padding: 4px 12px; font-size: 11px; border: 1px solid #ccc;
@@ -148,59 +148,6 @@
       .tabs, .action-btn, .share-box, .player-name-input { display: none !important; }
     }
   </style>
-</head>
-<body>
-  <h1>Ultimate Werewolf</h1>
-  <p class="subtitle">Digital Setup Generator</p>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('moderator')">📋 Setup Game</button>
-    <button class="tab-btn" onclick="switchTab('player')">👤 Join Game</button>
-  </div>
-
-  <!-- Moderator Panel -->
-  <div id="moderator" class="tab-content active setup-panel">
-    <p class="note">🎲 Moderator: Generate a setup and share the link with players</p>
-
-    <div class="input-section">
-      <span class="input-label">How many players? (excluding Moderator)</span>
-      <div class="btn-row" id="btnRow"></div>
-    </div>
-
-    <div>
-      <button class="action-btn action-btn-green" onclick="generateGame()" style="display:none" id="generateBtn">✓ Create Game Link</button>
-      <button class="action-btn" id="rerollBtn" onclick="reroll()" style="display:none">↻ Reroll Setup</button>
-    </div>
-
-    <div id="result">
-      <div class="result-title" id="resultTitle"></div>
-      <div class="result-sub" id="resultSub"></div>
-      
-      <div class="share-box">
-        <div class="share-label">Shareable Link (send to players)</div>
-        <div class="share-link" id="shareLink"></div>
-        <div class="share-buttons">
-          <button onclick="copyToClipboard()">📋 Copy</button>
-          <button onclick="shareViaURL()">🔗 Share URL</button>
-        </div>
-      </div>
-
-      <div id="roleList"></div>
-      <div class="summary" id="summary"></div>
-      <div id="nightSection"></div>
-    </div>
-
-    <div id="modView"></div>
-  </div>
-
-  <!-- Player Panel -->
-  <div id="player" class="tab-content player-panel">
-    <p class="note">👤 Player: Enter your name to see your assigned role</p>
-    
-    <div id="playerView"></div>
-  </div>
-
   <script>
   // ── ROLE DEFINITIONS ──────────────────────────────────────────────────────
   var ROLES = {
@@ -240,24 +187,24 @@
   };
 
   var NIGHT_ACTIONS = {
-    1:  "Werewolves gather and silently choose a victim to kill",
-    2:  "Alpha Wolf can convert a villager into a werewolf (once per game)",
-    3:  "Minion privately communicates if needed",
-    4:  "Sorceress selects a player to learn if they are the Seer",
-    5:  "Seer / Mystic Seer / Apprentice Seer view chosen player roles",
-    6:  "Aura Seer learns alignment (good/evil) of a chosen player",
-    7:  "Mentalist learns if two chosen players are on same team",
-    8:  "Revealer flips one player's card publicly (then dies)",
-    9:  "PI learns if at least one of two chosen players is a werewolf",
-    10: "Witch saves werewolves' victim OR eliminates a player",
-    11: "Huntress can proactively use her shot (once per game)",
-    12: "Bodyguard protects one player from werewolf attack",
-    13: "Priest blesses a player to make them immune for the night",
-    14: "Spellcaster silences a chosen player (once per game)",
-    15: "Cupid links two players as lovers (once, Night 1 only)",
-    16: "Troublemaker stirs up trouble for next day's vote",
-    17: "Doppelganger copies another player's role (Night 1 only)",
-    18: "Cult Leader recruits one player into the cult"
+    1:  "Werewolves choose a victim to kill",
+    2:  "Alpha Wolf can convert a villager (once per game)",
+    3:  "Minion communicates if needed",
+    4:  "Sorceress learns if a player is the Seer",
+    5:  "Seers view chosen player roles",
+    6:  "Aura Seer learns player alignment",
+    7:  "Mentalist learns if players are on same team",
+    8:  "Revealer flips one player's card publicly",
+    9:  "PI learns if a chosen player is a werewolf",
+    10: "Witch saves victim OR eliminates a player",
+    11: "Huntress uses her shot proactively",
+    12: "Bodyguard protects one player",
+    13: "Priest blesses a player",
+    14: "Spellcaster silences a player",
+    15: "Cupid links two lovers (Night 1)",
+    16: "Troublemaker stirs up trouble",
+    17: "Doppelganger copies a role",
+    18: "Cult Leader recruits a player"
   };
 
   var POOLS = {
@@ -284,14 +231,18 @@
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tab).classList.add('active');
-    document.querySelector('button[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
-    
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(btn) {
+      if (btn.textContent.includes(tab === 'moderator' ? 'Setup' : 'Join')) {
+        btn.classList.add('active');
+      }
+    });
     if (tab === 'player') renderPlayerView();
   }
 
   function copyToClipboard() {
     var link = document.getElementById('shareLink').textContent;
-    navigator.clipboard.writeText(link).then(() => alert('Link copied!'));
+    navigator.clipboard.writeText(link).then(function() { alert('Link copied!'); });
   }
 
   function shareViaURL() {
@@ -303,29 +254,11 @@
     }
   }
 
-  // ── SETUP GENERATION ──────────────────────────────────────────────────────
-  var btnRow = document.getElementById("btnRow");
-  [6,7,8,9,10,11,12,13,14].forEach(function(n) {
-    var b = document.createElement("button");
-    b.className = "btn"; b.textContent = n;
-    b.onclick = function() {
-      document.querySelectorAll(".btn").forEach(function(x){ x.classList.remove("active"); });
-      b.classList.add("active");
-      currentCount = n;
-      generate(n);
-      document.getElementById("generateBtn").style.display = "inline-block";
-      document.getElementById("rerollBtn").style.display = "inline-block";
-    };
-    btnRow.appendChild(b);
-  });
-
-  function reroll() { if (currentCount) generate(currentCount); }
-
-  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
   function generateGameId() {
     return 'uw-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   }
+
+  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function generate(count) {
     var pool = JSON.parse(JSON.stringify(POOLS[count]));
@@ -389,44 +322,25 @@
     renderResult(count, evilKeys, villageKeys, neutralKeys);
   }
 
+  function reroll() { if (currentCount) generate(currentCount); }
+
   function generateGame() {
     if (!currentGameState) return;
-    
     var gameData = JSON.stringify(currentGameState);
     localStorage.setItem('game-' + currentGameState.gameId, gameData);
-    
     var baseUrl = window.location.origin + window.location.pathname;
     var shareLink = baseUrl + '?game=' + currentGameState.gameId;
-    
     document.getElementById('shareLink').textContent = shareLink;
     renderModeratorView();
-  }
-
-  function buildNightOrder(evilKeys, villageKeys, neutralKeys) {
-    var allKeys = evilKeys.concat(villageKeys).concat(neutralKeys);
-    var unique = {};
-    allKeys.forEach(function(k) { unique[k] = true; });
-    var actingRoles = [];
-    for (var k in unique) {
-      if (ROLES[k] && ROLES[k].nightOrder < 99) {
-        actingRoles.push(k);
-      }
-    }
-    actingRoles.sort(function(a, b) {
-      return ROLES[a].nightOrder - ROLES[b].nightOrder;
-    });
-    return actingRoles;
   }
 
   function renderModeratorView() {
     var modView = document.getElementById('modView');
     var gameState = currentGameState;
-    
     var html = '<div class="mod-panel"><h3 style="margin-top:20px;margin-bottom:12px;">Connected Players</h3>';
     html += '<div class="players-list" id="playersList"></div>';
     html += '<p style="font-size:11px;color:#888;margin-top:12px;">Players: ' + Object.keys(gameState.players).length + '/' + gameState.playerCount + '</p>';
     html += '</div>';
-    
     modView.innerHTML = html;
     updatePlayersList();
   }
@@ -435,10 +349,8 @@
     if (!currentGameState) return;
     var playersList = document.getElementById('playersList');
     if (!playersList) return;
-    
     var html = '';
     var players = currentGameState.players;
-    
     if (Object.keys(players).length === 0) {
       html = '<div style="padding:20px;text-align:center;color:#888;">Waiting for players...</div>';
     } else {
@@ -462,21 +374,17 @@
     var params = new URLSearchParams(window.location.search);
     var gameId = params.get('game');
     var playerView = document.getElementById('playerView');
-    
     if (!gameId) {
-      playerView.innerHTML = '<p style="color:#888;padding:20px;">No game link provided. Ask the moderator for the shareable link.</p>';
+      playerView.innerHTML = '<p style="color:#888;padding:20px;">No game link. Ask moderator for the link.</p>';
       return;
     }
-    
     var gameData = localStorage.getItem('game-' + gameId);
     if (!gameData) {
-      playerView.innerHTML = '<p style="color:#888;padding:20px;">Game not found or has expired.</p>';
+      playerView.innerHTML = '<p style="color:#888;padding:20px;">Game not found or expired.</p>';
       return;
     }
-    
     var gameState = JSON.parse(gameData);
     var playerId = localStorage.getItem('playerId-' + gameId);
-    
     var html = '';
     if (!playerId) {
       html += '<div style="max-width:400px;">';
@@ -488,88 +396,64 @@
       var role = ROLES[player.role];
       html += '<div class="role-display">';
       html += '<div class="player-name-display">Your Name: <strong>' + player.name + '</strong></div>';
-      html += '<div style="font-size:12px;color:#888;margin-bottom:12px;">Find your card in the pile or ask the moderator</div>';
+      html += '<div style="font-size:12px;color:#888;margin-bottom:12px;">Find your card or ask moderator</div>';
       html += '<div class="role-name role-team-' + role.team + '">' + role.name + '</div>';
       html += '<div class="role-desc">' + role.desc + '</div>';
-      html += '<button class="action-btn" onclick="leaveGame()">Leave Game</button>';
+      html += '<button class="action-btn" onclick="leaveGame('' + gameId + '')">Leave Game</button>';
       html += '</div>';
     }
-    
     playerView.innerHTML = html;
   }
 
   function joinGame(gameId) {
     var nameInput = document.getElementById('playerNameInput');
     var playerName = nameInput.value.trim();
-    
-    if (!playerName) {
-      alert('Please enter your name');
-      return;
-    }
-    
+    if (!playerName) { alert('Enter your name'); return; }
     var gameData = localStorage.getItem('game-' + gameId);
-    if (!gameData) {
-      alert('Game not found');
-      return;
-    }
-    
+    if (!gameData) { alert('Game not found'); return; }
     var gameState = JSON.parse(gameData);
     var playerId = 'player-' + Date.now();
-    
-    // Assign a random role
     var availableIndices = [];
     for (var i = 0; i < gameState.playerCount; i++) {
       var alreadyAssigned = false;
       for (var pId in gameState.players) {
-        if (gameState.players[pId].roleIndex === i) {
-          alreadyAssigned = true;
-          break;
-        }
+        if (gameState.players[pId].roleIndex === i) { alreadyAssigned = true; break; }
       }
       if (!alreadyAssigned) availableIndices.push(i);
     }
-    
-    if (availableIndices.length === 0) {
-      alert('All roles have been assigned');
-      return;
-    }
-    
+    if (availableIndices.length === 0) { alert('All roles assigned'); return; }
     var roleIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
     var role = gameState.roles[roleIndex];
-    
-    gameState.players[playerId] = {
-      name: playerName,
-      role: role,
-      roleIndex: roleIndex
-    };
-    
+    gameState.players[playerId] = { name: playerName, role: role, roleIndex: roleIndex };
     localStorage.setItem('game-' + gameId, JSON.stringify(gameState));
     localStorage.setItem('playerId-' + gameId, playerId);
-    
     renderPlayerView();
-    
-    if (currentGameState && currentGameState.gameId === gameId) {
-      updatePlayersList();
-    }
+    if (currentGameState && currentGameState.gameId === gameId) { updatePlayersList(); }
   }
 
-  function leaveGame() {
-    var params = new URLSearchParams(window.location.search);
-    var gameId = params.get('game');
-    if (gameId) {
-      localStorage.removeItem('playerId-' + gameId);
-      renderPlayerView();
+  function leaveGame(gameId) {
+    localStorage.removeItem('playerId-' + gameId);
+    renderPlayerView();
+  }
+
+  function buildNightOrder(evilKeys, villageKeys, neutralKeys) {
+    var allKeys = evilKeys.concat(villageKeys).concat(neutralKeys);
+    var unique = {};
+    allKeys.forEach(function(k) { unique[k] = true; });
+    var actingRoles = [];
+    for (var k in unique) {
+      if (ROLES[k] && ROLES[k].nightOrder < 99) { actingRoles.push(k); }
     }
+    actingRoles.sort(function(a, b) { return ROLES[a].nightOrder - ROLES[b].nightOrder; });
+    return actingRoles;
   }
 
   function renderResult(count, evilKeys, villageKeys, neutralKeys) {
     document.getElementById("resultTitle").textContent = count + " Players — Card Setup";
-    document.getElementById("resultSub").textContent = "Deal one card face-down to each player. Use reroll for a different setup.";
+    document.getElementById("resultSub").textContent = "Deal cards face-down. Use reroll for different setup.";
     document.getElementById("result").style.display = "block";
-
     var roleList = document.getElementById("roleList");
     roleList.innerHTML = "";
-
     function tally(keys) {
       var map = {}, order = [];
       keys.forEach(function(k) {
@@ -578,15 +462,12 @@
       });
       return order.map(function(k){ return { key:k, qty:map[k] }; });
     }
-
     var sections = [
       { items: tally(evilKeys),    team:"evil"    },
       { items: tally(villageKeys), team:"village" },
       { items: tally(neutralKeys), team:"neutral" }
     ];
-
     var evilCount = 0, villageCount = 0, neutralCount = 0;
-
     sections.forEach(function(sec) {
       sec.items.forEach(function(entry) {
         var r = ROLES[entry.key];
@@ -605,47 +486,110 @@
         if (r.team === "neutral") neutralCount += entry.qty;
       });
     });
-
     var summary = document.getElementById("summary");
     summary.innerHTML =
       '<span class="sum-evil">Evil: ' + evilCount + '</span>' +
       '<span class="sum-village">Village: ' + villageCount + '</span>' +
       (neutralCount ? '<span class="sum-neutral">Third Party: ' + neutralCount + '</span>' : '') +
-      '<span style="color:#888;font-family:sans-serif;">Total: ' + count + ' cards</span>';
-
+      '<span style="color:#888;font-family:sans-serif;">Total: ' + count + '</span>';
     var nightOrder = buildNightOrder(evilKeys, villageKeys, neutralKeys);
     var nightSection = document.getElementById("nightSection");
     nightSection.innerHTML = "";
-    
     if (nightOrder.length > 0) {
-      var nightTitle = document.createElement("div"); nightTitle.textContent = "Night Order";
+      var nightTitle = document.createElement("div");
       nightTitle.style.cssText = "font-size:12px;font-weight:bold;text-transform:uppercase;margin-top:16px;margin-bottom:8px;color:#555;";
+      nightTitle.textContent = "Night Order";
       nightSection.appendChild(nightTitle);
-      
-      var nightSeq = document.createElement("div");
       nightOrder.forEach(function(roleKey, idx) {
         var r = ROLES[roleKey];
         var step = document.createElement("div");
         step.style.cssText = "display:flex;align-items:baseline;gap:8px;padding:6px 10px;border-left:3px solid #999;background:#f9f9f9;font-size:11px;border-radius:3px;margin-bottom:6px;";
-        step.innerHTML = '<span style="font-weight:bold;min-width:20px;color:#666;">' + (idx+1) + '.</span>' +
+        step.innerHTML = '<span style="font-weight:bold;color:#666;min-width:20px;">' + (idx+1) + '.</span>' +
                          '<span style="font-weight:bold;">' + r.name + ':</span>' +
                          '<span style="color:#555;flex:1;">' + NIGHT_ACTIONS[r.nightOrder] + '</span>';
-        nightSeq.appendChild(step);
+        nightSection.appendChild(step);
       });
-      nightSection.appendChild(nightSeq);
     }
   }
 
-  // ── INITIALIZATION ────────────────────────────────────────────────────────
   function init() {
     var params = new URLSearchParams(window.location.search);
-    if (params.get('game')) {
-      switchTab('player');
-      renderPlayerView();
+    if (params.get('game')) { switchTab('player'); renderPlayerView(); }
+    
+    var btnRow = document.getElementById("btnRow");
+    if (btnRow) {
+      [6,7,8,9,10,11,12,13,14].forEach(function(n) {
+        var b = document.createElement("button");
+        b.className = "btn"; b.textContent = n;
+        b.onclick = function() {
+          document.querySelectorAll(".btn").forEach(function(x){ x.classList.remove("active"); });
+          b.classList.add("active");
+          currentCount = n;
+          generate(n);
+          document.getElementById("generateBtn").style.display = "inline-block";
+          document.getElementById("rerollBtn").style.display = "inline-block";
+        };
+        btnRow.appendChild(b);
+      });
     }
   }
 
-  window.addEventListener('load', init);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
   </script>
+</head>
+<body>
+  <h1>Ultimate Werewolf</h1>
+  <p class="subtitle">Digital Setup Generator</p>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('moderator')">📋 Setup Game</button>
+    <button class="tab-btn" onclick="switchTab('player')">👤 Join Game</button>
+  </div>
+
+  <!-- Moderator Panel -->
+  <div id="moderator" class="tab-content active setup-panel">
+    <p class="note">🎲 Moderator: Generate a setup and share the link with players</p>
+
+    <div class="input-section">
+      <span class="input-label">How many players? (excluding Moderator)</span>
+      <div class="btn-row" id="btnRow"></div>
+    </div>
+
+    <div>
+      <button class="action-btn action-btn-green" onclick="generateGame()" style="display:none" id="generateBtn">✓ Create Game Link</button>
+      <button class="action-btn" id="rerollBtn" onclick="reroll()" style="display:none">↻ Reroll Setup</button>
+    </div>
+
+    <div id="result">
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-sub" id="resultSub"></div>
+      
+      <div class="share-box">
+        <div class="share-label">Shareable Link (send to players)</div>
+        <div class="share-link" id="shareLink"></div>
+        <div class="share-buttons">
+          <button onclick="copyToClipboard()">📋 Copy</button>
+          <button onclick="shareViaURL()">🔗 Share</button>
+        </div>
+      </div>
+
+      <div id="roleList"></div>
+      <div class="summary" id="summary"></div>
+      <div id="nightSection"></div>
+    </div>
+
+    <div id="modView"></div>
+  </div>
+
+  <!-- Player Panel -->
+  <div id="player" class="tab-content player-panel">
+    <p class="note">👤 Player: Enter your name to see your assigned role</p>
+    <div id="playerView"></div>
+  </div>
 </body>
 </html>
