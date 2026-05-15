@@ -87,6 +87,38 @@ var POOLS = {6:{e:["werewolf"],v:["seer","hunter","bodyguard"]},7:{e:["werewolf"
 var NIGHT_ACTIONS = {1:"Werewolves kill",2:"Alpha converts",3:"Minion checks",4:"Sorceress seeks",5:"Seers view",6:"Aura learns",7:"Mentalist compares",8:"Revealer flips",9:"PI checks",10:"Witch acts",11:"Huntress shoots",12:"Bodyguard protects",13:"Priest blesses",14:"Spellcaster silences",15:"Cupid links",16:"Troublemaker stirs",17:"Doppelganger copies",18:"Cult recruits"};
 var gameState = null;
 
+function encodeGameState(gs) {
+  var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance});
+  return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function decodeGameState(encoded) {
+  try {
+    var padded = encoded + '=='.substr(0,(4-encoded.length%4)%4);
+    var stateStr = atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
+    var data = JSON.parse(stateStr);
+    return {id:'shared',count:data.c,players:{},roles:data.r,evil:data.e,village:data.v,neutral:data.n,balance:data.b};
+  } catch(e) {
+    return null;
+  }
+}
+
+function encodeGameState(gs) {
+  var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance});
+  return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function decodeGameState(encoded) {
+  try {
+    var padded = encoded + '=='.substr(0,(4-encoded.length%4)%4);
+    var stateStr = atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
+    var data = JSON.parse(stateStr);
+    return {id:'shared',count:data.c,players:{},roles:data.r,evil:data.e,village:data.v,neutral:data.n,balance:data.b};
+  } catch(e) {
+    return null;
+  }
+}
+
 function setupGame(count) {
   var pool = JSON.parse(JSON.stringify(POOLS[count]));
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
@@ -97,9 +129,6 @@ function setupGame(count) {
 }
 
 function showSetup(pool) {
-  var gameKey = "game-"+gameState.id;
-  localStorage.setItem(gameKey, JSON.stringify(gameState));
-  
   var html = "<h3 style='margin-bottom:12px;'>"+gameState.count+" Players (Balance: "+(gameState.balance>=0?"+":"")+gameState.balance+")</h3>";
   html += "<div class='summary'><span class='tag tag-evil'>Evil: "+gameState.evil+"</span><span class='tag tag-village'>Village: "+gameState.village+"</span>";
   if(gameState.neutral > 0) html += "<span class='tag tag-neutral'>Neutral: "+gameState.neutral+"</span>";
@@ -130,7 +159,8 @@ function showSetup(pool) {
     html += "</div>";
   }
   
-  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  var encoded = encodeGameState(gameState);
+  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
   html += "<div class='share-box' style='display:block;'><div style='font-size:11px;font-weight:bold;margin-bottom:6px;'>SHARE THIS LINK WITH PLAYERS:</div><div class='share-link'>"+url+"</div>";
   html += "<button class='action-btn' onclick='copyLink()'>Copy</button> ";
   if(navigator.share) {
@@ -179,29 +209,31 @@ function endGame() {
 }
 
 function copyLink() {
-  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  var encoded = encodeGameState(gameState);
+  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
   navigator.clipboard.writeText(url).then(function() { alert("Link copied!"); });
 }
 
 function shareLink() {
-  var url = window.location.origin + window.location.pathname + "?game=" + gameState.id;
+  var encoded = encodeGameState(gameState);
+  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
   navigator.share({title:"Werewolf Game",url:url});
 }
 
 function showPlayerView() {
   var params = new URLSearchParams(window.location.search);
-  var gid = params.get("game");
+  var gid = params.get("g");
   var html = "";
   if(!gid) {
     html = "<p style='color:#888;'>Ask moderator for game link</p>";
   } else {
-    var gameKey = "game-"+gid;
-    var gdata = localStorage.getItem(gameKey);
-    if(!gdata) {
-      html = "<p style='color:#c0392b;font-weight:bold;'>Game expired or link invalid</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
+    var g = decodeGameState(gid);
+    if(!g) {
+      html = "<p style='color:#c0392b;font-weight:bold;'>Game link invalid</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
     } else {
-      var g = JSON.parse(gdata);
-      var pid = localStorage.getItem("pid-"+gid);
+      var stored = localStorage.getItem("game-shared");
+      if(stored) { g = JSON.parse(stored); }
+      var pid = localStorage.getItem("pid-shared");
       if(!pid) {
         html = "<input type='text' class='player-name-input' id='pname' placeholder='Your name'>";
         html += "<button class='action-btn action-btn-green' onclick='joinGame(\""+gid+"\")'>Join Game</button>";
@@ -216,7 +248,7 @@ function showPlayerView() {
         html += "<h2>"+r.n+"</h2>";
         html += "<div class='team-badge'>"+teamLabel+"</div>";
         html += "<div class='description'>"+r.d+"</div>";
-        html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:20px;' onclick='leaveGame(\""+gid+"\")'>Leave Game</button>";
+        html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:20px;' onclick='leaveGame(\"shared\")'>Leave Game</button>";
         html += "</div>";
       }
     }
@@ -227,20 +259,21 @@ function showPlayerView() {
 function joinGame(gid) {
   var name = document.getElementById("pname").value.trim();
   if(!name) { alert("Enter your name"); return; }
-  var gameKey = "game-"+gid;
-  var gdata = localStorage.getItem(gameKey);
-  if(!gdata) { alert("Game expired"); return; }
-  var g = JSON.parse(gdata);
+  var g = decodeGameState(gid);
+  if(!g) { alert("Game link invalid"); return; }
   var pid = "p"+Date.now();
   var rndx = Math.floor(Math.random() * g.roles.length);
   g.players[pid] = {name:name, role:g.roles[rndx]};
-  localStorage.setItem(gameKey, JSON.stringify(g));
-  localStorage.setItem("pid-"+gid, pid);
+  localStorage.setItem("game-shared", JSON.stringify(g));
+  localStorage.setItem("pid-shared", pid);
+  localStorage.setItem("gid-shared", gid);
   showPlayerView();
 }
 
 function leaveGame(gid) {
-  localStorage.removeItem("pid-"+gid);
+  localStorage.removeItem("pid-shared");
+  localStorage.removeItem("game-shared");
+  localStorage.removeItem("gid-shared");
   showPlayerView();
 }
 
@@ -294,7 +327,7 @@ function initPage() {
   }
   
   var params = new URLSearchParams(window.location.search);
-  if(params.get("game")) {
+  if(params.get("g")) {
     setTimeout(function(){document.getElementById("playerBtn").click();}, 100);
   }
 }
