@@ -89,6 +89,9 @@ var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var supabase = null;
 if(window.supabase && window.supabase.createClient) {
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log("✓ Supabase initialized");
+} else {
+  console.log("✗ Supabase SDK not loaded");
 }
 
 var ROLES = {werewolf:{n:"Werewolf",t:"evil",w:-9,no:1,d:"Point to eliminate at night. Wins with evil.",e:"🐺"},alphawolf:{n:"Alpha Wolf",t:"evil",w:-9,no:2,d:"Once per game, convert village to werewolf.",e:"👑🐺"},wolfcub:{n:"Wolf Cub",t:"evil",w:-8,no:1,d:"If killed, werewolves get double kill next night.",e:"🐶"},minion:{n:"Minion",t:"evil",w:-6,no:3,d:"Knows werewolves. Wins with evil.",e:"🤝"},sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, learn if target is Seer.",e:"🔮"},lycan:{n:"Lycan",t:"evil",w:-1,no:99,d:"Appears as werewolf to Seer. Secretly evil.",e:"🌙"},seer:{n:"Seer",t:"village",w:7,no:5,d:"Each night, learn one player's true role.",e:"🔍"},mysticseer:{n:"Mystic Seer",t:"village",w:9,no:5,d:"Learn true role of one, alignment of another.",e:"🌟"},appseer:{n:"Apprentice Seer",t:"village",w:4,no:99,d:"Becomes Seer if Seer dies.",e:"📚"},mentalist:{n:"Mentalist",t:"village",w:6,no:7,d:"Learn if two players are same team.",e:"🧠"},auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, learn alignment (good/evil).",e:"✨"},pi:{n:"PI",t:"village",w:3,no:9,d:"Learn if one of two is werewolf.",e:"🕵️"},revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Flip card once per game, then die.",e:"💎"},witch:{n:"Witch",t:"village",w:4,no:10,d:"Save victim OR eliminate player.",e:"🧙‍♀️"},hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When killed, shoot one player.",e:"🏹"},huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, also on day death.",e:"👩‍🦰🏹"},bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Protect one from werewolves each night.",e:"🛡️"},priest:{n:"Priest",t:"village",w:3,no:13,d:"Bless player for immunity.",e:"🙏"},spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once, silence player for one day.",e:"✋"},cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: link two lovers (die together).",e:"💘"},mason:{n:"Mason",t:"village",w:2,no:99,d:"Know other Masons.",e:"🪨"},prince:{n:"Prince",t:"village",w:3,no:99,d:"First vote cancels, role revealed.",e:"👶"},toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive werewolf kill until next day.",e:"💪"},diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If eaten, skip werewolves' next kill.",e:"🦠"},drunk:{n:"Drunk",t:"village",w:4,no:99,d:"Don't know role. Learn on day 3.",e:"🍷"},pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"Must vote daily. Wins with village.",e:"☮️"},troublemaker:{n:"Troublemaker",t:"neutral",w:0,no:16,d:"Stir trouble for next day vote.",e:"😈"},doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Copy role night 1, gain when they die.",e:"👥"},madbomber:{n:"Mad Bomber",t:"neutral",w:-2,no:99,d:"Eliminated = chain explosion.",e:"💣"},curse:{n:"Curse",t:"neutral",w:-3,no:99,d:"If werewolves eat you, become wolf.",e:"⚫"},cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Recruit nightly. Win if all cultists.",e:"⛪"}};
@@ -212,11 +215,15 @@ function showSetup(pool) {
 function refreshPlayers() {
   if(!gameState || !gameState.id) return;
   
+  console.log("Refreshing players for game:", gameState.id);
+  
   if(supabase) {
     // Always fetch fresh data from Supabase (priority)
     supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
       var data = response.data;
       var error = response.error;
+      
+      console.log("Supabase fetch response:", {data: data, error: error});
       
       if(error) {
         console.error("Error fetching players from Supabase:", error);
@@ -230,6 +237,7 @@ function refreshPlayers() {
         // Rebuild gameState.players from Supabase data
         gameState.players = {};
         if(data) {
+          console.log("Found "+data.length+" players from Supabase");
           for(var i = 0; i < data.length; i++) {
             gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
           }
@@ -246,6 +254,7 @@ function refreshPlayers() {
       console.error("Error fetching players:", error);
     });
   } else {
+    console.log("Supabase not available - using localStorage only");
     // Fall back to localStorage if Supabase not available
     var gameKey = "game-"+gameState.id;
     var stored = localStorage.getItem(gameKey);
@@ -433,15 +442,25 @@ function joinGame(gid) {
   
   // Try to save to Supabase if available
   if(supabase) {
+    console.log("Inserting player to Supabase:", {id: pid, game_id: g.id, name: name, role: g.roles[rndx]});
     supabase.from('players').insert([{
       id: pid,
       game_id: g.id,
       player_id: pid,
       name: name,
       role: g.roles[rndx]
-    }]).catch(function(error) {
+    }]).then(function(response) {
+      console.log("Supabase insert response:", response);
+      if(response.error) {
+        console.error("Supabase error:", response.error);
+      } else {
+        console.log("Player saved to Supabase successfully");
+      }
+    }).catch(function(error) {
       console.error("Error joining game on Supabase:", error);
     });
+  } else {
+    console.log("Supabase not available - only saving to localStorage");
   }
   
   showPlayerView();
