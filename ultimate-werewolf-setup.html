@@ -222,14 +222,26 @@ function shareLink() {
 
 function showPlayerView() {
   var params = new URLSearchParams(window.location.search);
-  var gid = params.get("g");
+  var gid = params.get("g") || params.get("game");
   var html = "";
   if(!gid) {
     html = "<p style='color:#888;'>Ask moderator for game link</p>";
   } else {
-    var g = decodeGameState(gid);
+    var g = null;
+    if(params.get("g")) {
+      g = decodeGameState(gid);
+    } else if(params.get("game")) {
+      var gameKey = "game-"+gid;
+      var stored = localStorage.getItem(gameKey);
+      if(stored) { 
+        g = JSON.parse(stored); 
+      } else {
+        g = null;
+      }
+    }
+    
     if(!g) {
-      html = "<p style='color:#c0392b;font-weight:bold;'>Game link invalid</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
+      html = "<p style='color:#c0392b;font-weight:bold;'>Game link invalid or expired</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
     } else {
       var stored = localStorage.getItem("game-shared");
       if(stored) { g = JSON.parse(stored); }
@@ -259,7 +271,19 @@ function showPlayerView() {
 function joinGame(gid) {
   var name = document.getElementById("pname").value.trim();
   if(!name) { alert("Enter your name"); return; }
-  var g = decodeGameState(gid);
+  
+  var g = null;
+  var params = new URLSearchParams(window.location.search);
+  if(params.get("g")) {
+    g = decodeGameState(gid);
+  } else if(params.get("game")) {
+    var gameKey = "game-"+gid;
+    var stored = localStorage.getItem(gameKey);
+    if(stored) { 
+      g = JSON.parse(stored); 
+    }
+  }
+  
   if(!g) { alert("Game link invalid"); return; }
   var pid = "p"+Date.now();
   var rndx = Math.floor(Math.random() * g.roles.length);
@@ -327,8 +351,14 @@ function initPage() {
   }
   
   var params = new URLSearchParams(window.location.search);
-  if(params.get("g")) {
-    setTimeout(function(){document.getElementById("playerBtn").click();}, 100);
+  if(params.get("g") || params.get("game")) {
+    setTimeout(function(){
+      document.getElementById("playerTab").classList.add("active");
+      document.getElementById("modTab").classList.remove("active");
+      document.getElementById("playerBtn").classList.add("active");
+      document.getElementById("modBtn").classList.remove("active");
+      showPlayerView();
+    }, 50);
   }
 }
 
