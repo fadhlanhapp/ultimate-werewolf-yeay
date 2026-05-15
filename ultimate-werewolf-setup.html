@@ -367,7 +367,7 @@ function showPlayerView() {
       var stored = localStorage.getItem("game-shared");
       if(stored) { g = JSON.parse(stored); }
       var pid = localStorage.getItem("pid-shared");
-      if(!pid) {
+      if(!pid || !g.players[pid]) {
         html = "<input type='text' class='player-name-input' id='pname' placeholder='Your name'>";
         html += "<button class='action-btn action-btn-green' onclick='joinGame(\""+gid+"\")'>Join Game</button>";
       } else {
