@@ -518,7 +518,10 @@ function joinGame(gid) {
   // Try to save to Supabase if available
   if(supabase || SUPABASE_KEY) {
     console.log("Saving player to Supabase:", {player_id: pid, game_id: g.id, name: name});
+    // Use timestamp as numeric ID (high enough to avoid collisions)
+    var numericId = Math.floor(Date.now() / 1000) % 1000000;
     supabaseInsertPlayer({
+      id: numericId,
       player_id: pid,
       game_id: g.id,
       name: name,
