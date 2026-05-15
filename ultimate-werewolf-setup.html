@@ -96,6 +96,7 @@ var POOLS = {6:{e:["werewolf"],v:["seer","hunter","bodyguard"]},7:{e:["werewolf"
 var NIGHT_ACTIONS = {1:"Werewolves kill",2:"Alpha converts",3:"Minion checks",4:"Sorceress seeks",5:"Seers view",6:"Aura learns",7:"Mentalist compares",8:"Revealer flips",9:"PI checks",10:"Witch acts",11:"Huntress shoots",12:"Bodyguard protects",13:"Priest blesses",14:"Spellcaster silences",15:"Cupid links",16:"Troublemaker stirs",17:"Doppelganger copies",18:"Cult recruits"};
 var gameState = null;
 var playersSubscription = null;
+var autoRefreshTimer = null;
 
 function encodeGameState(gs) {
   var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
@@ -207,7 +208,40 @@ function showSetup(pool) {
 function refreshPlayers() {
   if(!gameState || !gameState.id) return;
   
-  if(!supabase) {
+  if(supabase) {
+    // Always fetch fresh data from Supabase (priority)
+    supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
+      var data = response.data;
+      var error = response.error;
+      
+      if(error) {
+        console.error("Error fetching players from Supabase:", error);
+        // Fall back to localStorage
+        var gameKey = "game-"+gameState.id;
+        var stored = localStorage.getItem(gameKey);
+        if(stored) {
+          gameState = JSON.parse(stored);
+        }
+      } else {
+        // Rebuild gameState.players from Supabase data
+        gameState.players = {};
+        if(data) {
+          for(var i = 0; i < data.length; i++) {
+            gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
+          }
+        }
+        
+        // Also update localStorage so other tabs see it
+        var gameKey = "game-"+gameState.id;
+        localStorage.setItem(gameKey, JSON.stringify(gameState));
+      }
+      
+      var pool = POOLS[gameState.count];
+      showSetup(pool);
+    }).catch(function(error) {
+      console.error("Error fetching players:", error);
+    });
+  } else {
     // Fall back to localStorage if Supabase not available
     var gameKey = "game-"+gameState.id;
     var stored = localStorage.getItem(gameKey);
@@ -216,36 +250,22 @@ function refreshPlayers() {
       var pool = POOLS[gameState.count];
       showSetup(pool);
     }
-    return;
   }
-  
-  // Fetch from Supabase
-  supabase.from('players').select('*').eq('game_id', gameState.id).then(function(response) {
-    var data = response.data;
-    var error = response.error;
-    
-    if(error) {
-      console.error("Error fetching players:", error);
-      return;
-    }
-    
-    // Rebuild gameState.players from Supabase data
-    gameState.players = {};
-    if(data) {
-      for(var i = 0; i < data.length; i++) {
-        gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
-      }
-    }
-    
-    var pool = POOLS[gameState.count];
-    showSetup(pool);
-  }).catch(function(error) {
-    console.error("Error fetching players:", error);
-  });
 }
 
 function subscribeToPlayers() {
-  if(!gameState || !gameState.id || !supabase) return;
+  if(!gameState || !gameState.id) return;
+  
+  // Start auto-refresh polling (fetch players every 2 seconds)
+  if(autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+  }
+  autoRefreshTimer = setInterval(function() {
+    refreshPlayers();
+  }, 2000);
+  
+  // Also try Supabase real-time subscription if available
+  if(!supabase) return;
   
   // Unsubscribe from previous subscription
   if(playersSubscription) {
@@ -253,26 +273,39 @@ function subscribeToPlayers() {
   }
   
   // Subscribe to real-time updates
-  playersSubscription = supabase
-    .channel('players-'+gameState.id)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'players',
-      filter: 'game_id=eq.'+gameState.id
-    }, (payload) => {
-      refreshPlayers();
-    })
-    .subscribe();
+  try {
+    playersSubscription = supabase
+      .channel('players-'+gameState.id)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'players',
+        filter: 'game_id=eq.'+gameState.id
+      }, (payload) => {
+        console.log("Player update received:", payload);
+        refreshPlayers();
+      })
+      .subscribe();
+  } catch(err) {
+    console.error("Could not subscribe to real-time:", err);
+  }
 }
 
 function endGame() {
   if(confirm("End this game? Players will no longer be able to join.")) {
     if(gameState && gameState.id) {
+      // Stop auto-refresh polling
+      if(autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+      
       // Delete from Supabase (async, no await)
-      supabase.from('games').delete().eq('id', gameState.id).catch(function(error) {
-        console.error("Error ending game:", error);
-      });
+      if(supabase) {
+        supabase.from('games').delete().eq('id', gameState.id).catch(function(error) {
+          console.error("Error ending game:", error);
+        });
+      }
       
       // Also clear localStorage
       localStorage.removeItem("game-"+gameState.id);
