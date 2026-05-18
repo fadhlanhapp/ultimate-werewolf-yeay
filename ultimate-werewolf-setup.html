@@ -576,9 +576,15 @@ function showPlayerView() {
     html = "<p style='color:#888;'>Ask moderator for game link</p>";
   } else {
     var g = null;
+    var actualGameId = null; // Track actual game ID for comparison
+    
     if(params.get("g")) {
       g = decodeGameState(gid);
+      if(g) {
+        actualGameId = g.id; // Extract actual game ID from decoded state
+      }
     } else if(params.get("game")) {
+      actualGameId = gid; // For ?game= links, gid IS the actual game ID
       var gameKey = "game-"+gid;
       var stored = localStorage.getItem(gameKey);
       if(stored) { 
@@ -592,14 +598,20 @@ function showPlayerView() {
       html = "<p style='color:#c0392b;font-weight:bold;'>Game link invalid or expired</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
     } else {
       var stored = localStorage.getItem("game-shared");
-      if(stored) { g = JSON.parse(stored); }
+      if(stored) { 
+        var parsedShared = JSON.parse(stored);
+        // Only use if from same game
+        if(parsedShared.id === actualGameId) {
+          g = parsedShared;
+        }
+      }
       var pid = localStorage.getItem("pid-shared");
       
       // FRESH GAME CHECK: If player was in a different game, show join form again
       var prevGameId = localStorage.getItem("prev-game-id");
-      if(pid && prevGameId && prevGameId !== gid) {
+      if(pid && prevGameId && actualGameId && prevGameId !== actualGameId) {
         // Different game detected - clear old session for fresh start
-        console.log("Player switching games: " + prevGameId + " -> " + gid);
+        console.log("Player switching games: " + prevGameId + " -> " + actualGameId);
         pid = null; // Force them to rejoin as fresh player
         localStorage.removeItem("pid-shared");
         localStorage.removeItem("game-shared");
@@ -611,16 +623,20 @@ function showPlayerView() {
       } else {
         var p = g.players[pid];
         var r = ROLES[p.role];
-        var cardClass = r.t === "evil" ? "role-card-evil" : (r.t === "village" ? "role-card-village" : "role-card-neutral");
-        var teamLabel = r.t === "evil" ? "🔴 EVIL SIDE" : (r.t === "village" ? "🟢 VILLAGE SIDE" : "🟣 NEUTRAL");
-        html = "<div class='role-card "+cardClass+"'>";
-        html += "<div style='font-size:14px;margin-bottom:8px;'>👤 "+p.name+"</div>";
-        html += "<div class='role-emoji'>"+r.e+"</div>";
-        html += "<h2>"+r.n+"</h2>";
-        html += "<div class='team-badge'>"+teamLabel+"</div>";
-        html += "<div class='description'>"+r.d+"</div>";
-        html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:20px;' onclick='leaveGame(\"shared\")'>Leave Game</button>";
-        html += "</div>";
+        if(!r) {
+          html = "<p style='color:#c0392b;'>ERROR: Role not found for " + p.role + "</p>";
+        } else {
+          var cardClass = r.t === "evil" ? "role-card-evil" : (r.t === "village" ? "role-card-village" : "role-card-neutral");
+          var teamLabel = r.t === "evil" ? "🔴 EVIL SIDE" : (r.t === "village" ? "🟢 VILLAGE SIDE" : "🟣 NEUTRAL");
+          html = "<div class='role-card "+cardClass+"'>";
+          html += "<div style='font-size:14px;margin-bottom:8px;'>👤 "+p.name+"</div>";
+          html += "<div class='role-emoji'>"+r.e+"</div>";
+          html += "<h2>"+r.n+"</h2>";
+          html += "<div class='team-badge'>"+teamLabel+"</div>";
+          html += "<div class='description'>"+r.d+"</div>";
+          html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:20px;' onclick='leaveGame(\"shared\")'>Leave Game</button>";
+          html += "</div>";
+        }
       }
     }
   }
@@ -634,24 +650,43 @@ function joinGame(gid) {
   var g = null;
   var params = new URLSearchParams(window.location.search);
   
+  // First, extract the actual game ID from the encoded state or URL
+  var actualGameId = null;
+  
+  // Decode game state to get the actual game ID
+  if(params.get("g")) {
+    g = decodeGameState(gid);
+    if(g) {
+      actualGameId = g.id;
+    }
+  } else if(params.get("game")) {
+    actualGameId = gid;
+    var gameKey = "game-"+gid;
+    var stored = localStorage.getItem(gameKey);
+    if(stored) { 
+      g = JSON.parse(stored); 
+    }
+  }
+  
   // FRESH GAME CHECK: If joining a different game, clear old player data
   var prevGameId = localStorage.getItem("prev-game-id");
-  if(prevGameId && prevGameId !== gid) {
+  if(prevGameId && actualGameId && prevGameId !== actualGameId) {
     // Different game detected - clear old session data for fresh start
-    console.log("New game detected. Clearing old session: " + prevGameId + " -> " + gid);
+    console.log("New game detected. Clearing old session: " + prevGameId + " -> " + actualGameId);
     localStorage.removeItem("game-shared");
     localStorage.removeItem("pid-shared");
-    // Keep "game-gid" entries as they're game-specific
   }
   
   // FIX: First try to get the CURRENT game state from localStorage
   // This ensures we see all players who have already joined
-  var gameKey = "game-" + gid;
-  var storedLatest = localStorage.getItem(gameKey);
-  if(storedLatest) {
-    try {
-      g = JSON.parse(storedLatest);
-    } catch(e) {}
+  if(!g && actualGameId) {
+    var gameKey = "game-" + actualGameId;
+    var storedLatest = localStorage.getItem(gameKey);
+    if(storedLatest) {
+      try {
+        g = JSON.parse(storedLatest);
+      } catch(e) {}
+    }
   }
   
   // If no localStorage, try decoding from URL
@@ -667,7 +702,7 @@ function joinGame(gid) {
           var parsedShared = JSON.parse(sharedGame);
           sharedGameId = parsedShared.id;
           // Only use it if game ID matches
-          if(sharedGameId === gid) {
+          if(sharedGameId === actualGameId) {
             g = parsedShared;
           }
         } catch(e) {}
@@ -716,6 +751,8 @@ function joinGame(gid) {
     return;
   }
   
+  // Use actual game ID for storage
+  var gameKey = "game-" + g.id;
   localStorage.setItem(gameKey, JSON.stringify(g));
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
