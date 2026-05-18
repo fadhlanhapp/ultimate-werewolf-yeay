@@ -834,7 +834,8 @@ function closeBroadcastChannel() {
 
 function leaveGame(gid) {
   localStorage.removeItem("pid-shared");
-  localStorage.removeItem("game-shared");
+  // ⚠️ DO NOT remove game-shared - other players in other windows need it!
+  // localStorage.removeItem("game-shared");
   localStorage.removeItem("gid-shared");
   closeBroadcastChannel();
   showPlayerView();
