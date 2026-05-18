@@ -764,7 +764,7 @@ function joinGame(gid) {
     
     console.log("✅ Player joined! " + name + " as " + assignedRole);
     showPlayerView();
-  }, 300); // 300ms delay to allow storage events from other windows
+  }, 1000); // 1000ms delay to ensure cross-window storage events propagate
 }
 
 // Open/manage broadcast channel for cross-window sync
