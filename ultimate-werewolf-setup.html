@@ -649,63 +649,54 @@ function joinGame(gid) {
   
   var g = null;
   var params = new URLSearchParams(window.location.search);
-  
-  // First, extract the actual game ID from the encoded state or URL
   var actualGameId = null;
   
-  // Decode game state to get the actual game ID
+  // STEP 1: Extract the actual game ID from URL
   if(params.get("g")) {
-    g = decodeGameState(gid);
-    if(g) {
-      actualGameId = g.id;
+    // Decode URL state to get the actual game ID
+    var decodedUrlState = decodeGameState(gid);
+    if(decodedUrlState) {
+      actualGameId = decodedUrlState.id;
     }
   } else if(params.get("game")) {
     actualGameId = gid;
-    var gameKey = "game-"+gid;
-    var stored = localStorage.getItem(gameKey);
-    if(stored) { 
-      g = JSON.parse(stored); 
-    }
   }
   
-  // FRESH GAME CHECK: If joining a different game, clear old player data
+  // STEP 2: FRESH GAME CHECK - If joining a different game, clear old player data
   var prevGameId = localStorage.getItem("prev-game-id");
   if(prevGameId && actualGameId && prevGameId !== actualGameId) {
-    // Different game detected - clear old session data for fresh start
     console.log("New game detected. Clearing old session: " + prevGameId + " -> " + actualGameId);
     localStorage.removeItem("game-shared");
     localStorage.removeItem("pid-shared");
   }
   
-  // FIX: First try to get the CURRENT game state from localStorage
-  // This ensures we see all players who have already joined
-  if(!g && actualGameId) {
+  // STEP 3: Try to get CURRENT game state from localStorage FIRST
+  // This is CRITICAL - it has all players who already joined!
+  if(actualGameId) {
     var gameKey = "game-" + actualGameId;
     var storedLatest = localStorage.getItem(gameKey);
     if(storedLatest) {
       try {
         g = JSON.parse(storedLatest);
-      } catch(e) {}
+        console.log("Using game state from localStorage with " + Object.keys(g.players).length + " players already joined");
+      } catch(e) {
+        console.error("Failed to parse stored game state:", e);
+      }
     }
   }
   
-  // If no localStorage, try decoding from URL
+  // STEP 4: If localStorage doesn't have it, fall back to URL decode or game-shared
   if(!g) {
     if(params.get("g")) {
       g = decodeGameState(gid);
-    } else {
-      // Only use game-shared if it's the SAME game ID
-      var sharedGame = localStorage.getItem("game-shared");
-      var sharedGameId = null;
-      if(sharedGame) {
-        try {
-          var parsedShared = JSON.parse(sharedGame);
-          sharedGameId = parsedShared.id;
-          // Only use it if game ID matches
-          if(sharedGameId === actualGameId) {
-            g = parsedShared;
-          }
-        } catch(e) {}
+      if(g) {
+        console.log("Using game state from URL decode (fresh game, no players yet)");
+      }
+    } else if(params.get("game")) {
+      var gameKey = "game-"+actualGameId;
+      var stored = localStorage.getItem(gameKey);
+      if(stored) { 
+        g = JSON.parse(stored); 
       }
     }
   }
