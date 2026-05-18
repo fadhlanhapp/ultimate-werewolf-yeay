@@ -1,15 +1,47 @@
-# Personal/Private Files
+# 🔒 PERSONAL/SENSITIVE FILES - DO NOT COMMIT
+# Media files
 *.pdf
-*.PNG
+*.PDF
 *.png
+*.PNG
 *.jpg
+*.JPG
 *.jpeg
+*.JPEG
 *.gif
+*.GIF
 *.mp4
+*.MP4
 *.mov
+*.MOV
+*.webm
+*.WEBM
+*.mkv
+*.MKV
+
+# Screenshots and recordings
+Screenshot*
+"Screenshot"*
+Simulator*
+Screen*Record*
+screen*record*
+
+# CV and documents
+CV_*
+Resume*
+resume*
+*CV*
+*.doc
+*.docx
+*.pptx
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 *.swp
 *.swo
@@ -19,9 +51,16 @@ Thumbs.db
 .vscode/
 .idea/
 *.sublime-*
+*.iml
 
 # Dependencies
 node_modules/
 venv/
 .env
 .env.local
+.env.*
+
+# Logs
+*.log
+logs/
+npm-debug.log*
