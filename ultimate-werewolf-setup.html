@@ -647,96 +647,66 @@ function joinGame(gid) {
   var name = document.getElementById("pname").value.trim();
   if(!name) { alert("Enter your name"); return; }
   
+  // STEP 1: Get the current game state
   var g = null;
   var params = new URLSearchParams(window.location.search);
-  var actualGameId = null;
   
-  // STEP 1: Extract the actual game ID from URL
+  // Try to get game from URL (?g=base64 parameter)
   if(params.get("g")) {
-    // Decode URL state to get the actual game ID
-    var decodedUrlState = decodeGameState(gid);
-    if(decodedUrlState) {
-      actualGameId = decodedUrlState.id;
-    }
+    g = decodeGameState(gid);
+    if(!g) { alert("Game link invalid"); return; }
   } else if(params.get("game")) {
-    actualGameId = gid;
-  }
-  
-  // STEP 2: FRESH GAME CHECK - If joining a different game, clear old player data
-  var prevGameId = localStorage.getItem("prev-game-id");
-  if(prevGameId && actualGameId && prevGameId !== actualGameId) {
-    console.log("New game detected. Clearing old session: " + prevGameId + " -> " + actualGameId);
-    localStorage.removeItem("game-shared");
-    localStorage.removeItem("pid-shared");
-  }
-  
-  // STEP 3: Try to get CURRENT game state from localStorage FIRST
-  // This is CRITICAL - it has all players who already joined!
-  if(actualGameId) {
-    // Try multiple possible keys to be safe
-    var possibleKeys = [
-      "game-" + actualGameId,
-      "game-shared",  // Also check shared
-      "gid-shared" // Fallback to shared game
-    ];
-    
-    for(var k = 0; k < possibleKeys.length; k++) {
-      var storedLatest = localStorage.getItem(possibleKeys[k]);
-      if(storedLatest) {
-        try {
-          var parsed = JSON.parse(storedLatest);
-          // Validate it's the same game
-          if(parsed.id === actualGameId || parsed.id === g?.id) {
-            g = parsed;
-            console.log("Using game state from localStorage (" + possibleKeys[k] + ") with " + Object.keys(g.players).length + " players already joined");
-            break;
-          }
-        } catch(e) {
-          console.error("Failed to parse " + possibleKeys[k] + ":", e);
-        }
-      }
+    // Try to get from localStorage for ?game= links
+    var gameKey = "game-"+gid;
+    var stored = localStorage.getItem(gameKey);
+    if(stored) { 
+      g = JSON.parse(stored); 
+    } else {
+      alert("Game link invalid"); 
+      return; 
     }
+  } else {
+    alert("No game link provided");
+    return;
   }
   
-  // STEP 4: If localStorage doesn't have it, fall back to URL decode or game-shared
-  if(!g) {
-    if(params.get("g")) {
-      g = decodeGameState(gid);
-      if(g) {
-        console.log("Using game state from URL decode (fresh game, no players yet)");
-      }
-    } else if(params.get("game")) {
-      var gameKey = "game-"+actualGameId;
-      var stored = localStorage.getItem(gameKey);
-      if(stored) { 
-        g = JSON.parse(stored); 
+  // STEP 2: Try to get the CURRENT game state from localStorage
+  // This has all players who have already joined
+  if(g && g.id) {
+    var latestKey = "game-" + g.id;
+    var latest = localStorage.getItem(latestKey);
+    if(latest) {
+      try {
+        var latestG = JSON.parse(latest);
+        // Merge: keep current players from localStorage, update roles array
+        latestG.roles = g.roles; // Keep the roles array from URL
+        g = latestG;
+        console.log("Using updated game state from localStorage with " + Object.keys(g.players).length + " players");
+      } catch(e) {
+        console.log("Could not parse localStorage game state, using URL state");
       }
     }
   }
   
   if(!g) { alert("Game link invalid"); return; }
   
-  // CRITICAL FIX: Always find the first unassigned role by checking ALL current players
-  // This prevents duplicate role assignments when multiple players join in parallel
+  // STEP 3: Assign a role - find first unassigned one
   var assignedRole = null;
   var assignedRoles = {};
   
-  // Build map of all roles currently assigned to other players
-  for(var pid_key in g.players) {
-    if(g.players[pid_key] && g.players[pid_key].role) {
-      assignedRoles[g.players[pid_key].role] = true;
-      console.log("Player " + g.players[pid_key].name + " already has role: " + g.players[pid_key].role);
+  // Build map of assigned roles
+  for(var pid in g.players) {
+    if(g.players[pid] && g.players[pid].role) {
+      assignedRoles[g.players[pid].role] = true;
+      console.log("✓ " + g.players[pid].name + " has " + g.players[pid].role);
     }
   }
-  
-  console.log("ROLE DEBUG - Assigned roles map:", assignedRoles);
-  console.log("ROLE DEBUG - Available roles:", g.roles);
   
   // Find first unassigned role
   for(var i = 0; i < g.roles.length; i++) {
     if(!assignedRoles[g.roles[i]]) {
       assignedRole = g.roles[i];
-      console.log("ROLE DEBUG - Assigning role: " + assignedRole);
+      console.log("→ Assigning role " + i + ": " + assignedRole);
       break;
     }
   }
@@ -746,98 +716,22 @@ function joinGame(gid) {
     return;
   }
   
+  // STEP 4: Create player entry with unique ID
   var pid = "p"+Date.now();
-  
-  console.log("DEBUG: Created player ID:", pid, "Type:", typeof pid, "Length:", pid.length);
-  
-  // This is a player joining, not moderator
-  isModeratorView = false;
-  
-  // Save to localStorage with current game key so next player gets updated state
   g.players[pid] = {name:name, role:assignedRole};
   
-  console.log("DEBUG: Added player to game. g.players keys:", Object.keys(g.players));
-  console.log("DEBUG: Player entry:", g.players[pid]);
-  
-  // SANITY CHECK 1: Verify player got added correctly
-  if(!g.players[pid] || !g.players[pid].role) {
-    alert("ERROR: Failed to assign role. Try again.");
-    return;
-  }
-  
-  // Use actual game ID for consistent storage key
-  var gameKey = "game-" + (g.id || actualGameId);
-  
-  console.log("DEBUG: Before storing - g.players keys:", Object.keys(g.players));
-  console.log("DEBUG: About to store with key:", gameKey);
-  
-  var gameJSON = JSON.stringify(g);
-  console.log("DEBUG: JSON size:", gameJSON.length, "First 200 chars:", gameJSON.substring(0, 200));
-  
-  localStorage.setItem(gameKey, gameJSON);
+  // STEP 5: Save to localStorage
+  var gameKey = "game-" + g.id;
+  localStorage.setItem(gameKey, JSON.stringify(g));
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
-  localStorage.setItem("gid-shared", g.id || actualGameId);
-  localStorage.setItem("prev-game-id", g.id || actualGameId);
+  localStorage.setItem("gid-shared", g.id);
+  localStorage.setItem("prev-game-id", g.id);
   
-  // Verify what was actually stored
-  var stored = localStorage.getItem(gameKey);
-  var storedShared = localStorage.getItem("game-shared");
-  var storedParsed = JSON.parse(stored);
-  var storedSharedParsed = JSON.parse(storedShared);
+  console.log("✅ Player joined! " + name + " as " + assignedRole);
+  console.log("Game now has " + Object.keys(g.players).length + " players");
   
-  console.log("DEBUG: After storing - gameKey players:", Object.keys(storedParsed.players));
-  console.log("DEBUG: After storing - game-shared players:", Object.keys(storedSharedParsed.players));
-  console.log("DEBUG: Mismatch?", Object.keys(storedParsed.players)[0] !== Object.keys(storedSharedParsed.players)[0] ? "YES!" : "No");
-  
-  // SANITY CHECK 2: Verify localStorage saved correctly
-  var verifyGame = localStorage.getItem(gameKey);
-  var verifyPid = localStorage.getItem("pid-shared");
-  if(!verifyGame || !verifyPid) {
-    console.error("SANITY CHECK FAILED: localStorage save failed");
-    return;
-  }
-  
-  var savedGame = JSON.parse(verifyGame);
-  if(!savedGame.players[pid] || savedGame.players[pid].role !== assignedRole) {
-    console.error("SANITY CHECK FAILED: Player data mismatch");
-    return;
-  }
-  
-  console.log("✅ SANITY CHECKS PASSED - Player joined:", {
-    player_id: pid,
-    name: name,
-    role: assignedRole,
-    game_id: g.id,
-    total_players: Object.keys(g.players).length,
-    game_size: g.count
-  });
-  
-  // Try to save to Supabase if available
-  if(supabase || SUPABASE_KEY) {
-    console.log("Saving player to Supabase:", {player_id: pid, game_id: g.id, name: name});
-    // Use timestamp as numeric ID (high enough to avoid collisions)
-    var numericId = Math.floor(Date.now() / 1000) % 1000000;
-    supabaseInsertPlayer({
-      id: numericId,
-      player_id: pid,
-      game_id: g.id,
-      name: name,
-      role: assignedRole
-    }).then(function(response) {
-      console.log("Supabase insert response:", response);
-      if(response.error) {
-        console.error("Supabase error:", response.error);
-      } else {
-        console.log("✓ Player saved to Supabase successfully");
-      }
-    }).catch(function(error) {
-      console.error("Error joining game on Supabase:", error);
-    });
-  } else {
-    console.log("Supabase not available - only saved to localStorage");
-  }
-  
+  // STEP 6: Show the role card immediately
   showPlayerView();
 }
 
