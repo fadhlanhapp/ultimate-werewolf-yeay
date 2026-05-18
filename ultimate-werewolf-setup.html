@@ -188,19 +188,9 @@ var broadcastedRoles = {}; // Track roles announced by other windows
 // 🔄 LISTEN FOR localStorage CHANGES FROM OTHER WINDOWS
 window.addEventListener('storage', function(e) {
   if(e.key === 'game-shared' && e.newValue) {
-    console.log("📡 Storage event: game-shared updated in another window");
-    try {
-      var updated = JSON.parse(e.newValue);
-      // If we're on player view and this game matches, refresh
-      var pid = localStorage.getItem("pid-shared");
-      if(pid && updated.id === localStorage.getItem("gid-shared")) {
-        console.log("✓ Game state updated from another window - " + Object.keys(updated.players || {}).length + " players now");
-        // Update our game-shared copy
-        localStorage.setItem("game-shared", e.newValue);
-      }
-    } catch(err) {
-      console.log("Could not parse storage event");
-    }
+    console.log("📡 Storage event: game-shared synced from another window - " + Object.keys(JSON.parse(e.newValue || '{}').players || {}).length + " players");
+    // ALWAYS update game-shared when it changes (even if current player hasn't joined yet)
+    localStorage.setItem("game-shared", e.newValue);
   }
 });
 
