@@ -184,7 +184,7 @@ var autoRefreshTimer = null;
 var isModeratorView = false;
 
 function encodeGameState(gs) {
-  var stateStr = JSON.stringify({r:gs.roles,ar:gs.availableRoles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
+  var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
   return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 
@@ -193,7 +193,7 @@ function decodeGameState(encoded) {
     var padded = encoded + '=='.substr(0,(4-encoded.length%4)%4);
     var stateStr = atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
     var data = JSON.parse(stateStr);
-    return {id:data.id||'shared',count:data.c,players:{},roles:data.r,availableRoles:data.ar||data.r.slice(),evil:data.e,village:data.v,neutral:data.n,balance:data.b};
+    return {id:data.id||'shared',count:data.c,players:{},roles:data.r,availableRoles:data.r.slice(),evil:data.e,village:data.v,neutral:data.n,balance:data.b};
   } catch(e) {
     return null;
   }
@@ -620,14 +620,31 @@ function joinGame(gid) {
   if(!g) { alert("Game link invalid"); return; }
   
   // IMPROVEMENT 1 & 2: Prevent duplicate role assignments
-  if(!g.availableRoles || g.availableRoles.length === 0) {
+  // Find first unassigned role to avoid duplicates
+  var assignedRole = null;
+  if(g.availableRoles && g.availableRoles.length > 0) {
+    // Use first available role from queue
+    assignedRole = g.availableRoles.shift();
+  } else {
+    // Fallback: find any unassigned role from the original roles list
+    var assignedRoles = {};
+    for(var pid_key in g.players) {
+      assignedRoles[g.players[pid_key].role] = true;
+    }
+    for(var i = 0; i < g.roles.length; i++) {
+      if(!assignedRoles[g.roles[i]]) {
+        assignedRole = g.roles[i];
+        break;
+      }
+    }
+  }
+  
+  if(!assignedRole) {
     alert("Game is full! All roles have been assigned.");
     return;
   }
   
   var pid = "p"+Date.now();
-  // IMPROVEMENT 1: Assign next available role (no duplicates)
-  var assignedRole = g.availableRoles.shift(); // Remove and get first role
   
   // This is a player joining, not moderator
   isModeratorView = false;
