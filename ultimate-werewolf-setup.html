@@ -185,6 +185,25 @@ var isModeratorView = false;
 var broadcastChannel = null;
 var broadcastedRoles = {}; // Track roles announced by other windows
 
+// 🔄 LISTEN FOR localStorage CHANGES FROM OTHER WINDOWS
+window.addEventListener('storage', function(e) {
+  if(e.key === 'game-shared' && e.newValue) {
+    console.log("📡 Storage event: game-shared updated in another window");
+    try {
+      var updated = JSON.parse(e.newValue);
+      // If we're on player view and this game matches, refresh
+      var pid = localStorage.getItem("pid-shared");
+      if(pid && updated.id === localStorage.getItem("gid-shared")) {
+        console.log("✓ Game state updated from another window - " + Object.keys(updated.players || {}).length + " players now");
+        // Update our game-shared copy
+        localStorage.setItem("game-shared", e.newValue);
+      }
+    } catch(err) {
+      console.log("Could not parse storage event");
+    }
+  }
+});
+
 function encodeGameState(gs) {
   var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
   return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
@@ -680,78 +699,79 @@ function joinGame(gid) {
   
   if(!g) { alert("Game link invalid"); return; }
   
-  // 🔧 QUERY game-shared FIRST as source of truth (shared across all tabs)
-  var gameKey = "game-" + g.id;
-  var latest = localStorage.getItem("game-shared");
-  if(latest) {
-    try {
-      var latestG = JSON.parse(latest);
-      // Merge: keep current players from game-shared, update roles array
-      if(latestG && latestG.players) {
-        latestG.roles = g.roles; // Keep roles array from URL
-        latestG.id = g.id; // Ensure ID matches
-        g = latestG;
-        console.log("✓ Found " + Object.keys(g.players).length + " players in game-shared");
+  // 🔧 READ GAME-SHARED (with delay to allow cross-window storage sync)
+  setTimeout(function() {
+    var latest = localStorage.getItem("game-shared");
+    if(latest) {
+      try {
+        var latestG = JSON.parse(latest);
+        // Merge: keep current players from game-shared, update roles array
+        if(latestG && latestG.players) {
+          latestG.roles = g.roles; // Keep roles array from URL
+          latestG.id = g.id; // Ensure ID matches
+          g = latestG;
+          console.log("✓ Re-synced: Found " + Object.keys(g.players).length + " players in game-shared");
+        }
+      } catch(e) {
+        console.log("Could not parse game-shared");
       }
-    } catch(e) {
-      console.log("Could not parse game-shared");
     }
-  }
-  
-  // Build map of taken roles from game state
-  var takenRoles = {};
-  for(var pid_check in g.players) {
-    if(g.players[pid_check] && g.players[pid_check].role) {
-      takenRoles[g.players[pid_check].role] = true;
-      console.log("✓ " + g.players[pid_check].name + " has " + g.players[pid_check].role);
+    
+    // Build map of taken roles from game state
+    var takenRoles = {};
+    for(var pid_check in g.players) {
+      if(g.players[pid_check] && g.players[pid_check].role) {
+        takenRoles[g.players[pid_check].role] = true;
+        console.log("✓ " + g.players[pid_check].name + " has " + g.players[pid_check].role);
+      }
     }
-  }
-  
-  // Find first unassigned role
-  var assignedRole = null;
-  for(var i = 0; i < g.roles.length; i++) {
-    if(!takenRoles[g.roles[i]]) {
-      assignedRole = g.roles[i];
-      console.log("→ Assigning role " + i + ": " + assignedRole);
-      break;
+    
+    // Find first unassigned role
+    var assignedRole = null;
+    for(var i = 0; i < g.roles.length; i++) {
+      if(!takenRoles[g.roles[i]]) {
+        assignedRole = g.roles[i];
+        console.log("→ Assigning role " + i + ": " + assignedRole);
+        break;
+      }
     }
-  }
-  
-  if(!assignedRole) {
-    alert("Game is full! All roles have been assigned.");
-    return;
-  }
-  
-  // Add new player
-  var pid = "p"+Date.now();
-  g.players[pid] = {name:name, role:assignedRole};
-  
-  // Save to both localStorage keys (game-shared is source of truth)
-  localStorage.setItem("game-shared", JSON.stringify(g));
-  localStorage.setItem(gameKey, JSON.stringify(g));
-  localStorage.setItem("pid-shared", pid);
-  localStorage.setItem("gid-shared", g.id);
-  localStorage.setItem("prev-game-id", g.id);
-  
-  // Try to sync with Supabase (optional, for when table exists)
-  fetch(SUPABASE_URL + "/rest/v1/players", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "apikey": SUPABASE_KEY
-    },
-    body: JSON.stringify({
-      game_id: g.id,
-      player_id: pid,
-      player_name: name,
-      role: assignedRole,
-      created_at: new Date().toISOString()
-    })
-  }).then(r => r.json()).then(result => console.log("Supabase sync:", result)).catch(err => console.log("Supabase sync skipped (table may not exist)"));
-  
-  console.log("✅ Player joined! " + name + " as " + assignedRole);
-  showPlayerView();
+    
+    if(!assignedRole) {
+      alert("Game is full! All roles have been assigned.");
+      return;
+    }
+    
+    // Add new player
+    var pid = "p"+Date.now();
+    g.players[pid] = {name:name, role:assignedRole};
+    
+    // Save to both localStorage keys (game-shared is source of truth)
+    localStorage.setItem("game-shared", JSON.stringify(g));
+    localStorage.setItem("game-" + g.id, JSON.stringify(g));
+    localStorage.setItem("pid-shared", pid);
+    localStorage.setItem("gid-shared", g.id);
+    localStorage.setItem("prev-game-id", g.id);
+    
+    // Try to sync with Supabase (optional, for when table exists)
+    fetch(SUPABASE_URL + "/rest/v1/players", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey": SUPABASE_KEY
+      },
+      body: JSON.stringify({
+        game_id: g.id,
+        player_id: pid,
+        player_name: name,
+        role: assignedRole,
+        created_at: new Date().toISOString()
+      })
+    }).then(r => r.json()).then(result => console.log("Supabase sync:", result)).catch(err => console.log("Supabase sync skipped (table may not exist)"));
+    
+    console.log("✅ Player joined! " + name + " as " + assignedRole);
+    showPlayerView();
+  }, 100); // 100ms delay to allow storage events to fire
 }
 
 // Open/manage broadcast channel for cross-window sync
