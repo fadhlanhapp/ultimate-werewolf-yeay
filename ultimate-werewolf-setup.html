@@ -184,7 +184,7 @@ var autoRefreshTimer = null;
 var isModeratorView = false;
 
 function encodeGameState(gs) {
-  var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
+  var stateStr = JSON.stringify({r:gs.roles,ar:gs.availableRoles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
   return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 
@@ -193,7 +193,7 @@ function decodeGameState(encoded) {
     var padded = encoded + '=='.substr(0,(4-encoded.length%4)%4);
     var stateStr = atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
     var data = JSON.parse(stateStr);
-    return {id:data.id||'shared',count:data.c,players:{},roles:data.r,evil:data.e,village:data.v,neutral:data.n,balance:data.b};
+    return {id:data.id||'shared',count:data.c,players:{},roles:data.r,availableRoles:data.ar||data.r.slice(),evil:data.e,village:data.v,neutral:data.n,balance:data.b};
   } catch(e) {
     return null;
   }
@@ -253,16 +253,35 @@ function rerollGameRoles() {
   // Get randomized roles
   var pool = randomizeRoles(evilCount, villageCount, neutralCount);
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
+  
+  // IMPROVEMENT 4: Add 3 extra roles for bluffing
+  var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3));
+  for(var i = 0; i < extraRoleCount; i++) {
+    var randomRoleKey = roles[Math.floor(Math.random() * roles.length)];
+    roles.push(randomRoleKey);
+  }
+  
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
   
+  // IMPROVEMENT 1 & 2: Reset available roles for reroll
+  var shuffledRoles = roles.slice();
+  for(var i = shuffledRoles.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = shuffledRoles[i];
+    shuffledRoles[i] = shuffledRoles[j];
+    shuffledRoles[j] = temp;
+  }
+  
   gameState.roles = roles;
+  gameState.availableRoles = shuffledRoles;
   gameState.evil = pool.e.length;
   gameState.village = pool.v.length;
   gameState.neutral = (pool.n||[]).length;
   gameState.balance = balance;
+  gameState.players = {}; // Reset players on reroll
   
-  console.log("Rerolled roles:", roles);
+  console.log("Rerolled roles:", roles, "Available:", shuffledRoles.length);
   localStorage.setItem("game-"+gameState.id, JSON.stringify(gameState));
   showSetup(pool);
 }
@@ -270,9 +289,28 @@ function rerollGameRoles() {
 function setupGame(count) {
   var pool = JSON.parse(JSON.stringify(POOLS[count]));
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
+  
+  // IMPROVEMENT 4: Add 3 extra roles for bluffing (more roles than players)
+  var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3)); // Add 30% more roles
+  for(var i = 0; i < extraRoleCount; i++) {
+    var randomRoleKey = roles[Math.floor(Math.random() * roles.length)];
+    roles.push(randomRoleKey);
+  }
+  
   var balance = 0;
   for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
-  gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
+  
+  // IMPROVEMENT 1 & 2: Track assigned roles to prevent duplicates and race conditions
+  var availableRoles = roles.slice(); // Copy array
+  var shuffledRoles = availableRoles.slice();
+  for(var i = shuffledRoles.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = shuffledRoles[i];
+    shuffledRoles[i] = shuffledRoles[j];
+    shuffledRoles[j] = temp;
+  }
+  
+  gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,availableRoles:shuffledRoles,assignedRoles:{},evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
   
   // This is the moderator creating a game
   isModeratorView = true;
@@ -341,13 +379,17 @@ function showSetup(pool) {
   }
   html += "</div>";
   
+  // IMPROVEMENT 3: Show all connected players up to game count
   html += "<h4 style='margin:16px 0 12px;'>Connected Players ("+Object.keys(gameState.players).length+"/"+gameState.count+")</h4>";
   if(Object.keys(gameState.players).length > 0) {
     html += "<div class='players-list'>";
+    var playerCount = 0;
     for(var pid in gameState.players) {
+      if(playerCount >= gameState.count) break; // Don't show more than game count
       var p = gameState.players[pid];
       var r = ROLES[p.role];
       html += "<div class='player-item'><div><div class='player-item-emoji'>"+r.e+"</div><div><strong>"+p.name+"</strong><div style='font-size:10px;color:#666;'>"+r.n+"</div></div></div><span class='tag tag-"+r.t+"'>"+r.t+"</span></div>";
+      playerCount++;
     }
     html += "</div>";
   } else {
@@ -577,14 +619,21 @@ function joinGame(gid) {
   
   if(!g) { alert("Game link invalid"); return; }
   
+  // IMPROVEMENT 1 & 2: Prevent duplicate role assignments
+  if(!g.availableRoles || g.availableRoles.length === 0) {
+    alert("Game is full! All roles have been assigned.");
+    return;
+  }
+  
   var pid = "p"+Date.now();
-  var rndx = Math.floor(Math.random() * g.roles.length);
+  // IMPROVEMENT 1: Assign next available role (no duplicates)
+  var assignedRole = g.availableRoles.shift(); // Remove and get first role
   
   // This is a player joining, not moderator
   isModeratorView = false;
   
   // Save to localStorage first (always works)
-  g.players[pid] = {name:name, role:g.roles[rndx]};
+  g.players[pid] = {name:name, role:assignedRole};
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
   localStorage.setItem("gid-shared", g.id);
@@ -601,7 +650,7 @@ function joinGame(gid) {
       player_id: pid,
       game_id: g.id,
       name: name,
-      role: g.roles[rndx]
+      role: assignedRole
     }).then(function(response) {
       console.log("Supabase insert response:", response);
       if(response.error) {
