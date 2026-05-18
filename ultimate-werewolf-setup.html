@@ -751,13 +751,17 @@ function joinGame(gid) {
         "apikey": SUPABASE_KEY
       },
       body: JSON.stringify({
+        id: Date.now(),
         game_id: g.id,
         player_id: pid,
-        player_name: name,
-        role: assignedRole,
-        created_at: new Date().toISOString()
+        name: name,
+        role: assignedRole
       })
-    }).then(r => r.json()).then(result => console.log("Supabase sync:", result)).catch(err => console.log("Supabase sync skipped (table may not exist)"));
+    }).then(r => r.json()).then(result => {
+      console.log("✅ Supabase player created:", result);
+    }).catch(err => {
+      console.log("⚠️ Supabase sync error:", err);
+    });
     
     console.log("✅ Player joined! " + name + " as " + assignedRole);
     showPlayerView();
