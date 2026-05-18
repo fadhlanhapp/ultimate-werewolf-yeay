@@ -182,6 +182,8 @@ var gameState = null;
 var playersSubscription = null;
 var autoRefreshTimer = null;
 var isModeratorView = false;
+var broadcastChannel = null;
+var broadcastedRoles = {}; // Track roles announced by other windows
 
 function encodeGameState(gs) {
   var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
@@ -535,6 +537,9 @@ function endGame() {
         autoRefreshTimer = null;
       }
       
+      // Close broadcast channel
+      closeBroadcastChannel();
+      
       // Delete from Supabase (async, no await)
       if(supabase) {
         supabase.from('games').delete().eq('id', gameState.id).catch(function(error) {
@@ -571,6 +576,20 @@ function shareLink() {
 function showPlayerView() {
   var params = new URLSearchParams(window.location.search);
   var gid = params.get("g") || params.get("game");
+  
+  // Open broadcast channel if game ID is available
+  var gameId = null;
+  if(gid && params.get("g")) {
+    var decoded = decodeGameState(gid);
+    if(decoded) gameId = decoded.id;
+  } else if(gid && params.get("game")) {
+    gameId = gid;
+  }
+  
+  if(gameId) {
+    openBroadcastChannel(gameId);
+  }
+  
   var html = "";
   if(!gid) {
     html = "<p style='color:#888;'>Ask moderator for game link</p>";
@@ -691,15 +710,22 @@ function joinGame(gid) {
   if(!g) { alert("Game link invalid"); return; }
   
   // STEP 3: Assign a role - find first unassigned one
+  // Check both localStorage players AND broadcasted roles from other windows
   var assignedRole = null;
   var assignedRoles = {};
   
-  // Build map of assigned roles
+  // Build map of assigned roles from localStorage
   for(var pid in g.players) {
     if(g.players[pid] && g.players[pid].role) {
       assignedRoles[g.players[pid].role] = true;
       console.log("✓ " + g.players[pid].name + " has " + g.players[pid].role);
     }
+  }
+  
+  // ALSO check broadcasted roles from other windows
+  for(var role in broadcastedRoles) {
+    assignedRoles[role] = true;
+    console.log("📡 Broadcasted: " + broadcastedRoles[role] + " has " + role);
   }
   
   // Find first unassigned role
@@ -731,8 +757,81 @@ function joinGame(gid) {
   console.log("✅ Player joined! " + name + " as " + assignedRole);
   console.log("Game now has " + Object.keys(g.players).length + " players");
   
-  // STEP 6: Show the role card immediately
+  // STEP 6: Broadcast this role assignment to other windows
+  if(g.id) {
+    openBroadcastChannel(g.id);
+    broadcastRoleAssignment(pid, assignedRole, name, g.id);
+  }
+  
+  console.log("✅ Player joined! " + name + " as " + assignedRole);
+  console.log("Game now has " + Object.keys(g.players).length + " players");
+  
+  // STEP 7: Show the role card immediately
   showPlayerView();
+}
+
+// Open/manage broadcast channel for cross-window sync
+function openBroadcastChannel(gameId) {
+  if(!gameId || broadcastChannel) return; // Already open
+  
+  try {
+    broadcastChannel = new BroadcastChannel("werewolf-game-" + gameId);
+    
+    broadcastChannel.onmessage = function(event) {
+      console.log("📡 Broadcast received:", event.data);
+      
+      if(event.data.type === "role-taken") {
+        // Track that this role was taken by another window
+        broadcastedRoles[event.data.role] = event.data.playerName;
+        console.log("Role taken in another window: " + event.data.role + " by " + event.data.playerName);
+        
+        // If we're on the join screen, update localStorage immediately
+        if(!localStorage.getItem("pid-shared")) {
+          var gameKey = "game-" + gameId;
+          var stored = localStorage.getItem(gameKey);
+          if(stored) {
+            var g = JSON.parse(stored);
+            if(!g.players[event.data.playerId]) {
+              g.players[event.data.playerId] = {name: event.data.playerName, role: event.data.role};
+              localStorage.setItem(gameKey, JSON.stringify(g));
+              localStorage.setItem("game-shared", JSON.stringify(g));
+              console.log("Updated localStorage with new player from broadcast");
+            }
+          }
+        }
+      }
+    };
+    
+    console.log("✓ Broadcast channel opened for game: " + gameId);
+  } catch(err) {
+    console.log("BroadcastChannel not supported or disabled:", err);
+  }
+}
+
+function broadcastRoleAssignment(playerId, role, playerName, gameId) {
+  if(!broadcastChannel) {
+    openBroadcastChannel(gameId);
+  }
+  
+  if(broadcastChannel) {
+    broadcastChannel.postMessage({
+      type: "role-taken",
+      playerId: playerId,
+      playerName: playerName,
+      role: role,
+      timestamp: Date.now()
+    });
+    console.log("📡 Broadcasted: " + playerName + " took " + role);
+  }
+}
+
+function closeBroadcastChannel() {
+  if(broadcastChannel) {
+    broadcastChannel.close();
+    broadcastChannel = null;
+    broadcastedRoles = {};
+    console.log("Broadcast channel closed");
+  }
 }
 
 
@@ -740,6 +839,7 @@ function leaveGame(gid) {
   localStorage.removeItem("pid-shared");
   localStorage.removeItem("game-shared");
   localStorage.removeItem("gid-shared");
+  closeBroadcastChannel();
   showPlayerView();
 }
 
