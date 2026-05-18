@@ -689,30 +689,48 @@ function joinGame(gid) {
   
   if(!g) { alert("Game link invalid"); return; }
   
-  // 🔧 READ GAME-SHARED (with delay to allow cross-window storage sync)
-  setTimeout(function() {
-    var latest = localStorage.getItem("game-shared");
-    if(latest) {
-      try {
-        var latestG = JSON.parse(latest);
-        // Merge: keep current players from game-shared, update roles array
-        if(latestG && latestG.players) {
-          latestG.roles = g.roles; // Keep roles array from URL
-          latestG.id = g.id; // Ensure ID matches
-          g = latestG;
-          console.log("✓ Re-synced: Found " + Object.keys(g.players).length + " players in game-shared");
+  // 🔧 QUERY SUPABASE FOR ACTUAL TAKEN ROLES (most reliable)
+  fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + g.id, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "apikey": SUPABASE_KEY
+    }
+  })
+  .then(r => r.json())
+  .then(supPlayers => {
+    console.log("📡 Supabase returned " + supPlayers.length + " existing players");
+    
+    // Build taken roles from Supabase
+    var takenRoles = {};
+    var supabasePlayerCount = 0;
+    if(Array.isArray(supPlayers)) {
+      supPlayers.forEach(p => {
+        if(p.role) {
+          takenRoles[p.role] = true;
+          console.log("✓ Supabase: " + p.name + " has " + p.role);
+          supabasePlayerCount++;
         }
-      } catch(e) {
-        console.log("Could not parse game-shared");
-      }
+      });
     }
     
-    // Build map of taken roles from game state
-    var takenRoles = {};
-    for(var pid_check in g.players) {
-      if(g.players[pid_check] && g.players[pid_check].role) {
-        takenRoles[g.players[pid_check].role] = true;
-        console.log("✓ " + g.players[pid_check].name + " has " + g.players[pid_check].role);
+    // If no players in Supabase, fall back to localStorage
+    if(supabasePlayerCount === 0) {
+      console.log("⚠️  Supabase empty, checking localStorage...");
+      var latest = localStorage.getItem("game-shared");
+      if(latest) {
+        try {
+          var latestG = JSON.parse(latest);
+          if(latestG && latestG.players) {
+            for(var pid_check in latestG.players) {
+              if(latestG.players[pid_check] && latestG.players[pid_check].role) {
+                takenRoles[latestG.players[pid_check].role] = true;
+                console.log("✓ LocalStorage: " + latestG.players[pid_check].name + " has " + latestG.players[pid_check].role);
+              }
+            }
+          }
+        } catch(e) {}
       }
     }
     
@@ -731,18 +749,18 @@ function joinGame(gid) {
       return;
     }
     
-    // Add new player
+    // Add new player to game state
     var pid = "p"+Date.now();
     g.players[pid] = {name:name, role:assignedRole};
     
-    // Save to both localStorage keys (game-shared is source of truth)
+    // Save to localStorage (broadcasts to other windows)
     localStorage.setItem("game-shared", JSON.stringify(g));
     localStorage.setItem("game-" + g.id, JSON.stringify(g));
     localStorage.setItem("pid-shared", pid);
     localStorage.setItem("gid-shared", g.id);
     localStorage.setItem("prev-game-id", g.id);
     
-    // Try to sync with Supabase (optional, for when table exists)
+    // Also save to Supabase (centralized backup)
     fetch(SUPABASE_URL + "/rest/v1/players", {
       method: "POST",
       headers: {
@@ -760,12 +778,59 @@ function joinGame(gid) {
     }).then(r => r.json()).then(result => {
       console.log("✅ Supabase player created:", result);
     }).catch(err => {
-      console.log("⚠️ Supabase sync error:", err);
+      console.log("⚠️  Supabase sync error:", err);
     });
     
     console.log("✅ Player joined! " + name + " as " + assignedRole);
     showPlayerView();
-  }, 300); // 300ms delay to allow storage events + browser sync
+  })
+  .catch(err => {
+    console.log("❌ Supabase query failed, using localStorage fallback");
+    // Fallback: just use localStorage
+    setTimeout(function() {
+      var latest = localStorage.getItem("game-shared");
+      if(latest) {
+        try {
+          var latestG = JSON.parse(latest);
+          if(latestG && latestG.players) {
+            latestG.roles = g.roles;
+            latestG.id = g.id;
+            g = latestG;
+          }
+        } catch(e) {}
+      }
+      
+      var takenRoles = {};
+      for(var pid_check in g.players) {
+        if(g.players[pid_check] && g.players[pid_check].role) {
+          takenRoles[g.players[pid_check].role] = true;
+        }
+      }
+      
+      var assignedRole = null;
+      for(var i = 0; i < g.roles.length; i++) {
+        if(!takenRoles[g.roles[i]]) {
+          assignedRole = g.roles[i];
+          break;
+        }
+      }
+      
+      if(!assignedRole) {
+        alert("Game is full!");
+        return;
+      }
+      
+      var pid = "p"+Date.now();
+      g.players[pid] = {name:name, role:assignedRole};
+      localStorage.setItem("game-shared", JSON.stringify(g));
+      localStorage.setItem("game-" + g.id, JSON.stringify(g));
+      localStorage.setItem("pid-shared", pid);
+      localStorage.setItem("gid-shared", g.id);
+      
+      console.log("✅ Player joined! " + name + " as " + assignedRole);
+      showPlayerView();
+    }, 500);
+  });
 }
 
 // Open/manage broadcast channel for cross-window sync
