@@ -410,17 +410,32 @@ function refreshPlayers() {
   
   console.log("Refreshing players for game:", gameState.id);
   
+  // Helper function to show the updated player list
+  var showUpdatedList = function() {
+    var pool = POOLS[gameState.count];
+    showSetup(pool);
+  };
+  
   if(supabase || SUPABASE_KEY) {
-    // Always fetch fresh data from Supabase (priority)
+    // Try to fetch fresh data from Supabase (priority)
     supabaseSelectPlayers(gameState.id).then(function(response) {
       var data = response.data;
       var error = response.error;
       
       console.log("Supabase fetch response:", {hasData: !!data, error: error, count: data ? data.length : 0});
       
-      if(error || !data) {
-        console.error("Error or no data from Supabase:", error);
-        console.log("Will still show UI, but players may not load");
+      if(error || !data || data.length === 0) {
+        console.log("Supabase returned no players, falling back to localStorage");
+        // Fall back to localStorage if Supabase fails or returns empty
+        var gameKey = "game-"+gameState.id;
+        var stored = localStorage.getItem(gameKey);
+        if(stored) {
+          try {
+            gameState = JSON.parse(stored);
+          } catch(e) {
+            console.error("Failed to parse localStorage:", e);
+          }
+        }
       } else if(Array.isArray(data)) {
         // Rebuild gameState.players from Supabase data
         gameState.players = {};
@@ -434,13 +449,20 @@ function refreshPlayers() {
         localStorage.setItem(gameKey, JSON.stringify(gameState));
       }
       
-      var pool = POOLS[gameState.count];
-      showSetup(pool);
+      showUpdatedList();
     }).catch(function(error) {
-      console.error("Error fetching players:", error);
-      // Still show UI even if fetch fails
-      var pool = POOLS[gameState.count];
-      showSetup(pool);
+      console.error("Error fetching from Supabase:", error);
+      // Fall back to localStorage if Supabase fetch fails
+      var gameKey = "game-"+gameState.id;
+      var stored = localStorage.getItem(gameKey);
+      if(stored) {
+        try {
+          gameState = JSON.parse(stored);
+        } catch(e) {
+          console.error("Failed to parse localStorage:", e);
+        }
+      }
+      showUpdatedList();
     });
   } else {
     console.log("Supabase not available - using localStorage only");
@@ -448,10 +470,13 @@ function refreshPlayers() {
     var gameKey = "game-"+gameState.id;
     var stored = localStorage.getItem(gameKey);
     if(stored) {
-      gameState = JSON.parse(stored);
-      var pool = POOLS[gameState.count];
-      showSetup(pool);
+      try {
+        gameState = JSON.parse(stored);
+      } catch(e) {
+        console.error("Failed to parse localStorage:", e);
+      }
     }
+    showUpdatedList();
   }
 }
 
