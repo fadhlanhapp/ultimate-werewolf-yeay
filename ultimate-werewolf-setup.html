@@ -594,6 +594,17 @@ function showPlayerView() {
       var stored = localStorage.getItem("game-shared");
       if(stored) { g = JSON.parse(stored); }
       var pid = localStorage.getItem("pid-shared");
+      
+      // FRESH GAME CHECK: If player was in a different game, show join form again
+      var prevGameId = localStorage.getItem("prev-game-id");
+      if(pid && prevGameId && prevGameId !== gid) {
+        // Different game detected - clear old session for fresh start
+        console.log("Player switching games: " + prevGameId + " -> " + gid);
+        pid = null; // Force them to rejoin as fresh player
+        localStorage.removeItem("pid-shared");
+        localStorage.removeItem("game-shared");
+      }
+      
       if(!pid || !g.players[pid]) {
         html = "<input type='text' class='player-name-input' id='pname' placeholder='Your name'>";
         html += "<button class='action-btn action-btn-green' onclick='joinGame(\""+gid+"\")'>Join Game</button>";
@@ -623,6 +634,16 @@ function joinGame(gid) {
   var g = null;
   var params = new URLSearchParams(window.location.search);
   
+  // FRESH GAME CHECK: If joining a different game, clear old player data
+  var prevGameId = localStorage.getItem("prev-game-id");
+  if(prevGameId && prevGameId !== gid) {
+    // Different game detected - clear old session data for fresh start
+    console.log("New game detected. Clearing old session: " + prevGameId + " -> " + gid);
+    localStorage.removeItem("game-shared");
+    localStorage.removeItem("pid-shared");
+    // Keep "game-gid" entries as they're game-specific
+  }
+  
   // FIX: First try to get the CURRENT game state from localStorage
   // This ensures we see all players who have already joined
   var gameKey = "game-" + gid;
@@ -638,10 +659,17 @@ function joinGame(gid) {
     if(params.get("g")) {
       g = decodeGameState(gid);
     } else {
+      // Only use game-shared if it's the SAME game ID
       var sharedGame = localStorage.getItem("game-shared");
+      var sharedGameId = null;
       if(sharedGame) {
         try {
-          g = JSON.parse(sharedGame);
+          var parsedShared = JSON.parse(sharedGame);
+          sharedGameId = parsedShared.id;
+          // Only use it if game ID matches
+          if(sharedGameId === gid) {
+            g = parsedShared;
+          }
         } catch(e) {}
       }
     }
@@ -681,12 +709,41 @@ function joinGame(gid) {
   
   // Save to localStorage with current game key so next player gets updated state
   g.players[pid] = {name:name, role:assignedRole};
+  
+  // SANITY CHECK 1: Verify player got added correctly
+  if(!g.players[pid] || !g.players[pid].role) {
+    alert("ERROR: Failed to assign role. Try again.");
+    return;
+  }
+  
   localStorage.setItem(gameKey, JSON.stringify(g));
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
   localStorage.setItem("gid-shared", g.id);
-  var gameKey = "game-"+g.id;
-  localStorage.setItem(gameKey, JSON.stringify(g));
+  localStorage.setItem("prev-game-id", g.id); // Track current game for future joins
+  
+  // SANITY CHECK 2: Verify localStorage saved correctly
+  var verifyGame = localStorage.getItem(gameKey);
+  var verifyPid = localStorage.getItem("pid-shared");
+  if(!verifyGame || !verifyPid) {
+    console.error("SANITY CHECK FAILED: localStorage save failed");
+    return;
+  }
+  
+  var savedGame = JSON.parse(verifyGame);
+  if(!savedGame.players[pid] || savedGame.players[pid].role !== assignedRole) {
+    console.error("SANITY CHECK FAILED: Player data mismatch");
+    return;
+  }
+  
+  console.log("✅ SANITY CHECKS PASSED - Player joined:", {
+    player_id: pid,
+    name: name,
+    role: assignedRole,
+    game_id: g.id,
+    total_players: Object.keys(g.players).length,
+    game_size: g.count
+  });
   
   // Try to save to Supabase if available
   if(supabase || SUPABASE_KEY) {
