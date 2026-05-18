@@ -1,0 +1,27 @@
+# Personal/Private Files
+*.pdf
+*.PNG
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Dependencies
+node_modules/
+venv/
+.env
+.env.local
