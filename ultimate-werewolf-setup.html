@@ -666,108 +666,102 @@ function joinGame(gid) {
   var name = document.getElementById("pname").value.trim();
   if(!name) { alert("Enter your name"); return; }
   
-  // STEP 1: Get the current game state
+  // Get game state from URL
   var g = null;
   var params = new URLSearchParams(window.location.search);
   
-  // Try to get game from URL (?g=base64 parameter)
   if(params.get("g")) {
     g = decodeGameState(gid);
     if(!g) { alert("Game link invalid"); return; }
-  } else if(params.get("game")) {
-    // Try to get from localStorage for ?game= links
-    var gameKey = "game-"+gid;
-    var stored = localStorage.getItem(gameKey);
-    if(stored) { 
-      g = JSON.parse(stored); 
-    } else {
-      alert("Game link invalid"); 
-      return; 
-    }
   } else {
     alert("No game link provided");
     return;
   }
   
-  // STEP 2: Try to get the CURRENT game state from localStorage
-  // This has all players who have already joined
-  if(g && g.id) {
-    var latestKey = "game-" + g.id;
-    var latest = localStorage.getItem(latestKey);
-    if(latest) {
-      try {
-        var latestG = JSON.parse(latest);
-        // Merge: keep current players from localStorage, update roles array
-        latestG.roles = g.roles; // Keep the roles array from URL
-        g = latestG;
-        console.log("Using updated game state from localStorage with " + Object.keys(g.players).length + " players");
-      } catch(e) {
-        console.log("Could not parse localStorage game state, using URL state");
-      }
-    }
-  }
-  
   if(!g) { alert("Game link invalid"); return; }
   
-  // STEP 3: Assign a role - find first unassigned one
-  // Check both localStorage players AND broadcasted roles from other windows
-  var assignedRole = null;
-  var assignedRoles = {};
-  
-  // Build map of assigned roles from localStorage
-  for(var pid in g.players) {
-    if(g.players[pid] && g.players[pid].role) {
-      assignedRoles[g.players[pid].role] = true;
-      console.log("✓ " + g.players[pid].name + " has " + g.players[pid].role);
-    }
-  }
-  
-  // ALSO check broadcasted roles from other windows
-  for(var role in broadcastedRoles) {
-    assignedRoles[role] = true;
-    console.log("📡 Broadcasted: " + broadcastedRoles[role] + " has " + role);
-  }
-  
-  // Find first unassigned role
-  for(var i = 0; i < g.roles.length; i++) {
-    if(!assignedRoles[g.roles[i]]) {
-      assignedRole = g.roles[i];
-      console.log("→ Assigning role " + i + ": " + assignedRole);
-      break;
-    }
-  }
-  
-  if(!assignedRole) {
-    alert("Game is full! All roles have been assigned.");
-    return;
-  }
-  
-  // STEP 4: Create player entry with unique ID
+  // 🔧 SUPABASE-BASED ROLE ASSIGNMENT (prevents duplication via centralized DB)
   var pid = "p"+Date.now();
-  g.players[pid] = {name:name, role:assignedRole};
   
-  // STEP 5: Save to localStorage
-  var gameKey = "game-" + g.id;
-  localStorage.setItem(gameKey, JSON.stringify(g));
-  localStorage.setItem("game-shared", JSON.stringify(g));
-  localStorage.setItem("pid-shared", pid);
-  localStorage.setItem("gid-shared", g.id);
-  localStorage.setItem("prev-game-id", g.id);
-  
-  console.log("✅ Player joined! " + name + " as " + assignedRole);
-  console.log("Game now has " + Object.keys(g.players).length + " players");
-  
-  // STEP 6: Broadcast this role assignment to other windows
-  if(g.id) {
-    openBroadcastChannel(g.id);
-    broadcastRoleAssignment(pid, assignedRole, name, g.id);
-  }
-  
-  console.log("✅ Player joined! " + name + " as " + assignedRole);
-  console.log("Game now has " + Object.keys(g.players).length + " players");
-  
-  // STEP 7: Show the role card immediately
-  showPlayerView();
+  // Query Supabase for existing players in this game
+  fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + g.id, {
+    headers: {
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "apikey": SUPABASE_KEY,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(r => r.json())
+  .then(function(players) {
+    console.log("📊 Existing players in game:", players || []);
+    
+    // Build map of taken roles from Supabase
+    var takenRoles = {};
+    if(players && Array.isArray(players)) {
+      players.forEach(function(p) {
+        if(p.role) {
+          takenRoles[p.role] = true;
+          console.log("✓ " + p.player_name + " has " + p.role);
+        }
+      });
+    }
+    
+    // Find first unassigned role
+    var assignedRole = null;
+    for(var i = 0; i < g.roles.length; i++) {
+      if(!takenRoles[g.roles[i]]) {
+        assignedRole = g.roles[i];
+        console.log("→ Assigning role " + i + ": " + assignedRole);
+        break;
+      }
+    }
+    
+    if(!assignedRole) {
+      alert("Game is full! All roles have been assigned.");
+      return;
+    }
+    
+    // Insert player record into Supabase
+    fetch(SUPABASE_URL + "/rest/v1/players", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey": SUPABASE_KEY
+      },
+      body: JSON.stringify({
+        game_id: g.id,
+        player_id: pid,
+        player_name: name,
+        role: assignedRole,
+        created_at: new Date().toISOString()
+      })
+    })
+    .then(r => r.json())
+    .then(function(result) {
+      console.log("✅ Inserted player to Supabase:", result);
+      
+      // Save to localStorage for UI
+      g.players[pid] = {name:name, role:assignedRole};
+      var gameKey = "game-" + g.id;
+      localStorage.setItem(gameKey, JSON.stringify(g));
+      localStorage.setItem("game-shared", JSON.stringify(g));
+      localStorage.setItem("pid-shared", pid);
+      localStorage.setItem("gid-shared", g.id);
+      localStorage.setItem("prev-game-id", g.id);
+      
+      console.log("✅ Player joined! " + name + " as " + assignedRole);
+      showPlayerView();
+    })
+    .catch(function(err) {
+      console.error("❌ Failed to insert player:", err);
+      alert("Error: Could not save your role. Please refresh and try again.");
+    });
+  })
+  .catch(function(err) {
+    console.error("❌ Failed to fetch existing players:", err);
+    alert("Error: Could not check existing roles. Please refresh and try again.");
+  });
 }
 
 // Open/manage broadcast channel for cross-window sync
