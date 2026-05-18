@@ -700,39 +700,19 @@ function joinGame(gid) {
   })
   .then(r => r.json())
   .then(supPlayers => {
-    console.log("📡 Supabase returned " + supPlayers.length + " existing players");
+    console.log("📡 Supabase returned " + (Array.isArray(supPlayers) ? supPlayers.length : 0) + " existing players");
     
-    // Build taken roles from Supabase
+    // Build taken roles ONLY from Supabase (trust it as source of truth)
     var takenRoles = {};
-    var supabasePlayerCount = 0;
     if(Array.isArray(supPlayers)) {
       supPlayers.forEach(p => {
         if(p.role) {
           takenRoles[p.role] = true;
           console.log("✓ Supabase: " + p.name + " has " + p.role);
-          supabasePlayerCount++;
         }
       });
     }
-    
-    // If no players in Supabase, fall back to localStorage
-    if(supabasePlayerCount === 0) {
-      console.log("⚠️  Supabase empty, checking localStorage...");
-      var latest = localStorage.getItem("game-shared");
-      if(latest) {
-        try {
-          var latestG = JSON.parse(latest);
-          if(latestG && latestG.players) {
-            for(var pid_check in latestG.players) {
-              if(latestG.players[pid_check] && latestG.players[pid_check].role) {
-                takenRoles[latestG.players[pid_check].role] = true;
-                console.log("✓ LocalStorage: " + latestG.players[pid_check].name + " has " + latestG.players[pid_check].role);
-              }
-            }
-          }
-        } catch(e) {}
-      }
-    }
+    // If Supabase is empty, takenRoles is empty = all roles available (don't check localStorage)
     
     // Find first unassigned role
     var assignedRole = null;
