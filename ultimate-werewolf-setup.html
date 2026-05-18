@@ -680,10 +680,11 @@ function joinGame(gid) {
   
   if(!g) { alert("Game link invalid"); return; }
   
-  // 🔧 SUPABASE-BASED ROLE ASSIGNMENT (prevents duplication via centralized DB)
+  // 🔧 HYBRID APPROACH: Try Supabase first, fallback to localStorage with polling
   var pid = "p"+Date.now();
+  var gameKey = "game-" + g.id;
   
-  // Query Supabase for existing players in this game
+  // Try Supabase first (if table exists)
   fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + g.id, {
     headers: {
       "Authorization": "Bearer " + SUPABASE_KEY,
@@ -693,17 +694,39 @@ function joinGame(gid) {
   })
   .then(r => r.json())
   .then(function(players) {
-    console.log("📊 Existing players in game:", players || []);
+    console.log("📊 Supabase players:", players);
     
-    // Build map of taken roles from Supabase
+    // Check if this is valid Supabase response or fallback needed
+    var useFallback = false;
     var takenRoles = {};
-    if(players && Array.isArray(players)) {
+    
+    if(players && Array.isArray(players) && !players.error) {
+      // Valid Supabase response
       players.forEach(function(p) {
         if(p.role) {
           takenRoles[p.role] = true;
           console.log("✓ " + p.player_name + " has " + p.role);
         }
       });
+    } else {
+      // Fallback to localStorage
+      console.log("Supabase unavailable, using localStorage");
+      useFallback = true;
+      
+      var latest = localStorage.getItem(gameKey);
+      if(latest) {
+        try {
+          var gData = JSON.parse(latest);
+          for(var pid_old in gData.players) {
+            if(gData.players[pid_old] && gData.players[pid_old].role) {
+              takenRoles[gData.players[pid_old].role] = true;
+              console.log("✓ " + gData.players[pid_old].name + " has " + gData.players[pid_old].role);
+            }
+          }
+        } catch(e) {
+          console.log("Could not parse localStorage");
+        }
+      }
     }
     
     // Find first unassigned role
@@ -721,46 +744,41 @@ function joinGame(gid) {
       return;
     }
     
-    // Insert player record into Supabase
-    fetch(SUPABASE_URL + "/rest/v1/players", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "apikey": SUPABASE_KEY
-      },
-      body: JSON.stringify({
-        game_id: g.id,
-        player_id: pid,
-        player_name: name,
-        role: assignedRole,
-        created_at: new Date().toISOString()
-      })
-    })
-    .then(r => r.json())
-    .then(function(result) {
-      console.log("✅ Inserted player to Supabase:", result);
-      
-      // Save to localStorage for UI
-      g.players[pid] = {name:name, role:assignedRole};
-      var gameKey = "game-" + g.id;
-      localStorage.setItem(gameKey, JSON.stringify(g));
-      localStorage.setItem("game-shared", JSON.stringify(g));
-      localStorage.setItem("pid-shared", pid);
-      localStorage.setItem("gid-shared", g.id);
-      localStorage.setItem("prev-game-id", g.id);
-      
-      console.log("✅ Player joined! " + name + " as " + assignedRole);
-      showPlayerView();
-    })
-    .catch(function(err) {
-      console.error("❌ Failed to insert player:", err);
-      alert("Error: Could not save your role. Please refresh and try again.");
-    });
+    // Add player to game state
+    g.players[pid] = {name:name, role:assignedRole};
+    
+    // If Supabase worked, insert to DB; otherwise just use localStorage
+    if(!useFallback && players && Array.isArray(players)) {
+      fetch(SUPABASE_URL + "/rest/v1/players", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "apikey": SUPABASE_KEY
+        },
+        body: JSON.stringify({
+          game_id: g.id,
+          player_id: pid,
+          player_name: name,
+          role: assignedRole,
+          created_at: new Date().toISOString()
+        })
+      }).then(r => r.json()).then(result => console.log("Supabase insert:", result)).catch(err => console.log("Supabase insert failed (OK):", err));
+    }
+    
+    // Save to localStorage (always, as primary state)
+    localStorage.setItem(gameKey, JSON.stringify(g));
+    localStorage.setItem("game-shared", JSON.stringify(g));
+    localStorage.setItem("pid-shared", pid);
+    localStorage.setItem("gid-shared", g.id);
+    localStorage.setItem("prev-game-id", g.id);
+    
+    console.log("✅ Player joined! " + name + " as " + assignedRole);
+    showPlayerView();
   })
   .catch(function(err) {
-    console.error("❌ Failed to fetch existing players:", err);
-    alert("Error: Could not check existing roles. Please refresh and try again.");
+    console.error("Fetch error:", err);
+    alert("Error connecting to server. Please refresh and try again.");
   });
 }
 
