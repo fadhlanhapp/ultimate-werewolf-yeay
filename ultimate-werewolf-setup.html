@@ -748,11 +748,16 @@ function joinGame(gid) {
   
   var pid = "p"+Date.now();
   
+  console.log("DEBUG: Created player ID:", pid, "Type:", typeof pid, "Length:", pid.length);
+  
   // This is a player joining, not moderator
   isModeratorView = false;
   
   // Save to localStorage with current game key so next player gets updated state
   g.players[pid] = {name:name, role:assignedRole};
+  
+  console.log("DEBUG: Added player to game. g.players keys:", Object.keys(g.players));
+  console.log("DEBUG: Player entry:", g.players[pid]);
   
   // SANITY CHECK 1: Verify player got added correctly
   if(!g.players[pid] || !g.players[pid].role) {
@@ -762,16 +767,28 @@ function joinGame(gid) {
   
   // Use actual game ID for consistent storage key
   var gameKey = "game-" + (g.id || actualGameId);
-  localStorage.setItem(gameKey, JSON.stringify(g));
+  
+  console.log("DEBUG: Before storing - g.players keys:", Object.keys(g.players));
+  console.log("DEBUG: About to store with key:", gameKey);
+  
+  var gameJSON = JSON.stringify(g);
+  console.log("DEBUG: JSON size:", gameJSON.length, "First 200 chars:", gameJSON.substring(0, 200));
+  
+  localStorage.setItem(gameKey, gameJSON);
   localStorage.setItem("game-shared", JSON.stringify(g));
   localStorage.setItem("pid-shared", pid);
   localStorage.setItem("gid-shared", g.id || actualGameId);
-  localStorage.setItem("prev-game-id", g.id || actualGameId); // Track current game for future joins
+  localStorage.setItem("prev-game-id", g.id || actualGameId);
   
-  // DEBUG: Verify what was stored
-  console.log("STORAGE DEBUG - Saving with key:", gameKey);
-  console.log("Game ID:", g.id, "Actual ID:", actualGameId);
-  console.log("All players in game:", Object.keys(g.players).length);
+  // Verify what was actually stored
+  var stored = localStorage.getItem(gameKey);
+  var storedShared = localStorage.getItem("game-shared");
+  var storedParsed = JSON.parse(stored);
+  var storedSharedParsed = JSON.parse(storedShared);
+  
+  console.log("DEBUG: After storing - gameKey players:", Object.keys(storedParsed.players));
+  console.log("DEBUG: After storing - game-shared players:", Object.keys(storedSharedParsed.players));
+  console.log("DEBUG: Mismatch?", Object.keys(storedParsed.players)[0] !== Object.keys(storedSharedParsed.players)[0] ? "YES!" : "No");
   
   // SANITY CHECK 2: Verify localStorage saved correctly
   var verifyGame = localStorage.getItem(gameKey);
