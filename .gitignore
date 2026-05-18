@@ -34,6 +34,10 @@ resume*
 *.doc
 *.docx
 *.pptx
+*.ppt
+Feature_Testing*
+generate_*.py
+*_Presentation.md
 
 # OS files
 .DS_Store
