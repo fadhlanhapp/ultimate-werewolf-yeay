@@ -360,7 +360,13 @@ function showSetup(pool) {
   for(var i = 0; i < gameState.roles.length; i++) {
     var rk = gameState.roles[i];
     var r = ROLES[rk];
-    html += "<div class='role-row'><div class='role-row-emoji'>"+r.e+"</div><div class='tag tag-"+r.t+"'>"+r.t.toUpperCase().substr(0,3)+"</div><div class='role-name'>"+r.n+"</div><div class='role-desc'>"+r.d+"</div></div>";
+    html += "<div style='border:1px solid #ddd;border-radius:6px;padding:12px;margin-bottom:12px;'>";
+    html += "<div style='display:flex;gap:12px;margin-bottom:8px;'><div style='font-size:28px;min-width:40px;text-align:center;'>"+r.e+"</div>";
+    html += "<div><div class='tag tag-"+r.t+"'>"+r.t.toUpperCase().substr(0,3)+"</div>";
+    html += "<div class='role-name' style='margin-bottom:4px;'>"+r.n+"</div>";
+    html += "<div class='role-desc' style='font-weight:bold;margin-bottom:6px;'>"+r.d+"</div></div></div>";
+    html += "<div style='font-size:12px;line-height:1.6;color:#333;margin-left:52px;'>"+r.ld+"</div>";
+    html += "</div>";
   }
   
   var nightRoles = [];
