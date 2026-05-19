@@ -265,10 +265,19 @@ function rerollGameRoles() {
   var pool = randomizeRoles(evilCount, villageCount, neutralCount);
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
   
-  // IMPROVEMENT 4: Add extra Villager roles for bluffing (keeps balance stable)
+  // IMPROVEMENT 4: Add extra roles for bluffing (only evil/neutral, not villagers to maintain balance)
   var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3));
+  var evilAndNeutralRoles = [];
+  for(var i = 0; i < roles.length; i++) {
+    if(ROLES[roles[i]].t !== 'village') {
+      evilAndNeutralRoles.push(roles[i]);
+    }
+  }
   for(var i = 0; i < extraRoleCount; i++) {
-    roles.push("villager"); // Add Villager (weight +1) for minimal balance impact
+    if(evilAndNeutralRoles.length > 0) {
+      var randomRoleKey = evilAndNeutralRoles[Math.floor(Math.random() * evilAndNeutralRoles.length)];
+      roles.push(randomRoleKey);
+    }
   }
   
   var balance = 0;
@@ -300,10 +309,19 @@ function setupGame(count) {
   var pool = JSON.parse(JSON.stringify(POOLS[count]));
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
   
-  // IMPROVEMENT 4: Add extra Villager roles for bluffing (more roles than players)
+  // IMPROVEMENT 4: Add extra roles for bluffing (only evil/neutral to maintain balance)
   var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3)); // Add 30% more roles
+  var evilAndNeutralRoles = [];
+  for(var i = 0; i < roles.length; i++) {
+    if(ROLES[roles[i]].t !== 'village') {
+      evilAndNeutralRoles.push(roles[i]);
+    }
+  }
   for(var i = 0; i < extraRoleCount; i++) {
-    roles.push("villager"); // Add Villager (weight +1) for minimal balance impact
+    if(evilAndNeutralRoles.length > 0) {
+      var randomRoleKey = evilAndNeutralRoles[Math.floor(Math.random() * evilAndNeutralRoles.length)];
+      roles.push(randomRoleKey);
+    }
   }
   
   var balance = 0;
