@@ -87,6 +87,20 @@
     .player-tile-kill:hover { background: #c0392b; color: #fff; }
     .player-tile-revive { background: #efe; border: 1px solid #27ae60; color: #27ae60; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer; margin-left: auto; }
 
+    .rip-entry { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; cursor: pointer; background: #fafafa; transition: background 0.15s; }
+    .rip-entry:hover { background: #f0f0f5; }
+    .rip-entry.rip-evil { border-left: 4px solid #c0392b; }
+    .rip-entry.rip-village { border-left: 4px solid #27ae60; }
+    .rip-entry.rip-neutral { border-left: 4px solid #8e44ad; }
+    .rip-entry.rip-vampire { border-left: 4px solid #8e0000; }
+    .rip-head { display: flex; gap: 10px; align-items: center; }
+    .rip-emoji { font-size: 26px; min-width: 34px; text-align: center; }
+    .rip-name { font-weight: bold; font-size: 14px; color: #1a1a1a; }
+    .rip-short { font-size: 12px; color: #555; margin-top: 2px; }
+    .rip-caret { color: #999; transition: transform 0.2s; margin-left: 8px; }
+    .rip-entry.open .rip-caret { transform: rotate(180deg); }
+    .rip-long { font-size: 12px; color: #444; line-height: 1.6; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd; display: none; }
+    .rip-entry.open .rip-long { display: block; }
     .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px;
       padding: 40px 30px; margin: 20px 0; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
       animation: slideUp 0.6s ease; }
@@ -1108,8 +1122,16 @@ async function renderPlayer() {
   html += "<div class='long-desc'>" + role.ld + "</div>";
   html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:14px;' id='leaveBtn'>🚪 Leave Game</button>";
   html += "</div>";
+
+  // Full list of roles in play — grouped by team, so players know what's possible.
+  html += renderRolesInPlay(g.roles);
+
   view.innerHTML = html;
   document.getElementById("leaveBtn").onclick = function () { leaveGameFromPlayer(gid); };
+  // Attach expand/collapse handlers for role entries
+  document.querySelectorAll(".rip-entry").forEach(function (el) {
+    el.onclick = function () { el.classList.toggle("open"); };
+  });
 
   // Poll every 5s so a moderator reroll updates the player's card automatically.
   if (playerPollTimer) clearTimeout(playerPollTimer);
@@ -1130,6 +1152,56 @@ async function renderPlayer() {
   }, 5000);
 }
 var playerPollTimer = null;
+
+// Render a grouped, collapsible list of all roles in this game (spoiler-free about who has what).
+function renderRolesInPlay(roles) {
+  var groups = {evil: [], village: [], vampire: [], neutral: []};
+  var counts = {};
+  for (var i = 0; i < roles.length; i++) counts[roles[i]] = (counts[roles[i]] || 0) + 1;
+  var seen = {};
+  for (var i = 0; i < roles.length; i++) {
+    var k = roles[i];
+    if (seen[k]) continue;
+    seen[k] = 1;
+    var r = ROLES[k]; if (!r) continue;
+    (groups[r.t] || groups.neutral).push({key: k, role: r, count: counts[k]});
+  }
+
+  var teamOrder = [
+    {key: "village", label: "🟢 Village", cls: "village"},
+    {key: "evil",    label: "🔴 Evil",    cls: "evil"},
+    {key: "vampire", label: "🩸 Vampire", cls: "vampire"},
+    {key: "neutral", label: "🟣 Neutral", cls: "neutral"}
+  ];
+
+  var html = "<div class='card' style='margin-top:16px;'>";
+  html += "<h3 style='margin-bottom:6px;'>🎭 Roles in this game (" + roles.length + " total)</h3>";
+  html += "<p style='font-size:12px;color:#666;margin-bottom:12px;'>Every role that was dealt. You don't know who has what — tap any card to read the full strategy.</p>";
+
+  for (var t = 0; t < teamOrder.length; t++) {
+    var team = teamOrder[t];
+    var list = groups[team.key];
+    if (!list || list.length === 0) continue;
+    html += "<h4 style='margin:14px 0 8px;color:#333;'>" + team.label + " <span style='color:#888;font-weight:normal;font-size:12px;'>(" + list.length + ")</span></h4>";
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      var badge = e.count > 1 ? " <span style='background:#333;color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:6px;'>×" + e.count + "</span>" : "";
+      html += "<div class='rip-entry rip-" + team.cls + "'>";
+      html += "<div class='rip-head'>";
+      html += "<span class='rip-emoji'>" + e.role.e + "</span>";
+      html += "<div style='flex:1;'>";
+      html += "<div class='rip-name'>" + e.role.n + badge + "</div>";
+      html += "<div class='rip-short'>" + e.role.d + "</div>";
+      html += "</div>";
+      html += "<span class='rip-caret'>▾</span>";
+      html += "</div>";
+      html += "<div class='rip-long'>" + e.role.ld + "</div>";
+      html += "</div>";
+    }
+  }
+  html += "</div>";
+  return html;
+}
 
 // ============================================================
 // TAB SWITCHING
