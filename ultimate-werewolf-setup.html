@@ -87,6 +87,20 @@
     .player-tile-kill:hover { background: #c0392b; color: #fff; }
     .player-tile-revive { background: #efe; border: 1px solid #27ae60; color: #27ae60; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer; margin-left: auto; }
 
+    .swap-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; animation: fadeIn 0.15s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .swap-modal { background: #fff; color: #1a1a1a; border-radius: 12px; max-width: 560px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.2s ease; margin-bottom: 40px; }
+    .swap-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
+    .swap-header button { background: transparent; border: none; font-size: 26px; color: #888; cursor: pointer; line-height: 1; padding: 0 6px; }
+    .swap-header button:hover { color: #c0392b; }
+    .swap-body { padding: 20px; }
+    .swap-footer { display: flex; gap: 8px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid #eee; background: #fafafa; border-radius: 0 0 12px 12px; }
+    .swap-summary { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 12px; background: #f5f5f0; border-radius: 8px; }
+    .swap-side { flex: 1; min-width: 0; }
+    .swap-lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .swap-role { font-size: 14px; margin-top: 2px; }
+    .swap-arrow { font-size: 22px; color: #667eea; padding: 0 6px; }
+    .swap-preview-card { background: #fafafa; border-left: 4px solid #667eea; padding: 14px; margin-top: 12px; border-radius: 6px; }
     .rip-entry { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; cursor: pointer; background: #fafafa; transition: background 0.15s; }
     .rip-entry:hover { background: #f0f0f5; }
     .rip-entry.rip-evil { border-left: 4px solid #c0392b; }
@@ -858,10 +872,6 @@ function renderModLobby() {
     // Full-width, bold Change button below the description so it can't be missed
     html += "<button class='action-btn' style='margin-top:10px;width:100%;background:#667eea;color:#fff;border-color:#667eea;font-size:13px;' data-swap-index='" + k + "'>🔄 Change This Role</button>";
     html += "</div>";
-    // If this row is being swapped, render the inline swap panel underneath
-    if (g.changing && g.changing.index === k) {
-      html += renderRoleSwapPanel(g.changing, k, rr);
-    }
   }
   html += "</div>";
 
@@ -913,17 +923,69 @@ function attachModLobbyHandlers() {
   document.querySelectorAll("[data-swap-index]").forEach(function (b) {
     b.onclick = function (ev) { ev.stopPropagation(); openRoleChanger(+b.getAttribute("data-swap-index")); };
   });
-  // Swap-panel controls
-  var sel = document.getElementById("swapRoleSelect");
-  if (sel) sel.onchange = function () { previewReplacementRole(sel.value); };
-  var ap = document.getElementById("swapApplyBtn"); if (ap) ap.onclick = applyRoleChange;
-  var cx = document.getElementById("swapCancelBtn"); if (cx) cx.onclick = cancelRoleChange;
+  // If a swap was in progress (e.g., resume after refresh), re-open the modal.
+  if (gameState.changing && !document.getElementById("swapModalOverlay")) showSwapModal();
 }
 
-// Build the inline "change role" panel for a given row.
-function renderRoleSwapPanel(changing, index, currentRole) {
+function openRoleChanger(index) {
+  if (!gameState) return;
+  if (gameState.phase !== "lobby") { alert("Role changes are only allowed in the lobby (before Start)."); return; }
+  gameState.changing = {index: index, sourceKey: gameState.displayRoles[index], selectedKey: null};
+  saveLocal();
+  showSwapModal();
+}
+
+// Build and inject the modal into <body>. Modal is position:fixed so scrolling
+// the page underneath does NOT dismiss it, and the moderator view can freely
+// re-render without touching the modal.
+function showSwapModal() {
+  hideSwapModal(); // remove any stale one
+  var overlay = document.createElement("div");
+  overlay.id = "swapModalOverlay";
+  overlay.className = "swap-overlay";
+  overlay.innerHTML = renderSwapModalShell();
+  document.body.appendChild(overlay);
+  document.body.style.overflow = "hidden"; // prevent bg scroll
+
+  // Populate the preview area (in-place, no full re-render)
+  renderSwapPreviewInto(document.getElementById("swapPreview"));
+
+  var sel = document.getElementById("swapRoleSelect");
+  if (sel) {
+    sel.onchange = function () {
+      if (!gameState || !gameState.changing) return;
+      gameState.changing.selectedKey = sel.value || null;
+      saveLocal();
+      renderSwapPreviewInto(document.getElementById("swapPreview"));
+      var ap = document.getElementById("swapApplyBtn");
+      if (ap) {
+        ap.disabled = !gameState.changing.selectedKey;
+        ap.style.opacity = gameState.changing.selectedKey ? "1" : "0.5";
+        ap.style.cursor = gameState.changing.selectedKey ? "pointer" : "not-allowed";
+      }
+    };
+  }
+  var ap = document.getElementById("swapApplyBtn"); if (ap) ap.onclick = applyRoleChange;
+  var cx = document.getElementById("swapCancelBtn"); if (cx) cx.onclick = cancelRoleChange;
+  var xb = document.getElementById("swapCloseX");     if (xb) xb.onclick = cancelRoleChange;
+
+  // Click on the backdrop area (outside the modal box) also cancels.
+  overlay.onclick = function (ev) { if (ev.target === overlay) cancelRoleChange(); };
+  // Escape to close
+  document.addEventListener("keydown", swapEscHandler);
+}
+function swapEscHandler(ev) { if (ev.key === "Escape") cancelRoleChange(); }
+function hideSwapModal() {
+  var m = document.getElementById("swapModalOverlay");
+  if (m) m.remove();
+  document.body.style.overflow = "";
+  document.removeEventListener("keydown", swapEscHandler);
+}
+
+function renderSwapModalShell() {
+  var changing = gameState.changing;
+  var currentRole = ROLES[changing.sourceKey];
   var selected = changing.selectedKey || null;
-  var previewRole = selected ? ROLES[selected] : null;
 
   var groups = {village: [], evil: [], vampire: [], neutral: []};
   for (var k in ROLES) {
@@ -933,23 +995,15 @@ function renderRoleSwapPanel(changing, index, currentRole) {
   var teamLabels = {village: "🟢 Village", evil: "🔴 Evil", vampire: "🩸 Vampire", neutral: "🟣 Neutral"};
   var teamOrder = ["village", "evil", "vampire", "neutral"];
 
-  var html = "<div style='background:#fff;border:2px solid #667eea;border-radius:10px;padding:14px;margin:8px 0 12px;'>";
-  html += "<div style='display:flex;align-items:center;gap:10px;margin-bottom:10px;'>";
-  html += "<span style='font-size:22px;'>" + currentRole.e + "</span>";
-  html += "<div><div style='font-size:12px;color:#666;'>Currently:</div>";
-  html += "<div style='font-weight:bold;font-size:14px;'>" + currentRole.n + "</div></div>";
-  html += "<span style='font-size:20px;color:#667eea;margin:0 8px;'>→</span>";
-  if (previewRole) {
-    html += "<span style='font-size:22px;'>" + previewRole.e + "</span>";
-    html += "<div><div style='font-size:12px;color:#666;'>Replace with:</div>";
-    html += "<div style='font-weight:bold;font-size:14px;'>" + previewRole.n + "</div></div>";
-  } else {
-    html += "<div style='color:#999;font-style:italic;'>Pick a replacement below…</div>";
-  }
+  var html = "<div class='swap-modal' onclick='event.stopPropagation()'>";
+  html += "<div class='swap-header'>";
+  html += "<div><span style='font-size:20px;'>" + currentRole.e + "</span> <strong>Changing role: " + currentRole.n + "</strong></div>";
+  html += "<button id='swapCloseX' aria-label='close'>×</button>";
   html += "</div>";
 
-  html += "<label style='font-size:12px;color:#555;display:block;margin-bottom:4px;'>Choose a role to swap in:</label>";
-  html += "<select id='swapRoleSelect' style='width:100%;padding:8px;font-size:13px;font-family:Georgia;border:1px solid #ccc;border-radius:6px;'>";
+  html += "<div class='swap-body'>";
+  html += "<label style='font-size:12px;color:#555;display:block;margin-bottom:6px;'>Choose a new role to swap in:</label>";
+  html += "<select id='swapRoleSelect' size='1' style='width:100%;padding:10px;font-size:14px;font-family:Georgia;border:1px solid #ccc;border-radius:6px;'>";
   html += "<option value=''>— select a role —</option>";
   for (var t = 0; t < teamOrder.length; t++) {
     var tk = teamOrder[t];
@@ -965,55 +1019,66 @@ function renderRoleSwapPanel(changing, index, currentRole) {
   }
   html += "</select>";
 
-  if (previewRole) {
-    var teamBadge = previewRole.t === "evil" ? "🔴 EVIL" : previewRole.t === "village" ? "🟢 VILLAGE" : previewRole.t === "vampire" ? "🩸 VAMPIRE" : "🟣 NEUTRAL";
-    html += "<div style='background:#f5f5f0;border-left:4px solid #667eea;padding:12px;margin-top:12px;border-radius:6px;'>";
-    html += "<div style='display:flex;align-items:center;gap:10px;'>";
-    html += "<span style='font-size:36px;'>" + previewRole.e + "</span>";
-    html += "<div><div style='font-weight:bold;font-size:16px;'>" + previewRole.n + "</div>";
-    html += "<span class='tag tag-" + previewRole.t + "'>" + teamBadge + "</span>";
-    html += "<span style='margin-left:8px;color:#666;font-size:12px;'>weight " + (previewRole.w >= 0 ? "+" : "") + previewRole.w + "</span></div>";
-    html += "</div>";
-    html += "<div style='font-weight:bold;margin-top:8px;font-size:13px;'>" + previewRole.d + "</div>";
-    html += "<div style='font-size:12px;line-height:1.6;margin-top:6px;color:#333;'>" + previewRole.ld + "</div>";
+  html += "<div id='swapPreview' style='margin-top:14px;'></div>";
+  html += "</div>";
 
-    // Show impact on balance
-    var newRoles = gameState.roles.slice();
-    var rIdx = newRoles.indexOf(changing.sourceKey);
-    if (rIdx !== -1) newRoles[rIdx] = selected;
-    var newBal = calcBalance(newRoles);
-    var delta = newBal - gameState.balance;
-    var deltaStr = (delta >= 0 ? "+" : "") + delta;
-    html += "<div style='margin-top:10px;font-size:11px;color:#666;'>New balance: <strong>" + (newBal >= 0 ? "+" : "") + newBal + "</strong> <span style='color:" + (delta === 0 ? "#999" : (Math.abs(newBal) > 3 ? "#c0392b" : "#27ae60")) + ";'>(" + deltaStr + ")</span></div>";
-    html += "</div>";
-  }
-
-  html += "<div style='margin-top:12px;display:flex;gap:8px;'>";
-  html += "<button class='action-btn primary' id='swapApplyBtn'" + (previewRole ? "" : " disabled style='opacity:0.5;cursor:not-allowed;'") + ">✓ Apply Swap</button>";
+  html += "<div class='swap-footer'>";
+  var canApply = !!selected;
   html += "<button class='action-btn' id='swapCancelBtn'>Cancel</button>";
+  html += "<button class='action-btn primary' id='swapApplyBtn'" + (canApply ? "" : " disabled style='opacity:0.5;cursor:not-allowed;'") + ">✓ Apply Swap</button>";
   html += "</div>";
   html += "</div>";
   return html;
 }
 
-function openRoleChanger(index) {
-  if (!gameState) return;
-  if (gameState.phase !== "lobby") { alert("Role changes are only allowed in the lobby (before Start)."); return; }
-  gameState.changing = {index: index, sourceKey: gameState.displayRoles[index], selectedKey: null};
-  saveLocal();
-  renderMod();
+function renderSwapPreviewInto(el) {
+  if (!el || !gameState || !gameState.changing) return;
+  var changing = gameState.changing;
+  var currentRole = ROLES[changing.sourceKey];
+  var previewRole = changing.selectedKey ? ROLES[changing.selectedKey] : null;
+
+  var html = "";
+  html += "<div class='swap-summary'>";
+  html += "<div class='swap-side'><div class='swap-lbl'>From</div><div class='swap-role'><span style='font-size:24px;'>" + currentRole.e + "</span> <strong>" + currentRole.n + "</strong></div></div>";
+  html += "<div class='swap-arrow'>→</div>";
+  if (previewRole) {
+    html += "<div class='swap-side'><div class='swap-lbl'>To</div><div class='swap-role'><span style='font-size:24px;'>" + previewRole.e + "</span> <strong>" + previewRole.n + "</strong></div></div>";
+  } else {
+    html += "<div class='swap-side' style='color:#999;font-style:italic;'>Pick a role above…</div>";
+  }
+  html += "</div>";
+
+  if (previewRole) {
+    var teamBadge = previewRole.t === "evil" ? "🔴 EVIL" : previewRole.t === "village" ? "🟢 VILLAGE" : previewRole.t === "vampire" ? "🩸 VAMPIRE" : "🟣 NEUTRAL";
+    html += "<div class='swap-preview-card'>";
+    html += "<div style='display:flex;align-items:center;gap:12px;'>";
+    html += "<span style='font-size:42px;'>" + previewRole.e + "</span>";
+    html += "<div><div style='font-weight:bold;font-size:17px;'>" + previewRole.n + "</div>";
+    html += "<span class='tag tag-" + previewRole.t + "'>" + teamBadge + "</span>";
+    html += "<span style='margin-left:8px;color:#666;font-size:12px;'>weight " + (previewRole.w >= 0 ? "+" : "") + previewRole.w + "</span></div>";
+    html += "</div>";
+    html += "<div style='font-weight:bold;margin-top:10px;font-size:13px;'>" + previewRole.d + "</div>";
+    html += "<div style='font-size:12px;line-height:1.7;margin-top:8px;color:#333;'>" + previewRole.ld + "</div>";
+
+    // Balance impact
+    var newRoles = gameState.roles.slice();
+    var rIdx = newRoles.indexOf(changing.sourceKey);
+    if (rIdx !== -1) newRoles[rIdx] = changing.selectedKey;
+    var newBal = calcBalance(newRoles);
+    var delta = newBal - gameState.balance;
+    var deltaStr = (delta >= 0 ? "+" : "") + delta;
+    var deltaColor = delta === 0 ? "#999" : (Math.abs(newBal) > 3 ? "#c0392b" : "#27ae60");
+    html += "<div style='margin-top:12px;font-size:12px;color:#666;'>New balance: <strong>" + (newBal >= 0 ? "+" : "") + newBal + "</strong> <span style='color:" + deltaColor + ";'>(" + deltaStr + ")</span></div>";
+    html += "</div>";
+  }
+  el.innerHTML = html;
 }
-function previewReplacementRole(newKey) {
-  if (!gameState || !gameState.changing) return;
-  gameState.changing.selectedKey = newKey || null;
-  saveLocal();
-  renderMod();
-}
+
 function cancelRoleChange() {
   if (!gameState) return;
   gameState.changing = null;
   saveLocal();
-  renderMod();
+  hideSwapModal();
 }
 async function applyRoleChange() {
   if (!gameState || !gameState.changing || !gameState.changing.selectedKey) return;
@@ -1043,6 +1108,7 @@ async function applyRoleChange() {
   gameState.balance = calcBalance(gameState.roles);
   gameState.balanceOk = gameState.balance >= MIN_BALANCE && gameState.balance <= MAX_BALANCE;
   gameState.changing = null;
+  hideSwapModal();
   saveLocal();
 
   // Push the new pool to Supabase so future joiners see the updated roles
