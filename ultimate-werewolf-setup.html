@@ -840,17 +840,23 @@ function renderModLobby() {
   }
 
   // Setup card list — always visible so moderator knows the full role sheet
-  html += "<h4>🎴 Roles in this game <span style='font-size:11px;color:#888;font-weight:normal;'>(tap 🔄 to swap any role)</span></h4>";
-  html += "<div style='background:#f9f9f9;border-radius:8px;padding:8px;'>";
+  html += "<h4>🎴 Roles in this game</h4>";
+  html += "<div class='info' style='margin-bottom:10px;'>💡 Tap <strong>🔄 Change Role</strong> on any card below to swap it for a different role. Players who joined get reassigned automatically.</div>";
+  html += "<div style='background:#f9f9f9;border-radius:8px;padding:10px;'>";
   var display = g.displayRoles || g.roles;
   for (var k = 0; k < display.length; k++) {
     var rr = ROLES[display[k]];
-    html += "<div class='role-row' data-role-index='" + k + "'><div class='role-emoji'>" + rr.e + "</div>";
-    html += "<div style='flex:1;'><div class='role-name'><span class='tag tag-" + rr.t + "'>" + rr.t.toUpperCase().substr(0,3) + "</span>" + rr.n + "</div>";
+    html += "<div class='role-row-v2' data-role-index='" + k + "' style='background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:8px;'>";
+    html += "<div style='display:flex;gap:12px;align-items:flex-start;'>";
+    html += "<div class='role-emoji' style='font-size:32px;'>" + rr.e + "</div>";
+    html += "<div style='flex:1;min-width:0;'>";
+    html += "<div class='role-name'><span class='tag tag-" + rr.t + "'>" + rr.t.toUpperCase().substr(0,3) + "</span>" + rr.n + "</div>";
     html += "<div class='role-desc' style='font-weight:bold;margin-top:4px;'>" + rr.d + "</div>";
     html += "<div class='role-desc' style='margin-top:6px;line-height:1.6;'>" + rr.ld + "</div>";
     html += "</div>";
-    html += "<button class='action-btn' style='padding:6px 10px;font-size:11px;' data-swap-index='" + k + "'>🔄 Change</button>";
+    html += "</div>";
+    // Full-width, bold Change button below the description so it can't be missed
+    html += "<button class='action-btn' style='margin-top:10px;width:100%;background:#667eea;color:#fff;border-color:#667eea;font-size:13px;' data-swap-index='" + k + "'>🔄 Change This Role</button>";
     html += "</div>";
     // If this row is being swapped, render the inline swap panel underneath
     if (g.changing && g.changing.index === k) {
