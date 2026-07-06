@@ -2,976 +2,943 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ultimate Werewolf</title>
-  <!-- Try multiple CDN sources for Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="console.log('Supabase loaded from jsdelivr')"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Georgia, serif; font-size: 13px; color: #1a1a1a; background: #f5f5f0;
-      display: flex; flex-direction: column; align-items: center; padding: 32px 20px; }
-    h1 { font-size: 22px; margin-bottom: 4px; }
-    .subtitle { color: #666; font-style: italic; font-size: 12px; margin-bottom: 6px; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
-    .tab-btn { padding: 8px 16px; border: 2px solid #bbb; border-radius: 6px; background: #fff;
-      cursor: pointer; font-size: 13px; font-weight: bold; }
-    .tab-btn.active { background: #2b2b2b; color: #fff; }
-    .tab-content { display: none; max-width: 700px; }
+    body { font-family: 'Georgia', serif; font-size: 14px; color: #1a1a1a;
+      background: radial-gradient(ellipse at top, #2b2b3a 0%, #0f0f18 100%);
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+      padding: 24px 16px; color: #eee; }
+    h1 { font-size: 26px; margin-bottom: 4px; color: #f5f5f0; text-shadow: 0 2px 10px rgba(255,107,107,0.4); }
+    .subtitle { color: #b0b0c0; font-style: italic; font-size: 12px; margin-bottom: 18px; }
+    .container { width: 100%; max-width: 720px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; }
+    .tab-btn { padding: 10px 22px; border: 2px solid #444; border-radius: 8px; background: #1e1e2a;
+      color: #ccc; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s; }
+    .tab-btn:hover { border-color: #888; }
+    .tab-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-color: transparent; }
+    .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-    .btn { width: 44px; height: 44px; border: 2px solid #bbb; border-radius: 6px; background: #fff;
-      font-weight: bold; cursor: pointer; font-family: Georgia; }
-    .btn:hover { border-color: #555; }
-    .btn.active { background: #2b2b2b; color: #fff; }
-    .action-btn { padding: 8px 20px; margin-right: 8px; border: 2px solid #2b2b2b; border-radius: 6px;
-      background: #fff; cursor: pointer; font-weight: bold; font-family: Georgia; }
-    .action-btn:hover { background: #2b2b2b; color: #fff; }
-    .action-btn-green { border-color: #27ae60; color: #27ae60; }
-    .action-btn-green:hover { background: #27ae60; color: #fff; }
-    #result { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 22px; display: none; }
-    .role-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
-    .role-name { font-weight: bold; min-width: 120px; }
-    .role-desc { flex: 1; font-size: 12px; }
-    .tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-right: 6px; font-weight: bold; }
+
+    .card { background: rgba(255,255,255,0.97); color: #1a1a1a; border-radius: 12px;
+      padding: 22px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .card h3 { font-size: 18px; margin-bottom: 12px; }
+    .card h4 { font-size: 14px; margin: 14px 0 8px; color: #444; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+    .count-btn { width: 52px; height: 52px; border: 2px solid #bbb; border-radius: 8px; background: #fff;
+      font-weight: bold; cursor: pointer; font-size: 16px; font-family: Georgia; transition: all 0.2s; }
+    .count-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+    .count-btn.active { background: #2b2b2b; color: #fff; border-color: #2b2b2b; }
+
+    .action-btn { padding: 10px 18px; margin: 4px; border: 2px solid #2b2b2b; border-radius: 8px;
+      background: #fff; color: #2b2b2b; cursor: pointer; font-weight: bold; font-family: Georgia;
+      font-size: 13px; transition: all 0.15s; }
+    .action-btn:hover { background: #2b2b2b; color: #fff; transform: translateY(-1px); }
+    .action-btn.primary { border-color: #27ae60; color: #fff; background: #27ae60; }
+    .action-btn.primary:hover { background: #219150; }
+    .action-btn.danger { border-color: #c0392b; color: #c0392b; }
+    .action-btn.danger:hover { background: #c0392b; color: #fff; }
+    .action-btn.warn { border-color: #f39c12; color: #f39c12; }
+    .action-btn.warn:hover { background: #f39c12; color: #fff; }
+    .action-btn.big { padding: 14px 28px; font-size: 15px; }
+
+    .tag { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-right: 6px; font-weight: bold; letter-spacing: 0.5px; }
     .tag-evil { background: #fdecea; color: #c0392b; }
     .tag-village { background: #eafaf1; color: #27ae60; }
     .tag-neutral { background: #f5eef8; color: #8e44ad; }
-    .summary { display: flex; gap: 12px; justify-content: center; font-size: 12px; flex-wrap: wrap; margin: 12px 0; }
-    .night-order { background: #fff9e6; border: 1px solid #f39c12; border-radius: 6px; padding: 12px; margin: 12px 0; }
-    .night-step { display: flex; gap: 10px; padding: 8px; border-left: 3px solid #f39c12; margin-bottom: 6px; font-size: 11px; }
-    .share-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin: 12px 0; display: none; }
-    .share-link { background: #fff; border: 1px solid #ddd; padding: 8px; font-family: monospace; font-size: 11px; word-break: break-all; margin-bottom: 8px; }
-    .player-name-input { font-size: 16px; padding: 10px; border: 2px solid #ddd; border-radius: 4px; width: 100%; max-width: 300px; margin-bottom: 12px; }
-    .players-list { background: #fff; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; }
-    .player-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-    .role-display { background: #fff; border: 2px solid #ddd; border-radius: 8px; padding: 40px; margin: 20px 0; text-align: center; }
-    .role-name-big { font-size: 28px; font-weight: bold; margin: 20px 0; }
-    .role-desc-big { font-size: 12px; margin: 20px 0; background: #f9f9f9; padding: 15px; border-radius: 4px; }
-    .warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px 12px; margin: 8px 0; color: #856404; font-size: 12px; }
-    .role-emoji { font-size: 80px; margin: 20px 0; animation: bounce 2s infinite; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 12px; padding: 40px; margin: 20px 0; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: slideUp 0.6s ease; }
+    .tag-vampire { background: #f9e4e4; color: #8e0000; }
+
+    .summary { display: flex; gap: 10px; justify-content: center; font-size: 12px; flex-wrap: wrap; margin: 12px 0; }
+    .balance-pill { display: inline-block; padding: 6px 14px; border-radius: 20px; font-weight: bold;
+      background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; }
+    .balance-pill.positive { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    .balance-pill.negative { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+
+    .role-row { display: flex; gap: 12px; padding: 12px; border-bottom: 1px solid #eee; align-items: center; }
+    .role-row:last-child { border-bottom: none; }
+    .role-emoji { font-size: 30px; min-width: 44px; text-align: center; }
+    .role-name { font-weight: bold; font-size: 14px; }
+    .role-desc { font-size: 12px; color: #555; margin-top: 2px; }
+
+    .night-order { background: #fff9e6; border: 1px solid #f39c12; border-radius: 8px; padding: 14px; margin: 12px 0; color: #1a1a1a; }
+    .night-step { display: flex; gap: 10px; padding: 8px 10px; border-left: 3px solid #f39c12; margin-bottom: 6px; font-size: 12px; background: rgba(255,255,255,0.6); border-radius: 4px; }
+    .night-step.done { opacity: 0.5; border-left-color: #27ae60; }
+    .night-step.current { background: #fff3cd; border-left-color: #e67e22; border-left-width: 5px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+    .share-box { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border: 1px solid #64b5f6; border-radius: 8px; padding: 14px; margin: 12px 0; color: #0d47a1; }
+    .share-link { background: #fff; border: 1px solid #90caf9; padding: 10px; font-family: monospace; font-size: 11px; word-break: break-all; margin-bottom: 8px; border-radius: 4px; }
+
+    .player-name-input { font-size: 16px; padding: 12px; border: 2px solid #ddd; border-radius: 6px; width: 100%; max-width: 320px; margin-bottom: 12px; font-family: Georgia; }
+    .player-name-input:focus { border-color: #667eea; outline: none; }
+
+    .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin: 12px 0; }
+    .player-tile { background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+    .player-tile.dead { opacity: 0.5; background: #f5f5f5; border-color: #ccc; }
+    .player-tile.dead .player-tile-name { text-decoration: line-through; color: #888; }
+    .player-tile-emoji { font-size: 24px; }
+    .player-tile-name { font-weight: bold; font-size: 13px; color: #1a1a1a; }
+    .player-tile-role { font-size: 10px; color: #666; }
+    .player-tile-hidden { color: #999; font-style: italic; }
+    .player-tile-kill { background: #fee; border: 1px solid #c0392b; color: #c0392b; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer; margin-left: auto; }
+    .player-tile-kill:hover { background: #c0392b; color: #fff; }
+    .player-tile-revive { background: #efe; border: 1px solid #27ae60; color: #27ae60; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer; margin-left: auto; }
+
+    .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px;
+      padding: 40px 30px; margin: 20px 0; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      animation: slideUp 0.6s ease; }
+    .role-card-evil { background: linear-gradient(135deg, #8b0000 0%, #ff4444 100%); }
+    .role-card-village { background: linear-gradient(135deg, #196f3d 0%, #2ecc71 100%); }
+    .role-card-neutral { background: linear-gradient(135deg, #6c3483 0%, #bb8fce 100%); }
+    .role-card-vampire { background: linear-gradient(135deg, #4a0000 0%, #8e0000 100%); }
+    .role-card-big-emoji { font-size: 90px; margin: 20px 0; animation: bounce 2.5s infinite; text-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .role-card h2 { font-size: 34px; margin: 12px 0; font-weight: bold; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+    .role-card .team-badge { display: inline-block; font-size: 12px; padding: 8px 18px; background: rgba(255,255,255,0.25);
+      border-radius: 20px; margin: 8px 0 16px; font-weight: bold; letter-spacing: 1px; }
+    .role-card .short-desc { font-size: 15px; margin: 12px 0; font-weight: bold; line-height: 1.5; }
+    .role-card .long-desc { font-size: 12px; margin: 20px 0 12px; line-height: 1.7; text-align: left;
+      background: rgba(0,0,0,0.18); padding: 14px; border-radius: 8px; }
+
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    .role-card-evil { background: linear-gradient(135deg, #8b0000 0%, #ff6b6b 100%); }
-    .role-card-village { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
-    .role-card-neutral { background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); }
-    .role-card h2 { font-size: 32px; margin: 15px 0; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-    .role-card .team-badge { display: inline-block; font-size: 12px; padding: 8px 16px; background: rgba(255,255,255,0.3); border-radius: 20px; margin: 10px 0; font-weight: bold; }
-    .role-card .description { font-size: 14px; margin: 20px 0; line-height: 1.6; font-style: italic; }
-    .role-row { display: flex; gap: 10px; padding: 12px; border-bottom: 1px solid #e0e0e0; align-items: center; }
-    .role-row-emoji { font-size: 28px; min-width: 40px; text-align: center; }
-    .player-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #e0e0e0; align-items: center; }
-    .player-item-emoji { font-size: 24px; margin-right: 12px; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes reveal { 0% { filter: blur(20px); opacity: 0; } 100% { filter: blur(0); opacity: 1; } }
+
+    .warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px 14px; margin: 10px 0; color: #856404; font-size: 12px; }
+    .info { background: #e3f2fd; border: 1px solid #64b5f6; border-radius: 6px; padding: 10px 14px; margin: 10px 0; color: #0d47a1; font-size: 12px; }
+    .error { background: #fdecea; border: 1px solid #c0392b; border-radius: 6px; padding: 10px 14px; margin: 10px 0; color: #c0392b; font-size: 12px; }
+
+    .phase-banner { text-align: center; padding: 16px; border-radius: 10px; margin-bottom: 16px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+    .phase-night { background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; }
+    .phase-day { background: linear-gradient(135deg, #f9d423, #ff9068); color: #1a1a1a; }
+    .phase-lobby { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #1a1a1a; }
+
+    .day-counter { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; margin-left: 10px; font-size: 14px; }
+
+    .lobby-status { background: linear-gradient(135deg, #f9f9f9, #e8e8e8); padding: 20px; text-align: center; border-radius: 10px; color: #333; font-size: 14px; }
+    .waiting-dots::after { content: '...'; animation: pulse 1.5s infinite; }
+
+    .win-check { padding: 12px; background: #e8f5e9; border-left: 4px solid #27ae60; margin: 10px 0; border-radius: 4px; font-size: 13px; }
+    .win-check.evil { background: #ffebee; border-left-color: #c0392b; }
+    .win-check.neutral { background: #f3e5f5; border-left-color: #8e44ad; }
+
+    .toggle-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+
+    @media (max-width: 500px) {
+      .role-card { padding: 28px 18px; }
+      .role-card h2 { font-size: 26px; }
+      .role-card-big-emoji { font-size: 70px; }
+      .players-grid { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
   <h1>🐺 Ultimate Werewolf</h1>
-  <p class="subtitle">Digital Setup - Balanced & Exciting</p>
+  <p class="subtitle">Digital moderator &amp; role dealer</p>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="modBtn">📋 Moderator</button>
-    <button class="tab-btn" id="playerBtn">👤 Join</button>
-  </div>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" id="modBtn">📋 Moderator</button>
+      <button class="tab-btn" id="playerBtn">👤 Join Game</button>
+    </div>
 
-  <div id="modTab" class="tab-content active">
-    <p style="text-align:center;color:#666;margin-bottom:16px;">Select players to generate balanced setup</p>
-    <div class="btn-row" id="btnRow"></div>
-    <div id="result"></div>
-  </div>
-
-  <div id="playerTab" class="tab-content">
-    <p style="text-align:center;color:#666;margin-bottom:16px;">Enter name to receive role</p>
-    <div id="playerView"></div>
+    <div id="modTab" class="tab-content active">
+      <div id="modView"></div>
+    </div>
+    <div id="playerTab" class="tab-content">
+      <div id="playerView"></div>
+    </div>
   </div>
 
   <script>
-// Supabase config
+// ============================================================
+// CONFIG
+// ============================================================
 var SUPABASE_URL = "https://ratzaaofhzddtzvytwle.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdHphYW9maHpkZHR6dnl0d2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTA3OTAsImV4cCI6MjA5NDM4Njc5MH0.Q9ZngA_jHY6u1bXRqD51mA-my7wcID01zQS1BRznkZk";
 var supabase = null;
 
-// REST API functions as fallback
-function supabaseInsertGame(game) {
-  if(supabase) {
-    return supabase.from('games').insert([game]);
-  } else {
-    // Fallback to REST API (remove auto-generated id field)
-    console.log("Using REST API to insert game");
-    return fetch(SUPABASE_URL + "/rest/v1/games", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "apikey": SUPABASE_KEY
-      },
-      body: JSON.stringify(game)
-    }).then(r => r.json());
-  }
-}
-
-function supabaseInsertPlayer(player) {
-  if(supabase) {
-    return supabase.from('players').insert([player]);
-  } else {
-    // Fallback to REST API
-    console.log("Using REST API to insert player");
-    return fetch(SUPABASE_URL + "/rest/v1/players", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "apikey": SUPABASE_KEY
-      },
-      body: JSON.stringify(player)
-    }).then(r => r.json());
-  }
-}
-
-function supabaseSelectPlayers(gameId) {
-  if(supabase) {
-    return supabase.from('players').select('*').eq('game_id', gameId);
-  } else {
-    // Fallback to REST API
-    console.log("Using REST API to fetch players for game:", gameId);
-    return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + gameId, {
-      headers: {
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "apikey": SUPABASE_KEY,
-        "Content-Type": "application/json"
-      }
-    }).then(function(r) {
-      console.log("REST API response status:", r.status);
-      if(!r.ok) {
-        console.error("REST API error:", r.status, r.statusText);
-        return {data: null, error: {message: "API returned " + r.status}};
-      }
-      return r.json().then(data => {console.log("Parsed players data:", data); return {data: data, error: null};});
-    }).catch(function(err) {
-      console.error("Fetch failed:", err);
-      return {data: null, error: err};
-    });
-  }
-}
-
 function initSupabase() {
-  if(window.supabase && window.supabase.createClient) {
+  if (window.supabase && window.supabase.createClient) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("✓ Supabase SDK initialized successfully");
     return true;
-  } else {
-    console.log("✗ Supabase SDK not available - will use REST API fallback");
-    return false;
   }
+  return false;
 }
-
-// Try to initialize immediately
-if(!initSupabase()) {
-  // If not available, wait up to 3 seconds for SDK to load
+if (!initSupabase()) {
   var retries = 0;
-  var initTimer = setInterval(function() {
-    retries++;
-    if(initSupabase() || retries >= 30) { // 30 * 100ms = 3 seconds
-      clearInterval(initTimer);
-    }
-  }, 100);
+  var t = setInterval(function () { retries++; if (initSupabase() || retries >= 30) clearInterval(t); }, 100);
 }
 
-var ROLES = {werewolf:{n:"Werewolf",t:"evil",w:-9,no:1,d:"Kill a villager each night. Wins with evil.",ld:"Part of informed evil minority. Coordinate kills strategically. Your biggest vulnerability: voting patterns reveal wolf unity. Lies become harder to maintain under social pressure. Scatter early votes for credibility, then gradually coordinate. Eliminate information roles (Seers, Doctors) before they threaten you.",e:"🐺"},alphawolf:{n:"Alpha Wolf",t:"evil",w:-9,no:2,d:"Once per game, convert a villager to werewolf.",ld:"You are the leader of the werewolves with a powerful ability: once during the game, you can convert a villager into another werewolf, increasing your team's power. Use this wisely—it permanently changes the game balance. You also participate in normal wolf kills each night.",e:"👑🐺"},wolfcub:{n:"Wolf Cub",t:"evil",w:-8,no:1,d:"If killed, werewolves get double kill next night.",ld:"You are young and vulnerable, but you have critical value to your wolf team. If you are killed by the village, your pack gains a massive advantage: they get to kill TWO players the next night instead of one. Werewolves protect you at all costs.",e:"🐶"},minion:{n:"Minion",t:"evil",w:-6,no:3,d:"Knows werewolves. Wins with evil.",ld:"Traitor inside village knowing all wolves but they don't know you. Coordinate through voting patterns and strategic silence. Build credibility by voting against one wolf early (establish independence), then gradually align with them. Dangerous tells: consistent voting, repeating defenses, sudden silence.",e:"🤝"},sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, learn if target is Seer.",ld:"Every night, you can point to one player and discover if they are the Seer. This intelligence helps the werewolves identify and eliminate the village's strongest information role. You're their spy in the magical realm.",e:"🔮"},sorcerer:{n:"Sorcerer",t:"evil",w:-7,no:27,d:"Evil seer: learn role (werewolf only), other seer, or nothing.",ld:"Each night, you can inspect one player. You learn: if they're a werewolf (you know all wolf roles), if they're the Seer (most dangerous to evil), or nothing at all. This selective information helps the werewolves strategize.",e:"🔮‍♂️"},shaman:{n:"Shaman",t:"evil",w:-5,no:19,d:"Each night, gain werewolf powers.",ld:"You are an evil magic user. On your first night, you gain the ability to participate in werewolf kills. Each subsequent night, you can perform a kill with the wolves. You gradually become more integrated into the evil team.",e:"🧙‍♂️"},wolfhound:{n:"Wolf Hound",t:"evil",w:-4,no:99,d:"Knows one werewolf. Wins with evil.",ld:"You are an evil spy who knows the identity of ONE werewolf. Your job is to coordinate with them subtly through voting and conversations, helping the evil team without revealing yourselves. You win when the werewolves triumph.",e:"🐕‍🦺"},dreamwolf:{n:"Dream Wolf",t:"evil",w:-8,no:99,d:"Replaces dead werewolf (don't wake until one dies).",ld:"You are a hidden werewolf who remains dormant until the first werewolf dies. Once that happens, you wake up and join the regular werewolves in their night kills. You're a strategic backup that activates mid-game.",e:"😴🐺"},lonewolf:{n:"Lone Wolf",t:"evil",w:-7,no:99,d:"Werewolf that wins only if last wolf alive.",ld:"You're a werewolf with a unique win condition: you ONLY win if you're the last evil player alive. This means you sometimes act against other werewolves' interests, creating internal conflict within the evil team. It's chaotic and dangerous.",e:"🐺‍🗨️"},blackwolf:{n:"Black Wolf",t:"evil",w:-8,no:28,d:"Spellcaster + Werewolf combined.",ld:"You combine two evil powers. Like a werewolf, you can kill at night. Like a spellcaster, you can silence one player per game, preventing them from voting during a day phase. Dual-threat strategist.",e:"⚫🐺"},bigbadwolf:{n:"Big Bad Wolf",t:"evil",w:-9,no:29,d:"Kill adjacent players or any combination of them.",ld:"You're an exceptionally powerful werewolf. Instead of just choosing one victim per night, you can kill any combination of adjacent players (sitting next to each other). This gives you massive flexibility in eliminations.",e:"😈🐺"},bogeyman:{n:"Bogeyman",t:"evil",w:-6,no:30,d:"If wolves can't decide, you decide. Win if all night-active die.",ld:"You're an evil mediator. When werewolves can't agree on whom to kill, YOU decide for them. Additionally, your unique win condition is: you win if all players with night actions are dead. You benefit from eliminating active players.",e:"👹"},fruitbrute:{n:"Fruit Brute",t:"evil",w:-7,no:31,d:"Last wolf: can't feed, but must kill all villagers.",ld:"If you're the last werewolf alive, you become powerful but desperate: you cannot go a single night without killing someone. If there's no one to kill, you lose. This creates intense late-game tension.",e:"🍃🐺"},wolfman:{n:"Wolf Man",t:"evil",w:-8,no:99,d:"Opposite of Lycan: villager to seers, secretly evil.",ld:"You're a deceptive role: you appear as a normal villager to all Seer-type investigations, but you're secretly part of the evil team and kill with werewolves at night. You're a spy in the truest sense.",e:"🧛‍♂️"},whitewolf:{n:"White Wolf",t:"evil",w:-10,no:32,d:"Wake with wolves every night. Every other night, kill anyone. Win if lone survivor.",ld:"You're both feared and independent. You wake with werewolves each night for communication, but every OTHER night you can kill any player—not just the werewolves' choice. Your solo win condition: you must be the last player standing.",e:"⚪🐺"},amnesiac:{n:"Amnesiac",t:"evil",w:0,no:99,d:"Random role each game. Wins with original team.",ld:"You wake up with no memory of your role. The moderator tells you a random role at the start, but that's not your real role. Your ACTUAL role is secret. You win with whatever your true team is, but you're operating on false information.",e:"❓"},vampire:{n:"Vampire",t:"vampire",w:-8,no:33,d:"Attack a player each night. They die if nominated next day.",ld:"You're a separate evil threat. Each night, you bite one player. That player doesn't die immediately, but if they're nominated for lynching the next day, they die automatically. You're an independent evil player with your own win condition.",e:"🧛"},seer:{n:"Seer",t:"village",w:7,no:5,d:"Each night, learn one player's true role.",ld:"Most powerful information role. Your burden: revealing knowledge makes you a target. Share findings through doubt, not certainty—certainty reveals your investigation. Build allies before exposing. Late game: establish Seer succession so institutional knowledge transfers if you die.",e:"🔍"},mysticseer:{n:"Mystic Seer",t:"village",w:9,no:5,d:"Learn true role of one, alignment of another.",ld:"You're an enhanced Seer with dual abilities. Each night you can: learn the exact role of one player AND learn the alignment (good/evil/neutral) of a different player. This gives you twice the information but requires strategic choices.",e:"🌟"},appseer:{n:"Apprentice Seer",t:"village",w:4,no:99,d:"Becomes Seer if Seer dies.",ld:"You start as a regular villager but have a hidden role: if the true Seer dies, you instantly step into their role and gain their night-vision powers for all future nights. You're the backup plan for village information.",e:"📚"},beholder:{n:"Beholder",t:"village",w:5,no:34,d:"First night, learn who the Seer is.",ld:"You have one powerful information moment: on the very first night, you learn the identity of the Seer. This is critical information—if you can survive and share it with the village, they know who to protect. But if werewolves discover YOU, they'll eliminate you both.",e:"👁️"},mentalist:{n:"Mentalist",t:"village",w:6,no:7,d:"Learn if two players are same team.",ld:"Each night, you point to any two players and learn if they're on the same team (both good, both evil, both neutral, etc.). You get binary intelligence: yes they're aligned, or no they're not. Useful for finding werewolf partners.",e:"🧠"},auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, learn alignment (good/evil).",ld:"Every night, you choose one player and learn their ALIGNMENT rather than exact role. You discover: is this person good (village), evil (werewolf/evil), or neutral? It's less specific than a Seer but still powerful information.",e:"✨"},empath:{n:"Empath",t:"village",w:4,no:20,d:"Learn if neighbors are good or evil.",ld:"You have a local knowledge power: you learn the alignment of your immediate neighbors on BOTH sides. So if you're in seat 5, you learn about seats 4 and 6. This helps find evil players sitting near you.",e:"💫"},pi:{n:"PI",t:"village",w:3,no:9,d:"Inspect 3 adjacent players: learn if any is evil.",ld:"Each night, you point to 3 adjacent players (sitting in a row or nearby) and learn if ANY of them are evil. It's a yes/no check for a small group. Useful for narrowing down werewolf locations.",e:"🕵️"},revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Once per game, flip a card and reveal role.",ld:"You have one powerful moment in the game: you can choose to flip a card and randomly reveal one player's actual role to everyone. This is a gamble—it might expose a werewolf or it might backfire. Use it strategically.",e:"💎"},witch:{n:"Witch",t:"village",w:4,no:10,d:"Once each: heal someone OR kill someone.",ld:"You're a powerful support role with two one-time abilities: (1) heal/save one player from the werewolves' kill, and (2) poison/kill one player of your choice. You decide WHEN to use these abilities throughout the game.",e:"🧙‍♀️"},doctor:{n:"Doctor",t:"village",w:5,no:21,d:"Protect one player each night from death.",ld:"Protector with nightly choice. Predictable patterns expose you to wolves. Vary targets, protect yourself occasionally, misdirect. Information: who gets attacked reveals wolves' threat priorities. Position as non-essential early, invaluable late-game.",e:"⚕️"},hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When killed, take someone down with you.",ld:"Retribution role: your death costs wolves a kill through your final action. Paradoxically, more valuable alive as threat than dead. Position yourself weak to encourage targeting, then secure your final shot against a suspected wolf.",e:"🏹"},huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, also when voted out.",ld:"You have two kill opportunities: if you're voted out during a day phase, you get to shoot someone before you die. Additionally, you can shoot once during a night phase. You're an aggressive force for the village.",e:"👩‍🦰🏹"},bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Protect one from werewolves each night.",ld:"Like a Doctor, every night you choose one player to protect from werewolf attacks. However, if werewolves target your protected player, you can choose to block the kill by revealing yourself as the Bodyguard.",e:"🛡️"},priest:{n:"Priest",t:"village",w:3,no:13,d:"First night protect one. Then alternate nights.",ld:"You protect one player on night one (like a Doctor), but then you alternate: protect someone night 2, skip night 3, protect someone night 4, skip night 5, and so on. Your protection is predictable but reliable.",e:"🙏"},spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once per game, silence a player next day.",ld:"You can use magic to silence one player, preventing them from voting, speaking, or taking actions during the next day phase. This is a one-time ability—choose the right moment to block a suspected werewolf.",e:"✋"},cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: link two lovers (die together).",ld:"On the very first night, you designate two players as lovers. From that point forward, if one lover dies, the other dies immediately too (even if it would be a night kill or day lynch). This creates powerful alliances.",e:"💘"},mason:{n:"Mason",t:"village",w:2,no:99,d:"Know other Masons.",ld:"You are part of a secret society of Masons. At the start of the game, you meet with other Masons and confirm each other's identities. You know who to trust and work with throughout the game.",e:"🪨"},prince:{n:"Prince",t:"village",w:3,no:99,d:"First vote doesn't eliminate you. Role revealed.",ld:"Once per game, when you're voted for lynching during a day phase, you cannot be eliminated. Everyone learns you're the Prince. After this one use, you're like a normal villager if voted for again.",e:"👶"},toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive one werewolf kill until next day.",ld:"The first time werewolves target you at night, they fail—you survive. You live to see the next day. Only on subsequent nights can they successfully kill you. You're hardy and resilient.",e:"💪"},diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If eaten by wolves, they skip next kill.",ld:"If the werewolves kill you at night, they become sick and cannot kill anyone the following night. Your death grants the village a free night of safety, which is a huge advantage.",e:"🦠"},drunk:{n:"Drunk",t:"village",w:4,no:99,d:"Don't know your role. Learn it on day 3.",ld:"You start the game with NO IDEA of your actual role. On the morning of day 3 (after two full day/night cycles), you learn what role you actually have. Until then, you're operating completely blind.",e:"🍷"},paranoid:{n:"Paranoid",t:"village",w:1,no:99,d:"You think everyone is a werewolf.",ld:"You have a handicap: you believe deep down that everyone around you is secretly a werewolf. You're paranoid and suspicious. Your votes and discussions must reflect this paranoia, even though most people aren't actually evil.",e:"😰"},gypsy:{n:"Gypsy",t:"village",w:2,no:22,d:"Each night, guess one player's role.",ld:"Every night, you make a guess about one player's role. You don't learn their actual role; you simply state your guess to the moderator. If you guess correctly, a special sign indicates you're on the right track.",e:"🔮"},medium:{n:"Medium",t:"village",w:2,no:23,d:"Contact the dead at night for clues.",ld:"When players die (day or night), you can contact them as a spirit. Each night, you communicate with one dead player to get clues about who the werewolves are. The dead can guide the living.",e:"👻"},jailer:{n:"Jailer",t:"village",w:3,no:24,d:"Jail one player - blocks their night actions.",ld:"Every night, you can jail one living player. That player cannot perform any night actions (Seers can't see, killers can't kill, etc.). However, they can still be killed by werewolves while jailed.",e:"⛓️"},pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"Cannot vote during day. Wins with village.",ld:"You're a peaceful soul: you cannot vote during any day phase. You can discuss and strategize, but your hands are tied when voting time comes. You still win with the village, but you're a handicapped teammate.",e:"☮️"},old_man:{n:"Old Man",t:"village",w:2,no:99,d:"Weak. Reveal when targeted.",ld:"You're elderly and weak. If the werewolves target you for a kill, you must immediately reveal your role to everyone before you die. Your death comes with a town-hall announcement.",e:"👴"},arsonist:{n:"Arsonist",t:"village",w:3,no:25,d:"Each night, douse one player with kerosene.",ld:"Every night, you choose a player and douse them with flammable liquid. Nothing happens yet. But if that player is voted for lynching the next day, they BURN UP and die—plus, you learn their role first.",e:"🔥"},vigilante:{n:"Vigilante",t:"village",w:2,no:26,d:"Once per game, eliminate one player.",ld:"You have one moment of action: during any night, you can choose to execute one player, permanently eliminating them. This is a one-time ability. Choose the right target—you could be the key to victory.",e:"🎯"},count:{n:"The Count",t:"village",w:2,no:99,d:"First night, learn # of werewolves in each half.",ld:"On the first night only, the village is split in half, and you learn HOW MANY werewolves are in the left half and HOW MANY are in the right half. This geographic information helps narrow down suspects.",e:"👮"},villageIdiot:{n:"Village Idiot",t:"village",w:1,no:99,d:"Must vote every day phase.",ld:"You're enthusiastic but foolish: you MUST vote for someone during every single day phase. You cannot abstain or skip voting. This forces you to take a stance constantly, even if you're unsure.",e:"🤪"},insomniac:{n:"Insomniac",t:"village",w:3,no:99,d:"Learn which neighbors woke during night.",ld:"You don't sleep, so you're aware: each night, you learn which of your immediate neighbors took night actions (like Seers viewing, Doctors protecting, Werewolves killing). You gain meta-knowledge about the night phase.",e:"😴"},martyr:{n:"Martyr",t:"village",w:4,no:99,d:"Take the place of a killed player before reveal.",ld:"When the werewolves kill someone at night, before the dead player is revealed, you can sacrifice yourself and take their place. You die instead, and the original target remains alive and unknown.",e:"⚰️"},mayor:{n:"Mayor",t:"village",w:3,no:99,d:"Your vote counts twice when you reveal.",ld:"You hold political power: if you publicly declare yourself as the Mayor, your votes count double from that moment onward. However, once revealed, werewolves know you're important and may target you.",e:"🎩"},oldhag:{n:"Old Hag",t:"village",w:4,no:35,d:"Each night, choose player who must leave next day.",ld:"Every night, you point to one player and curse them. The next day phase, that player MUST leave the table during deliberations and cannot participate in voting or discussion. They're banished to the sidelines.",e:"🧓"},thing:{n:"Thing",t:"village",w:1,no:99,d:"Each night, tap adjacent player.",ld:"You're mysterious and tactile. Each night, you tap one of your immediate neighbors (person to your left or right). They learn they've been tapped but don't know by whom. It's a subtle communication signal.",e:"👆"},villager:{n:"Villager",t:"village",w:1,no:99,d:"Find and eliminate werewolves.",ld:"Pure investigator with no special abilities. Your power comes from analyzing voting patterns and behavior. Watch for deception stress—lies become harder to maintain across multiple day phases. Build vocal presence early to establish credibility, then make your accusations count.",e:"👨‍🌾"},fortuneteller:{n:"Fortune Teller",t:"village",w:3,no:36,d:"Know exact roles of inspected players.",ld:"Every night, you can inspect one player and learn their exact role with perfect accuracy. Your fortune-telling is never wrong. You have crystal-clear information to guide the village's strategy.",e:"🔮✨"},amulet:{n:"Amulet of Protection",t:"village",w:5,no:99,d:"Can't die. Pass to another player each day or destroyed.",ld:"You carry a magical amulet that prevents your death. You cannot be killed by werewolves or voted out. However, each day phase, you can pass the amulet to another living player, making them immune instead.",e:"💍"},lycan:{n:"Lycan",t:"village",w:-1,no:99,d:"Appear as werewolf to Seers, but you're village.",ld:"You're infected with a curse: all Seer-type roles see you as a werewolf, even though you're actually a villager. This creates confusion and suspicion, making your life difficult despite being on the village's side.",e:"🌙"},troublemaker:{n:"Troublemaker",t:"neutral",w:0,no:16,d:"Stir trouble: next day has 2 day-kill attempts.",ld:"You're chaos incarnate. When you're killed (day or night), the next day phase becomes chaotic: instead of one lynching vote, the village gets TWO lynch attempts. Two people die instead of one. The trouble multiplies.",e:"😈"},doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Copy role night 1. Gain when they die.",ld:"On the first night, you choose one player and steal their role. You become them. If your original target dies during the game, you automatically gain their new role at that moment. You're a shape-shifter.",e:"👥"},madbomber:{n:"Mad Bomber",t:"neutral",w:-2,no:99,d:"If eliminated, chain explosion kills others.",ld:"If you're voted out during the day, you detonate and take other players with you—several people near you die in the explosion. Your death is catastrophic. This makes lynching you a risky proposition.",e:"💣"},curse:{n:"Curse",t:"neutral",w:-3,no:99,d:"If werewolves eat you, become werewolf.",ld:"You're cursed. If the werewolves kill you at night, you rise as a werewolf and join their team immediately. Your death converts you to evil. The werewolves must decide: is recruiting you worth giving up a kill?",e:"⚫"},cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Recruit one player each night. Win if all cultists.",ld:"Every night, you choose one player and recruit them to your cult. If you recruit them, they become part of your cult (you know each other). You win when all living players are cultists. You're building a secret society.",e:"⛪"},fool:{n:"Fool",t:"neutral",w:-2,no:99,d:"Win if voted out during day phase.",ld:"Your goal is unique: you WIN if you're voted for and lynched during any day phase. The village thinks they're eliminating a threat, but they're actually helping you achieve victory.",e:"🤡"},jester:{n:"Jester",t:"neutral",w:-1,no:99,d:"Win if voted out during day.",ld:"Like the Fool, you win if the village votes you out during the day. You're the entertainer who gets a laugh at the village's expense. Your ultimate victory is dying by vote.",e:"🎭"},hoodlum:{n:"Hoodlum",t:"neutral",w:-1,no:99,d:"Win if those 2 indicated players die while alive.",ld:"Before the game starts, two specific players are secretly marked as targets. You win if both of those players die while you're still alive. You don't kill them yourself; you just need them to die somehow.",e:"🚬"},tanner:{n:"Tanner",t:"neutral",w:2,no:99,d:"Win if you are killed.",ld:"Your victory condition is your own death. Whether killed by werewolves at night or voted out by the village during the day, if you die, you win. It's an unusual and dark objective.",e:"👔"},wildchild:{n:"Wild Child",t:"neutral",w:0,no:99,d:"Become werewolf if role-model dies.",ld:"At the start of the game, you choose a role-model—any other player. If that person dies during the game, you immediately turn into a werewolf and join their team (if they're evil) or cause chaos (if they're good).",e:"👶"},sasquatch:{n:"Sasquatch",t:"neutral",w:-1,no:99,d:"Become werewolf if day ends without killing.",ld:"You're a creature watching the village. If a day phase ends without anyone being voted out and lynched, you transform into a werewolf and join the evil team. Inaction feeds the beast.",e:"🦍"},leprechaun:{n:"Leprechaun",t:"neutral",w:1,no:37,d:"Redirect werewolf attacks to adjacent players.",ld:"Each night, you can redirect the werewolves' kill to one of the target's neighbors instead. You don't control WHO dies, but you shift the death to an adjacent seat. You're a mischievous redirector.",e:"🍀"},bloodymary:{n:"Bloody Mary",t:"neutral",w:-1,no:99,d:"If killed, kill someone from the killing team nightly.",ld:"When you die (by any means), you return as a vengeful spirit. Each night thereafter, you automatically kill one player from the team that killed you. Your death triggers a chain of revenge killings.",e:"🩸"},chupacabra:{n:"Chupacabra",t:"neutral",w:-2,no:38,d:"Each night, target werewolf = death. No wolf = kill any.",ld:"Every night, you hunt one player. If that player is a werewolf, they die automatically. If they're NOT a werewolf, nothing happens immediately, but you're gathering information. You're specifically hunting werewolves.",e:"🧛‍♂️"},nostradamus:{n:"Nostradamus",t:"neutral",w:1,no:99,d:"Predict winner on night 1. Solo win if right & alive.",ld:"On the first night, you predict which team will win the game. If your prediction is correct AND you're still alive at the end of the game, you win solo (regardless of which team actually won). You must be alive to reap the reward.",e:"🔮📜"},direwolf:{n:"Dire Wolf",t:"neutral",w:-2,no:99,d:"Choose companion night 1. Die if they die.",ld:"On the first night, you choose one companion. From that moment, if your companion dies for any reason, you die too automatically—even if they're killed by werewolves, the village, or anything else. You're bound together.",e:"👹"},ghost:{n:"Ghost",t:"neutral",w:0,no:99,d:"Die night 1, then send letter clues from beyond.",ld:"You die on the very first night (automatically, no discussion). However, before dying, you write a secret letter with one clue that gets revealed later in the game. Even in death, you help guide players toward truth.",e:"👼"},orator:{n:"Orator",t:"village",w:2,no:40,d:"Your speeches sway votes. Once per game, eliminate two players in one day.",ld:"Master of persuasion and rhetoric. Your voice carries authority in village discussions—when you speak, players listen and shift their votes. Once per game, you can deliver a powerful oration that triggers two consecutive eliminations in a single day phase. Strategy: identify your moment carefully. Use early game to build credibility through correct voting predictions, establish yourself as a trusted voice. Late game, when werewolves grow overconfident and voting becomes fractured, unleash your double-elimination power to delete two suspected evils simultaneously. Wolves target you precisely because you threaten their vote manipulation. Early speech patterns reveal your rhetorical style—wolves learn to counter-argue you. Save your power for moments of maximum chaos when the village is split and uncertain.",e:"🎤"},lawyer:{n:"Lawyer",t:"village",w:3,no:41,d:"Select one at night. If voted out next day, save them.",ld:"Legal advocate with institutional power to overturn unjust lynchings. Each night, you select one player as your client. If that player receives the most votes during the next day's elimination vote, they cannot be eliminated—the lynching is overturned, and the person with the next-highest votes dies instead. Your role creates asymmetric voting dynamics: knowing you exist changes elimination strategy. Wolves must either target you first (to remove your protection) or avoid voting for innocent clients (exposing their protection strategy). Early game: defend random players or weak suspicions to establish unpredictability. Mid-game: shift to defending players with voting patterns inconsistent with evil alignment. Late-game: defend the most likely innocents when wolf voting becomes coordinated. Paradox: your power is most valuable when announced late, because wolves cannot retroactively adjust their elimination targets.",e:"⚖️"},gossip:{n:"Gossip",t:"village",w:2,no:42,d:"Learn what others discussed at night (partial info).",ld:"Information broker who thrives on scattered intelligence and partial truths. Each night, you eavesdrop on night-phase role communications and learn 2-3 random keywords or phrases from those discussions. The fragments are deliberately vague: you might hear 'protect,' 'target,' or 'kill' without context. Your power is pattern recognition across multiple nights. By night 3, repeated keywords reveal role identities—if you hear 'cure' and 'salve,' a Witch is active. Hear 'vision' twice? Seer confirmed. Your vulnerability: wolves can feed you false keywords through controlled conversations, creating misdirection. Early game: stay quiet and gather information. Mid-game: begin dropping keywords into public discussion, watching who reacts to prove they heard the same conversations. Late-game: your accumulated keyword map becomes a complete role list if you survive. Wolves target you to silence accumulated intelligence before you weaponize pattern recognition.",e:"💬"},advocate:{n:"Advocate",t:"village",w:2,no:43,d:"Propose defenses during day. Once save someone from lynch.",ld:"Public champion of the accused with one guaranteed reprieve. Once per game, after votes are tallied and a lynching is about to occur, you can intercede with an emergency defense and overturn the elimination. The accused is saved; instead, the vote goes to a sudden-death runoff between the top TWO vote-receivers. Your power's timing is crucial: using it too early wastes leverage when village coordination is weak; saving it creates tension as game progresses. Wolves cannot predict when you'll intervene—do you save obviously innocent players (wasting your power on likely survivors)? Or do you save suspicious players (making you appear complicit)? The meta-game: you must choose between appearing weak (if you rarely use power) or appearing manipulative (if you save guilty players). Your defense speeches during day phases build credibility that multiplies when power activates. Announce your role only after using power, as advance notice lets wolves avoid lynching critical players before you waste your save.",e:"📣"},demagogue:{n:"Demagogue",t:"neutral",w:-1,no:44,d:"Manipulate votes toward chaos. Win if no consensus reached.",ld:"Master manipulator whose victory lies in prolonging organized chaos and preventing consensus. Your goal is deliberately toxic: prevent any unified elimination for at least 5 days. You win solo if the game continues that long with voting remaining fractured and non-committal. Strategy: poison every discussion by introducing doubt, false equivalencies, and rhetorical whiplash. When wolves coordinate around one target, accuse someone else. When village unifies, defend the accused using sophisticated arguments. Create false voting blocs by publicly predicting how people will vote, self-fulfilling your prophecies. Your meta-game weapon: if both wolves and village begin voting consistently, you're losing—they're finding consensus. Counter by introducing 'what-if' scenarios that split both teams. Early game: appear village, build trust. Mid-game: systematically introduce chaos whenever patterns solidify. Late-game: full disclosure works: 'I've been deliberately creating division.' Wolves hate you because you destabilize their kills; villagers hate you because you prevent elimination. You survive longest as a secondary threat while primary threats (wolves/evil) fight each other.",e:"🗣️"},whistleblower:{n:"Whistleblower",t:"village",w:3,no:45,d:"Public accusation: reveal one suspected evil role at night.",ld:"Courageous voice willing to risk credibility for truth. Each night, you study one player and make a public accusation: 'This person is [role].' Your accusations are visible to all players. If you're correct, your credibility soars—the village trusts your future accusations. If you're wrong, you're marked as unreliable or possibly evil yourself. Your power is reputation volatility: correct accusations grant disproportionate influence; wrong accusations destroy your standing. Strategy: early accusations should target obvious threats (high-profile players acting suspiciously). Wrong accusations feel worse in early game when credibility pools are small. By mid-game, if you've been accurate 2+ times, make bold accusations that shift village strategy. Wolves counter you by committing early to inconsistent behavior—if you accuse them, your credibility drops when they act innocent. Your vulnerability: wolves can 'prove' you wrong through collective voting against your accusations. Late-game: your reputation becomes your weapon—announce controversial role identifications that reshape the entire endgame narrative, leveraging accumulated credibility.",e:"🔔"},accuser:{n:"Accuser",t:"village",w:1,no:46,d:"Accusations count double during day elimination votes.",ld:"Voice of disproportionate influence in elimination voting. When you nominate a player for lynching during day phase, your accusation counts as two votes instead of one—mathematically, you shift close votes from ties to eliminations. Your power is conditional: only active when you actively nominate. Strategy: early game, stay silent and build observation of voting patterns. When you identify a suspicious cluster forming around one player, enter with your doubled accusation to tip the balance. Wolves counter you by either: (1) eliminating you early before you accumulate influence, or (2) voting opposite directions to neutralize your double-vote advantage. Your meta-power: knowing you exist changes how players vote—skeptical voters become more cautious, fearing your potential intervention. Middle-game: use accusations sparingly to maintain mystery about your power. Late-game: weaponize your accumulated silence; your single intervention feels 'natural' because you've appeared non-participatory. Paradox: your most powerful move is appearing weak—wolves underestimate silent voters, then suddenly your doubled accusation kills their coordinate target.",e:"👉"},defender:{n:"Defender",t:"village",w:1,no:47,d:"Defend one player each day. They gain vote immunity that day.",ld:"Champion of immunity who grants temporary sanctuary during day votes. Each day phase, you publicly announce one player as defended. For that day only, that player cannot receive elimination votes—all votes for them are nullified, and those votes are wasted. Your protection is limited to ONE player per day and only prevents voting, not discussion or suspicion. Strategic complexity: defending creates asymmetric vulnerability. If you defend an obviously innocent player, you waste defense. If you defend a suspicious player, you appear complicit. Wolves counter you by: (1) targeting you early to remove your shielding, or (2) never voting for defended players, waiting until you shift defenses to strike. Meta-game: your defense reveals your read on innocence—if you defend players in voting blocs, wolves identify your suspected allies. Early-game strategy: defend random players to maintain mystery. Mid-game: defend players receiving coordinated wolf votes. Late-game: focus defense on players with unique information roles. Your ultimate power: forcing wolves to choose between wasting elimination time on defended players or expending night kills on you.",e:"🛡️"},gadfly:{n:"Gadfly",t:"neutral",w:0,no:48,d:"Challenge authorities daily. Stir discussion controversy.",ld:"Ancient tradition of the critical voice who questions everything and destabilizes comfortable assumptions. Your role is pure chaos: you survive the entire game by deliberately challenging any authority that emerges—vote for leaders, accuse the trusted, defend the suspicious. Your victory condition is singular: be alive at the end. You don't care who wins; you only care that you persist. Wolves dislike you because you question their vote coordination; villagers distrust you because you undermine consensus. Strategy: appear uncommitted by voting erratically and challenging both wolves and villagers equally. When wolves become obvious, question the villagers hunting them. When villagers gain momentum, introduce doubt. Your meta-position: everyone suspects you of being complicit with the enemy because you never align firmly. Late-game, this suspicion becomes your shield—eliminating you is lower priority than eliminating obvious threats. Your survival strategy: never be the primary target. Let wolves and villagers fight; you stay peripheral. By mid-game, if you've successfully avoided elimination, you've implicitly won because you'll likely survive if anyone does.",e:"🪰"},chronicler:{n:"Chronicler",t:"village",w:2,no:49,d:"Record voting patterns. Reveal analysis once per game.",ld:"Data keeper and pattern analyst whose power emerges from accumulated observation. Throughout the game, you secretly track and record every vote, accusation, and elimination pattern. Once per game, you can reveal a comprehensive voting analysis that identifies coordinated voting blocs: 'Players X, Y, Z voted together for eliminations on days 2, 4, and 6.' You expose statistical evidence of wolf coordination. Your power's timing determines effectiveness: reveal early, villagers eliminate your identified wolves but lose surprise; reveal late, wolves are nearly defeated already. Strategic tension: wolves know you're recording but can't identify you until you speak. This creates false security—you can vote with wolves early without suspicion, only revealing coordinated patterns later. Meta-game: your existence changes wolf voting strategy. Sophisticated wolves will deliberately vote inconsistently with each other to avoid pattern detection. Your late-game revelation becomes a referendum on trust—do villagers believe your statistical evidence? Wolves counter by discrediting you: 'The data is coincidence, not coordination.' Late-game value: if you've been silent and trustworthy, your sudden voting analysis becomes irrefutable proof that reshapes final elimination votes.",e:"📊"},propagandist:{n:"Propagandist",t:"evil",w:-2,no:50,d:"Spread false rumors. Once per day influence discussion.",ld:"Evil architect of disinformation working within the village. Each day phase, you can anonymously introduce one false rumor into discussion: 'I heard Player X claiming to be Seer' or 'Player Y acts suspiciously.' The village cannot identify the rumor's source. Your propaganda plants seeds of doubt that shift voting patterns. Strategy: introduce rumors that cast suspicion on innocent players who would otherwise receive no attention. Pair rumors with minimal evidence—let villagers' paranoia amplify your disinformation. Coordinate rumors with wolves: if wolves are targeting Player X, seed rumors supporting that elimination. Mid-game: rumors become less effective as villagers recognize patterns. Early-game: rumors hit hardest because baseline suspicion is highest. Counter-strategy: wolves must protect you by appearing to believe your rumors and voting accordingly. Your integration with wolf team: you're most valuable when wolves don't publicly know you exist—you share no night meetings, no coordination signals, creating plausible deniability. Villagers hunt obvious wolves while your misdirection eliminates innocents. Late-game: if revealed, your historical rumors become analysis targets. Villagers calculate which eliminations were influenced by your propaganda versus legitimate village action. Your weakness: accurate record-keeping by Chronicler undoes your work.",e:"📰"}, conspirator:{n:"Conspirator",t:"evil",w:-3,no:51,d:"Coordinate with wolves invisibly through voting patterns.",ld:"Master strategist and evil coordinator who knows all werewolves and orchestrates their victory through subtle voting signaling. Unlike the Minion (who knows wolves but keeps quiet), you actively direct wolf victory by synchronizing eliminations, accusation timing, and voting patterns. You're the invisible commander coordinating evil strategy without direct communication. Your unique advantage: wolves don't know you exist. While minions must coordinate by proving themselves to wolves through voting, you already possess complete intelligence and actively manipulate outcomes. Strategy: early game, build credibility by voting with village consensus while secretly supporting wolf strategy. Establish yourself as untrustworthy when necessary—occasionally vote against wolf targets to appear independent. Mid-game: subtle coordination intensifies. A well-timed accusation backed by your vote can tip eliminations. Wolves trust these moments because you've demonstrated reliability. Late-game: your power multiplies—wolves now trust your voting patterns implicitly, coordinating around your election choices. Your danger: you combine Minion's knowledge advantage with active elimination power. Villagers hunting coordinated voters catch Minions but miss you because you blend voting inconsistency with strategic moments of alignment. Ultimate vulnerability: if Chronicler analyzes patterns across full game, they identify your strategic voting peaks—moments where your voting correlates perfectly with wolf interests. Your win path: eliminate Chronicler early, manipulate Propagandist's misdirection to deflect analysis, and guide wolves to victory through coordinated voting theater.",e:"🤐"}};
-var POOLS = {6:{e:["werewolf"],v:["seer","hunter","bodyguard","villager"],n:["jester"]},7:{e:["werewolf","sorceress"],v:["seer","hunter","bodyguard","mason"],n:["troublemaker"]},8:{e:["werewolf","wolfhound"],v:["seer","mentalist","bodyguard","revealer","villager"],n:["doppelganger"]},9:{e:["alphawolf","minion","sorceress"],v:["seer","hunter","bodyguard","mason","orator"],n:["wildchild"]},10:{e:["alphawolf","minion","sorceress","shaman"],v:["seer","doctor","hunter","bodyguard","revealer","lawyer"],n:["cultleader"]},11:{e:["alphawolf","minion","wolfhound","sorceress"],v:["seer","doctor","hunter","bodyguard","mason","advocate","gossip"],n:["wildchild"]},12:{e:["alphawolf","minion","sorceress","wolfhound","shaman"],v:["seer","doctor","hunter","bodyguard","revealer","mason","accuser","villager"],n:["doppelganger"]},13:{e:["alphawolf","minion","sorceress","wolfhound","sorcerer"],v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","advocate","chronicler"],n:["cultleader"]},14:{e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer"],v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower"],n:["wildchild"]}}
-var NIGHT_ACTIONS = {1:"Werewolves kill",2:"Alpha converts",3:"Minion checks",4:"Sorceress seeks",5:"Seers view",6:"Aura learns",7:"Mentalist compares",8:"Revealer flips",9:"PI checks",10:"Witch acts",11:"Huntress shoots",12:"Bodyguard protects",13:"Priest blesses",14:"Spellcaster silences",15:"Cupid links",16:"Troublemaker stirs",17:"Doppelganger copies",18:"Cult recruits",19:"Shaman gains",20:"Empath senses",21:"Doctor heals",22:"Gypsy guesses",23:"Medium contacts",24:"Jailer imprisons",25:"Arsonist douses",26:"Vigilante acts",27:"Sorcerer senses",28:"Black Wolf silences",29:"Big Bad Wolf kills",30:"Bogeyman decides",31:"Fruit Brute kills",32:"White Wolf kills",33:"Vampire attacks",34:"Beholder learns",35:"Old Hag banishes",36:"Fortune Teller knows",37:"Leprechaun redirects",38:"Chupacabra hunts",39:"Lawyer defends",40:"Whistleblower accuses",41:"Chronicler records"};
-var gameState = null;
-var playersSubscription = null;
-var autoRefreshTimer = null;
-var isModeratorView = false;
-var broadcastChannel = null;
-var broadcastedRoles = {}; // Track roles announced by other windows
+// ============================================================
+// ROLE DATA
+// ============================================================
+var ROLES = {werewolf:{n:"Werewolf",t:"evil",w:-9,no:1,d:"Kill a villager each night.",ld:"Coordinate kills with the pack. Vote scatter early, then align. Eliminate information roles first.",e:"🐺"},alphawolf:{n:"Alpha Wolf",t:"evil",w:-9,no:2,d:"Once per game, convert a villager to werewolf.",ld:"Leader of the wolves. Once per game convert a villager to another wolf.",e:"👑🐺"},wolfcub:{n:"Wolf Cub",t:"evil",w:-8,no:1,d:"If killed, werewolves get double kill next night.",ld:"If lynched, the pack kills two the next night.",e:"🐶"},minion:{n:"Minion",t:"evil",w:-6,no:3,d:"Knows werewolves. Wins with evil.",ld:"Traitor inside village knowing all wolves. They don't know you.",e:"🤝"},sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, learn if target is Seer.",ld:"Hunt the Seer for the wolf team.",e:"🔮"},sorcerer:{n:"Sorcerer",t:"evil",w:-7,no:27,d:"Evil seer: learn role (werewolf only), other seer, or nothing.",ld:"Selective seer — feed the wolves.",e:"🧙"},shaman:{n:"Shaman",t:"evil",w:-5,no:19,d:"Each night, gain werewolf powers.",ld:"Join the wolves' kills each night.",e:"🧙‍♂️"},wolfhound:{n:"Wolf Hound",t:"evil",w:-4,no:99,d:"Knows one werewolf. Wins with evil.",ld:"Spy who knows one wolf.",e:"🐕"},dreamwolf:{n:"Dream Wolf",t:"evil",w:-8,no:1,d:"Replaces dead werewolf (don't wake until one dies).",ld:"Dormant wolf that wakes when the first wolf dies.",e:"😴🐺"},lonewolf:{n:"Lone Wolf",t:"evil",w:-7,no:1,d:"Werewolf that wins only if last wolf alive.",ld:"You only win alone as the last evil.",e:"🐺"},blackwolf:{n:"Black Wolf",t:"evil",w:-8,no:28,d:"Spellcaster + Werewolf combined.",ld:"Kills at night; once per game silences one player.",e:"⚫🐺"},bigbadwolf:{n:"Big Bad Wolf",t:"evil",w:-9,no:29,d:"Kill adjacent players or any combination.",ld:"Kill any combination of adjacent players.",e:"😈🐺"},bogeyman:{n:"Bogeyman",t:"evil",w:-6,no:30,d:"If wolves can't decide, you decide. Win if all night-active die.",ld:"Tiebreaker for wolf kills. Wins if all night-active players die.",e:"👹"},fruitbrute:{n:"Fruit Brute",t:"evil",w:-7,no:31,d:"Last wolf: can't feed, but must kill all villagers.",ld:"Powerful desperate last wolf. Must kill each night.",e:"🍃🐺"},wolfman:{n:"Wolf Man",t:"evil",w:-8,no:1,d:"Appears as villager to Seers, secretly evil.",ld:"Deceptive wolf that reads as villager.",e:"🧛‍♂️"},whitewolf:{n:"White Wolf",t:"evil",w:-10,no:32,d:"Wake with wolves nightly. Every other night, kill anyone.",ld:"Solo win — last player standing.",e:"⚪🐺"},amnesiac:{n:"Amnesiac",t:"evil",w:0,no:99,d:"Random role each game. Wins with original team.",ld:"Fake role given at start. True role revealed later.",e:"❓"},vampire:{n:"Vampire",t:"vampire",w:-8,no:33,d:"Attack a player each night. They die if nominated next day.",ld:"Bite one; if they're nominated the next day they die.",e:"🧛"},seer:{n:"Seer",t:"village",w:7,no:5,d:"Each night, learn one player's true role.",ld:"Most powerful info role. Share carefully; wolves target you.",e:"🔍"},mysticseer:{n:"Mystic Seer",t:"village",w:9,no:5,d:"Learn true role of one, alignment of another.",ld:"Enhanced Seer — role + alignment info per night.",e:"🌟"},appseer:{n:"Apprentice Seer",t:"village",w:4,no:99,d:"Becomes Seer if Seer dies.",ld:"Backup Seer; activates when Seer dies.",e:"📚"},beholder:{n:"Beholder",t:"village",w:5,no:34,d:"First night, learn who the Seer is.",ld:"Only knows the Seer; protect them if possible.",e:"👁️"},mentalist:{n:"Mentalist",t:"village",w:6,no:7,d:"Learn if two players are same team.",ld:"Compare two players' alignments each night.",e:"🧠"},auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, learn alignment (good/evil).",ld:"Learn one player's alignment each night.",e:"✨"},empath:{n:"Empath",t:"village",w:4,no:20,d:"Learn if neighbors are good or evil.",ld:"Alignment of both immediate neighbors.",e:"💫"},pi:{n:"PI",t:"village",w:3,no:9,d:"Inspect 3 adjacent players: learn if any is evil.",ld:"Yes/no evil check on 3 adjacent seats.",e:"🕵️"},revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Once per game, flip a card and reveal role.",ld:"One-time public role reveal.",e:"💎"},witch:{n:"Witch",t:"village",w:4,no:10,d:"Once each: heal someone OR kill someone.",ld:"Two one-shot potions: heal + kill.",e:"🧙‍♀️"},doctor:{n:"Doctor",t:"village",w:5,no:21,d:"Protect one player each night from death.",ld:"Vary targets. Protecting yourself once is fair.",e:"⚕️"},hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When killed, take someone down with you.",ld:"Death shot: pick a target when you die.",e:"🏹"},huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, also when voted out.",ld:"Nightly shot + revenge shot on lynch.",e:"🏹"},bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Protect one from werewolves each night.",ld:"Block wolf kill by revealing yourself.",e:"🛡️"},priest:{n:"Priest",t:"village",w:3,no:13,d:"First night protect one. Then alternate nights.",ld:"Protect on odd nights only.",e:"🙏"},spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once per game, silence a player next day.",ld:"One-time day silence.",e:"✋"},cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: link two lovers (die together).",ld:"Two lovers die together.",e:"💘"},mason:{n:"Mason",t:"village",w:2,no:99,d:"Know other Masons.",ld:"Confirmed trust circle on night 1.",e:"🪨"},prince:{n:"Prince",t:"village",w:3,no:99,d:"First vote doesn't eliminate you. Role revealed.",ld:"One-time vote immunity, then role revealed.",e:"👑"},toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive one werewolf kill until next day.",ld:"Survive first wolf attack; die the day after.",e:"💪"},diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If eaten by wolves, they skip next kill.",ld:"Wolves lose a night if they eat you.",e:"🦠"},drunk:{n:"Drunk",t:"village",w:4,no:99,d:"Don't know your role. Learn it on day 3.",ld:"Blind role until day 3.",e:"🍷"},paranoid:{n:"Paranoid",t:"village",w:1,no:99,d:"You think everyone is a werewolf.",ld:"Roleplay: everyone is a wolf.",e:"😰"},gypsy:{n:"Gypsy",t:"village",w:2,no:22,d:"Each night, guess one player's role.",ld:"Guess a role; mod signals hits.",e:"🔮"},medium:{n:"Medium",t:"village",w:2,no:23,d:"Contact the dead at night for clues.",ld:"Talk to the dead each night.",e:"👻"},jailer:{n:"Jailer",t:"village",w:3,no:24,d:"Jail one player - blocks their night actions.",ld:"Blocks night actions; wolves can still kill jailed.",e:"⛓️"},pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"Cannot vote during day. Wins with village.",ld:"No voting allowed.",e:"☮️"},old_man:{n:"Old Man",t:"village",w:2,no:99,d:"Weak. Reveal when targeted.",ld:"Reveal on wolf attack, then die.",e:"👴"},arsonist:{n:"Arsonist",t:"village",w:3,no:25,d:"Each night, douse one player with kerosene.",ld:"Doused + lynched = they burn AND you learn their role.",e:"🔥"},vigilante:{n:"Vigilante",t:"village",w:2,no:26,d:"Once per game, eliminate one player.",ld:"One-shot night kill.",e:"🎯"},count:{n:"The Count",t:"village",w:2,no:99,d:"First night, learn # of werewolves in each half.",ld:"Split-table wolf count on night 1.",e:"🎩"},villageIdiot:{n:"Village Idiot",t:"village",w:1,no:99,d:"Must vote every day phase.",ld:"Cannot abstain from voting.",e:"🤪"},insomniac:{n:"Insomniac",t:"village",w:3,no:99,d:"Learn which neighbors woke during night.",ld:"See who acted next to you.",e:"😴"},martyr:{n:"Martyr",t:"village",w:4,no:99,d:"Take the place of a killed player before reveal.",ld:"Die in someone else's place before reveal.",e:"⚰️"},mayor:{n:"Mayor",t:"village",w:3,no:99,d:"Your vote counts twice when you reveal.",ld:"Reveal for double vote power.",e:"🎖️"},oldhag:{n:"Old Hag",t:"village",w:4,no:35,d:"Each night, choose player who must leave next day.",ld:"Curse one player to sit out next day.",e:"🧓"},thing:{n:"Thing",t:"village",w:1,no:99,d:"Each night, tap adjacent player.",ld:"Silent tap on a neighbor.",e:"👆"},villager:{n:"Villager",t:"village",w:1,no:99,d:"Find and eliminate werewolves.",ld:"No powers. Analyze behavior and vote carefully.",e:"👨‍🌾"},fortuneteller:{n:"Fortune Teller",t:"village",w:3,no:36,d:"Know exact roles of inspected players.",ld:"Perfect role reads each night.",e:"🔮"},amulet:{n:"Amulet of Protection",t:"village",w:5,no:99,d:"Can't die. Pass to another player each day or destroyed.",ld:"Death immunity; pass each day.",e:"💍"},lycan:{n:"Lycan",t:"village",w:-1,no:99,d:"Appear as werewolf to Seers, but you're village.",ld:"You read as wolf to Seers.",e:"🌙"},troublemaker:{n:"Troublemaker",t:"neutral",w:0,no:16,d:"Stir trouble: next day has 2 day-kill attempts.",ld:"Death triggers double lynching.",e:"😈"},doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Copy role night 1. Gain when they die.",ld:"Copy a role night 1; inherit their new role on death.",e:"👥"},madbomber:{n:"Mad Bomber",t:"neutral",w:-2,no:99,d:"If eliminated, chain explosion kills others.",ld:"Voted out = neighbors die too.",e:"💣"},curse:{n:"Curse",t:"neutral",w:-3,no:99,d:"If werewolves eat you, become werewolf.",ld:"Wolf kill converts you.",e:"⚫"},cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Recruit one player each night. Win if all cultists.",ld:"Recruit to cult; win when all living are in.",e:"⛪"},fool:{n:"Fool",t:"neutral",w:-2,no:99,d:"Win if voted out during day phase.",ld:"Win by being lynched.",e:"🤡"},jester:{n:"Jester",t:"neutral",w:-1,no:99,d:"Win if voted out during day.",ld:"Win by being lynched.",e:"🎭"},hoodlum:{n:"Hoodlum",t:"neutral",w:-1,no:99,d:"Win if two indicated players die while you're alive.",ld:"Two secret targets must die while you live.",e:"🚬"},tanner:{n:"Tanner",t:"neutral",w:2,no:99,d:"Win if you are killed.",ld:"Your death = your win.",e:"👔"},wildchild:{n:"Wild Child",t:"neutral",w:0,no:99,d:"Become werewolf if role-model dies.",ld:"Pick a model; convert on their death.",e:"👶"},sasquatch:{n:"Sasquatch",t:"neutral",w:-1,no:99,d:"Become werewolf if day ends without killing.",ld:"No lynch = you convert.",e:"🦍"},leprechaun:{n:"Leprechaun",t:"neutral",w:1,no:37,d:"Redirect werewolf attacks to adjacent players.",ld:"Shift the wolf kill to a neighbor.",e:"🍀"},bloodymary:{n:"Bloody Mary",t:"neutral",w:-1,no:99,d:"If killed, kill someone from the killing team nightly.",ld:"Revenge ghost after death.",e:"🩸"},chupacabra:{n:"Chupacabra",t:"neutral",w:-2,no:38,d:"Each night target a wolf = they die. Otherwise nothing.",ld:"Auto-kill on wolves; whiff on non-wolves.",e:"🦇"},nostradamus:{n:"Nostradamus",t:"neutral",w:1,no:99,d:"Predict winner on night 1. Solo win if right & alive.",ld:"Guess the winning team on night 1.",e:"📜"},direwolf:{n:"Dire Wolf",t:"neutral",w:-2,no:99,d:"Choose companion night 1. Die if they die.",ld:"Bound to a companion — die together.",e:"👹"},ghost:{n:"Ghost",t:"neutral",w:0,no:99,d:"Die night 1, then send letter clues from beyond.",ld:"Auto-die night 1; write one clue letter.",e:"👼"},orator:{n:"Orator",t:"village",w:2,no:40,d:"Once per game, eliminate two players in one day.",ld:"One-time double-lynch power.",e:"🎤"},lawyer:{n:"Lawyer",t:"village",w:3,no:41,d:"Select one at night. If voted out next day, save them.",ld:"Overturn a lynch by nominating a defender-client.",e:"⚖️"},gossip:{n:"Gossip",t:"village",w:2,no:42,d:"Learn 2-3 random keywords from night discussions.",ld:"Fragmentary night intelligence.",e:"💬"},advocate:{n:"Advocate",t:"village",w:2,no:43,d:"Once per game, save someone from lynch.",ld:"One-time lynch veto.",e:"📣"},demagogue:{n:"Demagogue",t:"neutral",w:-1,no:44,d:"Prevent consensus. Solo win if no lynch for 5 days.",ld:"Chaos agent — win if voting stays split for 5 days.",e:"🗣️"},whistleblower:{n:"Whistleblower",t:"village",w:3,no:45,d:"Public accusation: reveal one suspected evil role at night.",ld:"Public accusation each night — reputation stakes.",e:"🔔"},accuser:{n:"Accuser",t:"village",w:1,no:46,d:"Your nominations count double during day votes.",ld:"Double-weight lynching votes.",e:"👉"},defender:{n:"Defender",t:"village",w:1,no:47,d:"Each day, one player gains vote immunity.",ld:"Grant lynch-immunity to one player per day.",e:"🛡️"},gadfly:{n:"Gadfly",t:"neutral",w:0,no:48,d:"Solo win by surviving to game end.",ld:"Survive — that's the whole goal.",e:"🪰"},chronicler:{n:"Chronicler",t:"village",w:2,no:49,d:"Once per game, reveal a voting-pattern analysis.",ld:"Expose coordinated wolf voting blocs once per game.",e:"📊"},propagandist:{n:"Propagandist",t:"evil",w:-2,no:50,d:"Spread anonymous false rumors once per day.",ld:"Plant misdirection in day discussion.",e:"📰"},conspirator:{n:"Conspirator",t:"evil",w:-3,no:51,d:"Knows wolves, coordinates through voting.",ld:"Silent wolf coordinator with full intel.",e:"🤐"}};
 
-// 🔄 LISTEN FOR localStorage CHANGES FROM OTHER WINDOWS
-window.addEventListener('storage', function(e) {
-  if(e.key === 'game-shared' && e.newValue) {
-    console.log("📡 Storage event: game-shared synced from another window - " + Object.keys(JSON.parse(e.newValue || '{}').players || {}).length + " players");
-    // ALWAYS update game-shared when it changes (even if current player hasn't joined yet)
-    localStorage.setItem("game-shared", e.newValue);
-  }
-});
+// Balanced pools per player count. Village count = total - evil - neutral.
+var POOLS = {
+  6:  {e:["werewolf"],                             v:["seer","hunter","bodyguard","villager"],                                 n:["jester"]},
+  7:  {e:["werewolf","sorceress"],                 v:["seer","hunter","bodyguard","mason"],                                    n:["troublemaker"]},
+  8:  {e:["werewolf","wolfhound"],                 v:["seer","mentalist","bodyguard","revealer","villager"],                   n:["doppelganger"]},
+  9:  {e:["alphawolf","minion","sorceress"],       v:["seer","hunter","bodyguard","mason","orator"],                           n:["wildchild"]},
+  10: {e:["alphawolf","minion","sorceress","shaman"], v:["seer","doctor","hunter","bodyguard","revealer","lawyer"],            n:["cultleader"]},
+  11: {e:["alphawolf","minion","wolfhound","sorceress"], v:["seer","doctor","hunter","bodyguard","mason","advocate","gossip"], n:["wildchild"]},
+  12: {e:["alphawolf","minion","sorceress","wolfhound","shaman"], v:["seer","doctor","hunter","bodyguard","revealer","mason","accuser","villager"], n:["doppelganger"]},
+  13: {e:["alphawolf","minion","sorceress","wolfhound","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","advocate","chronicler"], n:["cultleader"]},
+  14: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower"], n:["wildchild"]},
+  15: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower","witch"], n:["wildchild"]},
+  16: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer","blackwolf"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower","witch"], n:["wildchild","cultleader"]}
+};
 
-function encodeGameState(gs) {
-  var stateStr = JSON.stringify({r:gs.roles,c:gs.count,e:gs.evil,v:gs.village,n:gs.neutral,b:gs.balance,id:gs.id});
-  return btoa(stateStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+// Full night order table
+var NIGHT_ACTIONS = {
+  1:"Werewolves open eyes and choose a victim",2:"Alpha Wolf may convert",3:"Minion learns wolves",
+  4:"Sorceress seeks the Seer",5:"Seer investigates",6:"Aura Seer senses alignment",
+  7:"Mentalist compares two players",8:"Revealer may flip a card",9:"PI checks a trio",
+  10:"Witch acts (heal or kill)",11:"Huntress may shoot",12:"Bodyguard protects",
+  13:"Priest blesses (alternate nights)",14:"Spellcaster silences",15:"Cupid links lovers (night 1)",
+  16:"Troublemaker stirs",17:"Doppelganger copies (night 1)",18:"Cult Leader recruits",
+  19:"Shaman kills with wolves",20:"Empath senses neighbors",21:"Doctor heals",
+  22:"Gypsy guesses",23:"Medium contacts the dead",24:"Jailer imprisons",
+  25:"Arsonist douses",26:"Vigilante acts",27:"Sorcerer inspects",
+  28:"Black Wolf may silence",29:"Big Bad Wolf may kill again",30:"Bogeyman decides tie",
+  31:"Fruit Brute kills alone",32:"White Wolf may kill freely",33:"Vampire bites",
+  34:"Beholder learns Seer (night 1)",35:"Old Hag banishes",36:"Fortune Teller knows",
+  37:"Leprechaun redirects",38:"Chupacabra hunts",40:"Orator prepares oration",
+  41:"Lawyer defends a client",42:"Gossip eavesdrops",43:"Advocate prepares defense",
+  44:"Demagogue plans chaos",45:"Whistleblower selects target",46:"Accuser sharpens vote",
+  47:"Defender picks tomorrow's shield",48:"Gadfly stays alive",49:"Chronicler records",
+  50:"Propagandist plants rumor",51:"Conspirator signals wolves"
+};
+
+// ============================================================
+// STATE
+// ============================================================
+var gameState = null;       // full local mirror
+var pollTimer = null;
+var bc = null;              // BroadcastChannel
+var isModerator = false;
+
+// ============================================================
+// SUPABASE HELPERS (REST API - works even before SDK loads)
+// ============================================================
+var HEADERS = {
+  "Content-Type": "application/json",
+  "Authorization": "Bearer " + SUPABASE_KEY,
+  "apikey": SUPABASE_KEY
+};
+
+function sbInsertGame(g) {
+  return fetch(SUPABASE_URL + "/rest/v1/games", {
+    method: "POST",
+    headers: Object.assign({}, HEADERS, {"Prefer": "resolution=merge-duplicates,return=minimal"}),
+    body: JSON.stringify({
+      id: g.id, count: g.count, roles: JSON.stringify(g.roles),
+      evil: g.evil, village: g.village, neutral: g.neutral, balance: g.balance
+    })
+  });
+}
+function sbGetGame(id) {
+  return fetch(SUPABASE_URL + "/rest/v1/games?id=eq." + encodeURIComponent(id), {headers: HEADERS})
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (arr) { return arr && arr[0] || null; });
+}
+function sbDeleteGame(id) {
+  return fetch(SUPABASE_URL + "/rest/v1/games?id=eq." + encodeURIComponent(id), {method: "DELETE", headers: HEADERS}).catch(function(){});
+}
+function sbGetPlayers(gid) {
+  return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + encodeURIComponent(gid) + "&order=id.asc", {headers: HEADERS})
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .catch(function () { return []; });
+}
+function sbInsertPlayer(p) {
+  return fetch(SUPABASE_URL + "/rest/v1/players", {
+    method: "POST",
+    headers: Object.assign({}, HEADERS, {"Prefer": "return=representation"}),
+    body: JSON.stringify(p)
+  }).then(function (r) { return r.ok ? r.json() : null; });
+}
+function sbDeletePlayer(id) {
+  return fetch(SUPABASE_URL + "/rest/v1/players?id=eq." + encodeURIComponent(id), {method: "DELETE", headers: HEADERS}).catch(function(){});
+}
+function sbDeleteAllPlayers(gid) {
+  return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + encodeURIComponent(gid), {method: "DELETE", headers: HEADERS}).catch(function(){});
 }
 
-function decodeGameState(encoded) {
-  try {
-    var padded = encoded + '=='.substr(0,(4-encoded.length%4)%4);
-    var stateStr = atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
-    var data = JSON.parse(stateStr);
-    return {id:data.id||'shared',count:data.c,players:{},roles:data.r,availableRoles:data.r.slice(),evil:data.e,village:data.v,neutral:data.n,balance:data.b};
-  } catch(e) {
-    return null;
-  }
-}
-
-function randomizeRoles(evilCount, villageCount, neutralCount) {
-  // Get all available roles by team
-  var allEvil = [], allVillage = [], allNeutral = [];
-  for(var key in ROLES) {
-    if(ROLES[key].t === 'evil') allEvil.push(key);
-    else if(ROLES[key].t === 'village') allVillage.push(key);
-    else if(ROLES[key].t === 'neutral') allNeutral.push(key);
-  }
-  
-  // Fisher-Yates shuffle
-  function shuffle(arr) {
-    var a = arr.slice();
-    for(var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var temp = a[i];
-      a[i] = a[j];
-      a[j] = temp;
-    }
-    return a;
-  }
-  
-  var shuffledEvil = shuffle(allEvil).slice(0, evilCount);
-  var shuffledVillage = shuffle(allVillage).slice(0, villageCount);
-  var shuffledNeutral = neutralCount > 0 ? shuffle(allNeutral).slice(0, neutralCount) : [];
-  
-  // CONSTRAINT: Ensure at least one core werewolf (Werewolf, Alpha Wolf, or Lone Wolf)
-  var coreWolves = ["werewolf", "alphawolf", "lonewolf"];
-  var hasCoreWolf = false;
-  for(var i = 0; i < shuffledEvil.length; i++) {
-    if(coreWolves.indexOf(shuffledEvil[i]) !== -1) {
-      hasCoreWolf = true;
-      break;
-    }
-  }
-  
-  if(!hasCoreWolf && evilCount > 0) {
-    // Replace first evil role with a random core wolf
-    var randomCoreWolf = coreWolves[Math.floor(Math.random() * coreWolves.length)];
-    shuffledEvil[0] = randomCoreWolf;
-  }
-  
-  return {e: shuffledEvil, v: shuffledVillage, n: shuffledNeutral};
-}
-
-function rerollGameRoles() {
-  if(!gameState) return;
-  var originalPool = POOLS[gameState.count];
-  var evilCount = originalPool.e.length;
-  var villageCount = originalPool.v.length;
-  var neutralCount = (originalPool.n || []).length;
-  
-  // Get randomized roles
-  var pool = randomizeRoles(evilCount, villageCount, neutralCount);
-  var roles = pool.e.concat(pool.v).concat(pool.n || []);
-  
-  // IMPROVEMENT 4: Add extra roles for bluffing (only evil/neutral, not villagers to maintain balance)
-  var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3));
-  var evilAndNeutralRoles = [];
-  for(var i = 0; i < roles.length; i++) {
-    if(ROLES[roles[i]].t !== 'village') {
-      evilAndNeutralRoles.push(roles[i]);
-    }
-  }
-  for(var i = 0; i < extraRoleCount; i++) {
-    if(evilAndNeutralRoles.length > 0) {
-      var randomRoleKey = evilAndNeutralRoles[Math.floor(Math.random() * evilAndNeutralRoles.length)];
-      roles.push(randomRoleKey);
-    }
-  }
-  
-  var balance = 0;
-  for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
-  
-  // IMPROVEMENT 1 & 2: Reset available roles for reroll
-  var shuffledRoles = roles.slice();
-  for(var i = shuffledRoles.length - 1; i > 0; i--) {
+// ============================================================
+// UTIL
+// ============================================================
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
-    var temp = shuffledRoles[i];
-    shuffledRoles[i] = shuffledRoles[j];
-    shuffledRoles[j] = temp;
+    var t = a[i]; a[i] = a[j]; a[j] = t;
   }
-  
-  gameState.roles = roles;
-  gameState.availableRoles = shuffledRoles;
-  gameState.evil = pool.e.length;
-  gameState.village = pool.v.length;
-  gameState.neutral = (pool.n||[]).length;
-  gameState.balance = balance;
-  gameState.players = {}; // Reset players on reroll
-  
-  console.log("Rerolled roles:", roles, "Available:", shuffledRoles.length);
-  localStorage.setItem("game-"+gameState.id, JSON.stringify(gameState));
-  showSetup(pool);
+  return a;
+}
+function calcBalance(roles) {
+  var b = 0;
+  for (var i = 0; i < roles.length; i++) b += ROLES[roles[i]].w;
+  return b;
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard) return navigator.clipboard.writeText(text);
+  var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+  ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  return Promise.resolve();
+}
+function saveLocal() {
+  if (!gameState) return;
+  localStorage.setItem("uw-game-" + gameState.id, JSON.stringify(gameState));
+  localStorage.setItem("uw-current", gameState.id);
+}
+function loadLocal(id) {
+  var s = localStorage.getItem("uw-game-" + id);
+  return s ? JSON.parse(s) : null;
 }
 
-function setupGame(count) {
-  var pool = JSON.parse(JSON.stringify(POOLS[count]));
+// ============================================================
+// GAME LIFECYCLE (MODERATOR)
+// ============================================================
+function createGame(count) {
+  if (!POOLS[count]) { alert("Unsupported player count: " + count); return; }
+  var pool = POOLS[count];
   var roles = pool.e.concat(pool.v).concat(pool.n || []);
-  
-  // IMPROVEMENT 4: Add extra roles for bluffing (only evil/neutral to maintain balance)
-  var extraRoleCount = Math.min(3, Math.floor(roles.length * 0.3)); // Add 30% more roles
-  var evilAndNeutralRoles = [];
-  for(var i = 0; i < roles.length; i++) {
-    if(ROLES[roles[i]].t !== 'village') {
-      evilAndNeutralRoles.push(roles[i]);
-    }
-  }
-  for(var i = 0; i < extraRoleCount; i++) {
-    if(evilAndNeutralRoles.length > 0) {
-      var randomRoleKey = evilAndNeutralRoles[Math.floor(Math.random() * evilAndNeutralRoles.length)];
-      roles.push(randomRoleKey);
-    }
-  }
-  
-  var balance = 0;
-  for(var i = 0; i < roles.length; i++) { balance += ROLES[roles[i]].w; }
-  
-  // IMPROVEMENT 1 & 2: Track assigned roles to prevent duplicates and race conditions
-  var availableRoles = roles.slice(); // Copy array
-  var shuffledRoles = availableRoles.slice();
-  for(var i = shuffledRoles.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var temp = shuffledRoles[i];
-    shuffledRoles[i] = shuffledRoles[j];
-    shuffledRoles[j] = temp;
-  }
-  
-  gameState = {id:"uw-"+Date.now(),count:count,players:{},roles:roles,availableRoles:shuffledRoles,assignedRoles:{},evil:pool.e.length,village:pool.v.length,neutral:(pool.n||[]).length,balance:balance};
-  
-  // This is the moderator creating a game
-  isModeratorView = true;
-  
-  // Save to Supabase (async, no await)
-  if(supabase || SUPABASE_KEY) {
-    console.log("Saving game to Supabase:", gameState.id);
-    supabaseInsertGame({
-      id: gameState.id,
-      count: count,
-      roles: JSON.stringify(roles),
-      evil: pool.e.length,
-      village: pool.v.length,
-      neutral: pool.n ? pool.n.length : 0,
-      balance: balance
-    }).catch(function(error) {
-      console.error("Error creating game:", error);
-    });
-  }
-  
-  // Also save to localStorage for offline fallback
-  localStorage.setItem("game-"+gameState.id, JSON.stringify(gameState));
-  localStorage.setItem("game-shared", JSON.stringify(gameState));
-  
-  showSetup(pool);
-  subscribeToPlayers();
-}
-
-function showSetup(pool) {
-  var html = "<h3 style='margin-bottom:12px;'>"+gameState.count+" Players (Balance: "+(gameState.balance>=0?"+":"")+gameState.balance+")</h3>";
-  html += "<div class='summary'><span class='tag tag-evil'>Evil: "+gameState.evil+"</span><span class='tag tag-village'>Village: "+gameState.village+"</span>";
-  if(gameState.neutral > 0) html += "<span class='tag tag-neutral'>Neutral: "+gameState.neutral+"</span>";
-  html += "</div>";
-  
-  html += "<h4 style='margin:16px 0 12px;'>Roles in this game:</h4>";
-  for(var i = 0; i < gameState.roles.length; i++) {
-    var rk = gameState.roles[i];
-    var r = ROLES[rk];
-    html += "<div style='border:1px solid #ddd;border-radius:6px;padding:12px;margin-bottom:12px;'>";
-    html += "<div style='display:flex;gap:12px;margin-bottom:8px;'><div style='font-size:28px;min-width:40px;text-align:center;'>"+r.e+"</div>";
-    html += "<div><div class='tag tag-"+r.t+"'>"+r.t.toUpperCase().substr(0,3)+"</div>";
-    html += "<div class='role-name' style='margin-bottom:4px;'>"+r.n+"</div>";
-    html += "<div class='role-desc' style='font-weight:bold;margin-bottom:6px;'>"+r.d+"</div></div></div>";
-    html += "<div style='font-size:12px;line-height:1.6;color:#333;margin-left:52px;'>"+r.ld+"</div>";
-    html += "</div>";
-  }
-  
-  var nightRoles = [];
-  for(var i = 0; i < gameState.roles.length; i++) {
-    if(ROLES[gameState.roles[i]].no < 99) {
-      nightRoles.push(gameState.roles[i]);
-    }
-  }
-  
-  if(nightRoles.length > 0) {
-    nightRoles.sort(function(a,b){return ROLES[a].no - ROLES[b].no;});
-    html += "<div class='night-order'><div style='font-weight:bold;margin-bottom:8px;'>Night Order (Who wakes when):</div>";
-    for(var i = 0; i < nightRoles.length; i++) {
-      var rk = nightRoles[i];
-      var r = ROLES[rk];
-      html += "<div class='night-step'><strong>"+r.no+".</strong> <strong>"+r.n+":</strong> "+NIGHT_ACTIONS[r.no]+"</div>";
-    }
-    html += "</div>";
-  }
-  
-  var encoded = encodeGameState(gameState);
-  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
-  html += "<div class='share-box' style='display:block;'><div style='font-size:11px;font-weight:bold;margin-bottom:6px;'>SHARE THIS LINK WITH PLAYERS:</div><div class='share-link'>"+url+"</div>";
-  html += "<button class='action-btn' onclick='copyLink()'>Copy</button> ";
-  if(navigator.share) {
-    html += "<button class='action-btn' onclick='shareLink()'>Share</button>";
-  }
-  html += "</div>";
-  
-  // IMPROVEMENT 3: Show all connected players up to game count
-  html += "<h4 style='margin:16px 0 12px;'>Connected Players ("+Object.keys(gameState.players).length+"/"+gameState.count+")</h4>";
-  if(Object.keys(gameState.players).length > 0) {
-    html += "<div class='players-list'>";
-    var playerCount = 0;
-    for(var pid in gameState.players) {
-      if(playerCount >= gameState.count) break; // Don't show more than game count
-      var p = gameState.players[pid];
-      var r = ROLES[p.role];
-      html += "<div class='player-item'><div><div class='player-item-emoji'>"+r.e+"</div><div><strong>"+p.name+"</strong><div style='font-size:10px;color:#666;'>"+r.n+"</div></div></div><span class='tag tag-"+r.t+"'>"+r.t+"</span></div>";
-      playerCount++;
-    }
-    html += "</div>";
-  } else {
-    html += "<div style='padding:20px;text-align:center;color:#888;'>Waiting for players...</div>";
-  }
-  
-  var btns = "<button class='action-btn action-btn-green' onclick='refreshPlayers()'>Refresh Players</button> ";
-
-  btns += "<button class='action-btn' onclick='rerollGameRoles()'>Reroll Setup</button> ";
-  btns += "<button class='action-btn' onclick='endGame()' style='border-color:#c0392b;color:#c0392b;'>End Game</button>";
-  
-  document.getElementById("result").innerHTML = html + "<div style='margin-top:16px;'>"+btns+"</div>";
-  document.getElementById("result").style.display = "block";
-}
-
-function refreshPlayers() {
-  if(!gameState || !gameState.id) return;
-  
-  console.log("Refreshing players for game:", gameState.id);
-  
-  // Helper function to show the updated player list
-  var showUpdatedList = function() {
-    var pool = POOLS[gameState.count];
-    showSetup(pool);
+  // Shuffle once at creation — persists as the assignment order.
+  var shuffled = shuffle(roles);
+  var id = "uw-" + Date.now().toString(36) + "-" + Math.random().toString(36).substr(2, 4);
+  gameState = {
+    id: id, count: count,
+    roles: shuffled,           // ← shuffled order = assignment order
+    displayRoles: roles.slice(),// ← original order for the mod's summary card
+    evil: pool.e.length, village: pool.v.length, neutral: (pool.n || []).length,
+    balance: calcBalance(roles),
+    players: {},               // pid → {id, name, role, dead}
+    phase: "lobby",            // lobby | night | day | ended
+    day: 0,
+    revealed: false,           // are roles shown in mod's player list?
+    createdAt: Date.now()
   };
-  
-  if(supabase || SUPABASE_KEY) {
-    // Try to fetch fresh data from Supabase (priority)
-    supabaseSelectPlayers(gameState.id).then(function(response) {
-      var data = response.data;
-      var error = response.error;
-      
-      console.log("Supabase fetch response:", {hasData: !!data, error: error, count: data ? data.length : 0});
-      
-      if(error || !data || data.length === 0) {
-        console.log("Supabase returned no players, falling back to localStorage");
-        // Fall back to localStorage if Supabase fails or returns empty
-        var gameKey = "game-"+gameState.id;
-        var stored = localStorage.getItem(gameKey);
-        if(stored) {
-          try {
-            gameState = JSON.parse(stored);
-          } catch(e) {
-            console.error("Failed to parse localStorage:", e);
-          }
-        }
-      } else if(Array.isArray(data)) {
-        // Rebuild gameState.players from Supabase data
-        gameState.players = {};
-        console.log("Found "+data.length+" players from Supabase");
-        for(var i = 0; i < data.length; i++) {
-          gameState.players[data[i].id] = {name: data[i].name, role: data[i].role};
-        }
-        
-        // Also update localStorage so other tabs see it
-        var gameKey = "game-"+gameState.id;
-        localStorage.setItem(gameKey, JSON.stringify(gameState));
-      }
-      
-      showUpdatedList();
-    }).catch(function(error) {
-      console.error("Error fetching from Supabase:", error);
-      // Fall back to localStorage if Supabase fetch fails
-      var gameKey = "game-"+gameState.id;
-      var stored = localStorage.getItem(gameKey);
-      if(stored) {
-        try {
-          gameState = JSON.parse(stored);
-        } catch(e) {
-          console.error("Failed to parse localStorage:", e);
-        }
-      }
-      showUpdatedList();
-    });
-  } else {
-    console.log("Supabase not available - using localStorage only");
-    // Fall back to localStorage if Supabase not available
-    var gameKey = "game-"+gameState.id;
-    var stored = localStorage.getItem(gameKey);
-    if(stored) {
-      try {
-        gameState = JSON.parse(stored);
-      } catch(e) {
-        console.error("Failed to parse localStorage:", e);
-      }
-    }
-    showUpdatedList();
-  }
+  isModerator = true;
+  saveLocal();
+  sbInsertGame(gameState).catch(function () {});
+  openBroadcast(id);
+  startPolling();
+  renderMod();
 }
 
-function subscribeToPlayers() {
-  if(!gameState || !gameState.id) return;
-  
-  // Start auto-refresh polling only for moderators (every 2 seconds)
-  if(isModeratorView) {
-    console.log("Starting auto-polling for moderator (2s interval)");
-    if(autoRefreshTimer) {
-      clearInterval(autoRefreshTimer);
-    }
-    autoRefreshTimer = setInterval(function() {
-      refreshPlayers();
-    }, 2000);
+function rerollRoles() {
+  if (!gameState) return;
+  if (Object.keys(gameState.players).length > 0) {
+    if (!confirm("Reroll will kick all joined players (they'll need to rejoin with a NEW link). Continue?")) return;
   }
-  
-  // Also try Supabase real-time subscription if SDK is available
-  if(!supabase) {
-    console.log("Supabase SDK not available, using polling only");
-    return;
+  var count = gameState.count;
+  // Full teardown → new id so old link stops working (no confusion).
+  var oldId = gameState.id;
+  sbDeleteAllPlayers(oldId);
+  sbDeleteGame(oldId);
+  localStorage.removeItem("uw-game-" + oldId);
+  stopPolling(); closeBroadcast();
+  createGame(count);
+}
+
+function startGame() {
+  if (!gameState) return;
+  var joined = Object.keys(gameState.players).length;
+  if (joined < gameState.count) {
+    if (!confirm("Only " + joined + "/" + gameState.count + " players joined. Start anyway?")) return;
   }
-  
-  // Unsubscribe from previous subscription
-  if(playersSubscription) {
-    playersSubscription.unsubscribe();
+  gameState.phase = "night";
+  gameState.day = 1;
+  gameState.revealed = true;  // mod sees roles now
+  gameState.nightStep = 0;
+  saveLocal();
+  broadcast({type: "game-started"});
+  renderMod();
+}
+
+function nextPhase() {
+  if (!gameState) return;
+  if (gameState.phase === "night") {
+    gameState.phase = "day";
+  } else if (gameState.phase === "day") {
+    gameState.phase = "night";
+    gameState.day += 1;
+    gameState.nightStep = 0;
   }
-  
-  // Subscribe to real-time updates
-  try {
-    playersSubscription = supabase
-      .channel('players-'+gameState.id)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'players',
-        filter: 'game_id=eq.'+gameState.id
-      }, (payload) => {
-        console.log("Player update received:", payload);
-        if(isModeratorView) {
-          refreshPlayers();
-        }
-      })
-      .subscribe();
-  } catch(err) {
-    console.error("Could not subscribe to real-time:", err);
-  }
+  saveLocal();
+  renderMod();
+}
+
+function advanceNightStep() {
+  if (!gameState || gameState.phase !== "night") return;
+  gameState.nightStep = (gameState.nightStep || 0) + 1;
+  saveLocal();
+  renderMod();
+}
+function resetNightStep() {
+  if (!gameState || gameState.phase !== "night") return;
+  gameState.nightStep = 0;
+  saveLocal();
+  renderMod();
+}
+
+function togglePlayerDead(pid) {
+  if (!gameState || !gameState.players[pid]) return;
+  gameState.players[pid].dead = !gameState.players[pid].dead;
+  saveLocal();
+  renderMod();
+}
+
+function toggleReveal() {
+  if (!gameState) return;
+  gameState.revealed = !gameState.revealed;
+  saveLocal();
+  renderMod();
 }
 
 function endGame() {
-  if(confirm("End this game? Players will no longer be able to join.")) {
-    if(gameState && gameState.id) {
-      // Stop auto-refresh polling
-      if(autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-      }
-      
-      // Close broadcast channel
-      closeBroadcastChannel();
-      
-      // Delete from Supabase (async, no await)
-      if(supabase) {
-        supabase.from('games').delete().eq('id', gameState.id).catch(function(error) {
-          console.error("Error ending game:", error);
-        });
-      }
-      
-      // Also clear localStorage
-      localStorage.removeItem("game-"+gameState.id);
-      localStorage.removeItem("game-shared");
-      
-      if(playersSubscription) {
-        playersSubscription.unsubscribe();
-      }
-    }
-    gameState = null;
-    document.getElementById("result").innerHTML = "<div class='warning'>Game ended. Create a new one to play again.</div>";
-    document.getElementById("result").style.display = "block";
+  if (!confirm("End this game and clear all data?")) return;
+  if (gameState) {
+    sbDeleteAllPlayers(gameState.id);
+    sbDeleteGame(gameState.id);
+    localStorage.removeItem("uw-game-" + gameState.id);
+    localStorage.removeItem("uw-current");
+    broadcast({type: "game-ended"});
   }
+  stopPolling(); closeBroadcast();
+  gameState = null;
+  renderMod();
 }
 
-function copyLink() {
-  var encoded = encodeGameState(gameState);
-  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
-  navigator.clipboard.writeText(url).then(function() { alert("Link copied!"); });
+// ============================================================
+// PLAYER LIFECYCLE
+// ============================================================
+async function loadGameForPlayer(gid) {
+  // Try Supabase first (source of truth)
+  var g = await sbGetGame(gid);
+  if (g) {
+    var roles = [];
+    try { roles = JSON.parse(g.roles); } catch (e) { roles = []; }
+    return {
+      id: g.id, count: g.count, roles: roles,
+      evil: g.evil, village: g.village, neutral: g.neutral, balance: g.balance,
+      players: {}
+    };
+  }
+  // Fallback: localStorage
+  return loadLocal(gid);
 }
 
-function shareLink() {
-  var encoded = encodeGameState(gameState);
-  var url = window.location.origin + window.location.pathname + "?g=" + encoded;
-  navigator.share({title:"Werewolf Game",url:url});
-}
+async function joinGame(gid) {
+  var name = (document.getElementById("pname").value || "").trim();
+  if (!name) { alert("Please enter your name"); return; }
+  if (name.length > 24) { alert("Name too long (max 24 chars)"); return; }
 
-function showPlayerView() {
-  var params = new URLSearchParams(window.location.search);
-  var gid = params.get("g") || params.get("game");
-  
-  // Open broadcast channel if game ID is available
-  var gameId = null;
-  if(gid && params.get("g")) {
-    var decoded = decodeGameState(gid);
-    if(decoded) gameId = decoded.id;
-  } else if(gid && params.get("game")) {
-    gameId = gid;
-  }
-  
-  if(gameId) {
-    openBroadcastChannel(gameId);
-  }
-  
-  var html = "";
-  if(!gid) {
-    html = "<p style='color:#888;'>Ask moderator for game link</p>";
-  } else {
-    var g = null;
-    var actualGameId = null; // Track actual game ID for comparison
-    
-    if(params.get("g")) {
-      g = decodeGameState(gid);
-      if(g) {
-        actualGameId = g.id; // Extract actual game ID from decoded state
-      }
-    } else if(params.get("game")) {
-      actualGameId = gid; // For ?game= links, gid IS the actual game ID
-      var gameKey = "game-"+gid;
-      var stored = localStorage.getItem(gameKey);
-      if(stored) { 
-        g = JSON.parse(stored); 
-      } else {
-        g = null;
-      }
-    }
-    
-    if(!g) {
-      html = "<p style='color:#c0392b;font-weight:bold;'>Game link invalid or expired</p><p style='color:#888;font-size:11px;'>Ask moderator to create a new game and send the link</p>";
-    } else {
-      var stored = localStorage.getItem("game-shared");
-      if(stored) { 
-        var parsedShared = JSON.parse(stored);
-        // Only use if from same game
-        if(parsedShared.id === actualGameId) {
-          g = parsedShared;
-        }
-      }
-      var pid = localStorage.getItem("pid-shared");
-      
-      // FRESH GAME CHECK: If player was in a different game, show join form again
-      var prevGameId = localStorage.getItem("prev-game-id");
-      if(pid && prevGameId && actualGameId && prevGameId !== actualGameId) {
-        // Different game detected - clear old session for fresh start
-        console.log("Player switching games: " + prevGameId + " -> " + actualGameId);
-        pid = null; // Force them to rejoin as fresh player
-        localStorage.removeItem("pid-shared");
-        localStorage.removeItem("game-shared");
-      }
-      
-      if(!pid || !g.players[pid]) {
-        html = "<input type='text' class='player-name-input' id='pname' placeholder='Your name'>";
-        html += "<button class='action-btn action-btn-green' onclick='joinGame(\""+gid+"\")'>Join Game</button>";
-      } else {
-        var p = g.players[pid];
-        var r = ROLES[p.role];
-        if(!r) {
-          html = "<p style='color:#c0392b;'>ERROR: Role not found for " + p.role + "</p>";
-        } else {
-          var cardClass = r.t === "evil" ? "role-card-evil" : (r.t === "village" ? "role-card-village" : "role-card-neutral");
-          var teamLabel = r.t === "evil" ? "🔴 EVIL SIDE" : (r.t === "village" ? "🟢 VILLAGE SIDE" : "🟣 NEUTRAL");
-          html = "<div class='role-card "+cardClass+"'>";
-          html += "<div style='font-size:14px;margin-bottom:8px;'>👤 "+p.name+"</div>";
-          html += "<div class='role-emoji'>"+r.e+"</div>";
-          html += "<h2>"+r.n+"</h2>";
-          html += "<div class='team-badge'>"+teamLabel+"</div>";
-          html += "<div class='description' style='font-weight:bold;margin-bottom:12px;'>"+r.d+"</div>";
-          html += "<div class='description' style='font-style:normal;font-size:13px;line-height:1.7;text-align:left;'>"+r.ld+"</div>";
-          html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:20px;' onclick='leaveGame(\"shared\")'>Leave Game</button>";
-          html += "</div>";
-        }
-      }
-    }
-  }
-  document.getElementById("playerView").innerHTML = html;
-}
+  var g = await loadGameForPlayer(gid);
+  if (!g) { alert("Game not found. Ask moderator for a fresh link."); return; }
 
-function joinGame(gid) {
-  var name = document.getElementById("pname").value.trim();
-  if(!name) { alert("Enter your name"); return; }
-  
-  // Get game state from URL
-  var g = null;
-  var params = new URLSearchParams(window.location.search);
-  
-  if(params.get("g")) {
-    g = decodeGameState(gid);
-    if(!g) { alert("Game link invalid"); return; }
-  } else {
-    alert("No game link provided");
-    return;
-  }
-  
-  if(!g) { alert("Game link invalid"); return; }
-
-  var headers = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + SUPABASE_KEY,
-    "apikey": SUPABASE_KEY
-  };
-
-  // Step 1: Ensure game exists in Supabase (upsert)
-  fetch(SUPABASE_URL + "/rest/v1/games", {
-    method: "POST",
-    headers: Object.assign({}, headers, {"Prefer": "resolution=ignore-duplicates"}),
-    body: JSON.stringify({
-      id: g.id,
-      count: g.count,
-      roles: JSON.stringify(g.roles),
-      evil: g.evil,
-      village: g.village,
-      neutral: g.neutral,
-      balance: g.balance
-    })
-  })
-  .catch(function() {}) // Ignore errors - game may already exist
-  .then(function() {
-    // Step 2: Query Supabase for already-assigned roles in this game
-    return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + g.id, {
-      method: "GET",
-      headers: headers
-    });
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(supPlayers) {
-    var takenRoles = {};
-
-    // Build taken roles from Supabase (works across all devices)
-    if(Array.isArray(supPlayers)) {
-      supPlayers.forEach(function(p) {
-        if(p.role) {
-          takenRoles[p.role] = true;
-          console.log("✓ Supabase: " + p.name + " has " + p.role);
-        }
-      });
-      console.log("📡 Supabase: " + supPlayers.length + " existing players");
-    }
-
-    // Find first unassigned role
-    var assignedRole = null;
-    for(var i = 0; i < g.roles.length; i++) {
-      if(!takenRoles[g.roles[i]]) {
-        assignedRole = g.roles[i];
-        console.log("→ Assigning role " + i + ": " + assignedRole);
-        break;
-      }
-    }
-
-    if(!assignedRole) {
-      alert("Game is full! All roles have been assigned.");
+  // Check for duplicate name on server + get taken roles
+  var existing = await sbGetPlayers(gid);
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].name.toLowerCase() === name.toLowerCase()) {
+      if (!confirm("Name '" + name + "' is already taken. Rejoin as this player?")) return;
+      // Rejoin — store their pid locally
+      localStorage.setItem("uw-pid-" + gid, existing[i].player_id);
+      localStorage.setItem("uw-current", gid);
+      renderPlayer();
       return;
     }
+  }
 
-    // Step 3: Insert the new player into Supabase
-    var pid = "p" + Date.now();
-    return fetch(SUPABASE_URL + "/rest/v1/players", {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        id: Date.now(),
-        game_id: g.id,
-        player_id: pid,
-        name: name,
-        role: assignedRole
-      })
-    })
-    .then(function() {
-      console.log("✅ Supabase: player inserted");
-      // Also update localStorage for same-device display
-      g.players[pid] = {name: name, role: assignedRole};
-      localStorage.setItem("game-shared", JSON.stringify(g));
-      localStorage.setItem("game-" + g.id, JSON.stringify(g));
-      localStorage.setItem("pid-shared", pid);
-      localStorage.setItem("gid-shared", g.id);
-      localStorage.setItem("prev-game-id", g.id);
-      console.log("✅ Player joined! " + name + " as " + assignedRole);
-      showPlayerView();
-    });
-  })
-  .catch(function(err) {
-    // Fallback: use localStorage if Supabase is totally unreachable
-    console.log("⚠️ Supabase unreachable, using localStorage fallback:", err);
-    setTimeout(function() {
-      var takenRoles = {};
-      var latest = localStorage.getItem("game-shared");
-      if(latest) {
-        try {
-          var latestG = JSON.parse(latest);
-          if(latestG && latestG.players) {
-            for(var pc in latestG.players) {
-              if(latestG.players[pc] && latestG.players[pc].role)
-                takenRoles[latestG.players[pc].role] = true;
-            }
-          }
-        } catch(e) {}
+  if (existing.length >= g.count) { alert("Game is full."); return; }
+
+  // Assign next role from the pre-shuffled list. Handles duplicates correctly:
+  // if the pool has 2×werewolf, 2 players get werewolf; if 1×seer, only 1 does.
+  var takenCount = {};
+  existing.forEach(function (p) { takenCount[p.role] = (takenCount[p.role] || 0) + 1; });
+  var seenCount = {};
+  var role = null;
+  for (var i = 0; i < g.roles.length; i++) {
+    var r = g.roles[i];
+    seenCount[r] = (seenCount[r] || 0) + 1;
+    if (seenCount[r] > (takenCount[r] || 0)) { role = r; break; }
+  }
+  if (!role) { alert("No roles remaining."); return; }
+
+  var pid = "p" + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+  var record = {
+    id: Date.now(),           // numeric id column
+    game_id: gid,
+    player_id: pid,
+    name: name,
+    role: role
+  };
+  var inserted = await sbInsertPlayer(record);
+  if (!inserted) { alert("Failed to join. Check your connection."); return; }
+
+  // Race-condition guard: refetch, verify this pid actually got this role uniquely.
+  var recheck = await sbGetPlayers(gid);
+  var mine = recheck.find ? recheck.find(function(p){return p.player_id===pid;}) : null;
+  if (!mine) { alert("Join failed — please try again."); return; }
+  // Race-condition guard: role may legitimately appear N times in the pool.
+  // Only retry if MORE players now hold this role than the pool allows.
+  var allowed = g.roles.filter(function (r) { return r === mine.role; }).length;
+  var dupes = recheck.filter(function (p) { return p.role === mine.role; });
+  if (dupes.length > allowed) {
+    var losers = dupes.sort(function (a, b) { return a.id - b.id; }).slice(allowed);
+    if (losers.some(function (p) { return p.player_id === pid; })) {
+      await sbDeletePlayer(mine.id);
+      return joinGame(gid);
+    }
+  }
+
+  localStorage.setItem("uw-pid-" + gid, pid);
+  localStorage.setItem("uw-current", gid);
+  renderPlayer();
+}
+
+async function leaveGameFromPlayer(gid) {
+  if (!confirm("Leave the game? Your role will be released.")) return;
+  var pid = localStorage.getItem("uw-pid-" + gid);
+  if (pid) {
+    var players = await sbGetPlayers(gid);
+    var mine = players.find ? players.find(function(p){return p.player_id===pid;}) : null;
+    if (mine) await sbDeletePlayer(mine.id);
+  }
+  localStorage.removeItem("uw-pid-" + gid);
+  renderPlayer();
+}
+
+// ============================================================
+// POLLING & BROADCAST
+// ============================================================
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(refreshFromServer, 2000);
+}
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+async function refreshFromServer() {
+  if (!gameState) return;
+  var players = await sbGetPlayers(gameState.id);
+  // Preserve dead state from local (dead is mod-only, never on server).
+  var newPlayers = {};
+  players.forEach(function (p) {
+    var prev = gameState.players[p.player_id] || {};
+    newPlayers[p.player_id] = {
+      id: p.id, name: p.name, role: p.role,
+      dead: !!prev.dead
+    };
+  });
+  gameState.players = newPlayers;
+  saveLocal();
+  if (isModerator) renderMod();
+}
+
+function openBroadcast(id) {
+  closeBroadcast();
+  try {
+    bc = new BroadcastChannel("uw-" + id);
+    bc.onmessage = function (e) {
+      if (e.data && e.data.type === "player-joined" && isModerator) {
+        refreshFromServer();
       }
-      var assignedRole = null;
-      for(var i = 0; i < g.roles.length; i++) {
-        if(!takenRoles[g.roles[i]]) { assignedRole = g.roles[i]; break; }
-      }
-      if(!assignedRole) { alert("Game is full!"); return; }
-      var pid = "p" + Date.now();
-      g.players[pid] = {name: name, role: assignedRole};
-      localStorage.setItem("game-shared", JSON.stringify(g));
-      localStorage.setItem("game-" + g.id, JSON.stringify(g));
-      localStorage.setItem("pid-shared", pid);
-      localStorage.setItem("gid-shared", g.id);
-      console.log("✅ Player joined (localStorage)! " + name + " as " + assignedRole);
-      showPlayerView();
-    }, 300);
+    };
+  } catch (err) {}
+}
+function closeBroadcast() {
+  if (bc) { try { bc.close(); } catch(e){} bc = null; }
+}
+function broadcast(msg) {
+  if (bc) { try { bc.postMessage(msg); } catch(e){} }
+}
+
+// ============================================================
+// MOD VIEW RENDERING
+// ============================================================
+function renderMod() {
+  var view = document.getElementById("modView");
+  if (!gameState) { view.innerHTML = renderModStart(); attachModStartHandlers(); return; }
+  if (gameState.phase === "lobby") { view.innerHTML = renderModLobby(); attachModLobbyHandlers(); return; }
+  view.innerHTML = renderModPlay();
+  attachModPlayHandlers();
+}
+
+function renderModStart() {
+  var buttons = "";
+  var counts = Object.keys(POOLS).sort(function (a, b) { return +a - +b; });
+  for (var i = 0; i < counts.length; i++) {
+    buttons += "<button class='count-btn' data-count='" + counts[i] + "'>" + counts[i] + "</button>";
+  }
+  return "<div class='card'>" +
+    "<h3>Start a new game</h3>" +
+    "<p style='color:#666;font-size:12px;margin-bottom:12px;'>Pick number of players (6–16). Roles are auto-balanced.</p>" +
+    "<div class='btn-row'>" + buttons + "</div>" +
+    "</div>";
+}
+function attachModStartHandlers() {
+  document.querySelectorAll(".count-btn").forEach(function (b) {
+    b.onclick = function () { createGame(+b.getAttribute("data-count")); };
   });
 }
 
-// Open/manage broadcast channel for cross-window sync
-function openBroadcastChannel(gameId) {
-  if(!gameId || broadcastChannel) return; // Already open
-  
-  try {
-    broadcastChannel = new BroadcastChannel("werewolf-game-" + gameId);
-    
-    broadcastChannel.onmessage = function(event) {
-      console.log("📡 Broadcast received:", event.data);
-      
-      if(event.data.type === "role-taken") {
-        // Track that this role was taken by another window
-        broadcastedRoles[event.data.role] = event.data.playerName;
-        console.log("Role taken in another window: " + event.data.role + " by " + event.data.playerName);
-        
-        // If we're on the join screen, update localStorage immediately
-        if(!localStorage.getItem("pid-shared")) {
-          var gameKey = "game-" + gameId;
-          var stored = localStorage.getItem(gameKey);
-          if(stored) {
-            var g = JSON.parse(stored);
-            if(!g.players[event.data.playerId]) {
-              g.players[event.data.playerId] = {name: event.data.playerName, role: event.data.role};
-              localStorage.setItem(gameKey, JSON.stringify(g));
-              localStorage.setItem("game-shared", JSON.stringify(g));
-              console.log("Updated localStorage with new player from broadcast");
-            }
-          }
-        }
-      }
-    };
-    
-    console.log("✓ Broadcast channel opened for game: " + gameId);
-  } catch(err) {
-    console.log("BroadcastChannel not supported or disabled:", err);
+function renderModLobby() {
+  var g = gameState;
+  var joined = Object.keys(g.players).length;
+  var url = window.location.origin + window.location.pathname + "?g=" + g.id;
+  var balSign = g.balance >= 0 ? "+" : "";
+  var balClass = g.balance > 2 ? "positive" : (g.balance < -2 ? "negative" : "");
+
+  var html = "";
+
+  // Phase banner
+  html += "<div class='phase-banner phase-lobby'>🕹 LOBBY — Waiting for players</div>";
+
+  // Summary card
+  html += "<div class='card'>";
+  html += "<h3>" + g.count + "-Player Game</h3>";
+  html += "<div class='summary'>";
+  html += "<span class='tag tag-evil'>Evil: " + g.evil + "</span>";
+  html += "<span class='tag tag-village'>Village: " + g.village + "</span>";
+  if (g.neutral > 0) html += "<span class='tag tag-neutral'>Neutral: " + g.neutral + "</span>";
+  html += "<span class='balance-pill " + balClass + "'>Balance: " + balSign + g.balance + "</span>";
+  html += "</div>";
+
+  // Share
+  html += "<div class='share-box'>";
+  html += "<div style='font-weight:bold;font-size:11px;margin-bottom:6px;'>📨 SHARE THIS LINK</div>";
+  html += "<div class='share-link'>" + url + "</div>";
+  html += "<button class='action-btn' id='copyBtn'>📋 Copy Link</button>";
+  if (navigator.share) html += "<button class='action-btn' id='shareBtn'>📤 Share</button>";
+  html += "</div>";
+
+  // Player list (names only in lobby)
+  html += "<h4>Joined Players (" + joined + "/" + g.count + ")</h4>";
+  if (joined === 0) {
+    html += "<div class='lobby-status'><span class='waiting-dots'>Waiting for players to join</span></div>";
+  } else {
+    html += "<div class='players-grid'>";
+    var i = 1;
+    for (var pid in g.players) {
+      var p = g.players[pid];
+      html += "<div class='player-tile'>";
+      html += "<div class='player-tile-emoji'>" + i + "️⃣</div>";
+      html += "<div><div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
+      html += "<div class='player-tile-role player-tile-hidden'>role hidden</div></div>";
+      html += "</div>";
+      i++;
+    }
+    html += "</div>";
   }
+
+  // Setup preview (roles list, hidden by default)
+  html += "<div class='toggle-row' style='margin-top:16px;'>";
+  html += "<button class='action-btn' id='togglePreview'>" + (g.showPreview ? "Hide" : "Show") + " role list (spoilers)</button>";
+  html += "</div>";
+  if (g.showPreview) {
+    html += "<div style='background:#f9f9f9;border-radius:8px;padding:8px;margin-top:8px;'>";
+    var display = g.displayRoles || g.roles;
+    for (var k = 0; k < display.length; k++) {
+      var r = ROLES[display[k]];
+      html += "<div class='role-row'><div class='role-emoji'>" + r.e + "</div>";
+      html += "<div><div class='role-name'><span class='tag tag-" + r.t + "'>" + r.t.toUpperCase().substr(0,3) + "</span>" + r.n + "</div>";
+      html += "<div class='role-desc'>" + r.d + "</div></div></div>";
+    }
+    html += "</div>";
+  }
+
+  // Actions
+  html += "<div style='margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;'>";
+  var canStart = joined >= 3;
+  html += "<button class='action-btn primary big' id='startBtn' " + (canStart ? "" : "disabled style='opacity:0.5;cursor:not-allowed;'") + ">▶ Start Game</button>";
+  html += "<button class='action-btn warn' id='rerollBtn'>🎲 Reroll Setup</button>";
+  html += "<button class='action-btn danger' id='endBtn'>✕ End Game</button>";
+  html += "</div>";
+  html += "</div>";
+  return html;
+}
+function attachModLobbyHandlers() {
+  var g = gameState;
+  var url = window.location.origin + window.location.pathname + "?g=" + g.id;
+  var btn;
+  if (btn = document.getElementById("copyBtn")) btn.onclick = function () { copyToClipboard(url).then(function () { btn.textContent = "✓ Copied!"; setTimeout(function(){btn.textContent="📋 Copy Link";},1500); }); };
+  if (btn = document.getElementById("shareBtn")) btn.onclick = function () { navigator.share({title: "Werewolf Game", url: url}); };
+  if (btn = document.getElementById("togglePreview")) btn.onclick = function () { g.showPreview = !g.showPreview; saveLocal(); renderMod(); };
+  if (btn = document.getElementById("startBtn")) btn.onclick = startGame;
+  if (btn = document.getElementById("rerollBtn")) btn.onclick = rerollRoles;
+  if (btn = document.getElementById("endBtn")) btn.onclick = endGame;
 }
 
-function broadcastRoleAssignment(playerId, role, playerName, gameId) {
-  if(!broadcastChannel) {
-    openBroadcastChannel(gameId);
-  }
-  
-  if(broadcastChannel) {
-    broadcastChannel.postMessage({
-      type: "role-taken",
-      playerId: playerId,
-      playerName: playerName,
-      role: role,
-      timestamp: Date.now()
-    });
-    console.log("📡 Broadcasted: " + playerName + " took " + role);
-  }
-}
-
-function closeBroadcastChannel() {
-  if(broadcastChannel) {
-    broadcastChannel.close();
-    broadcastChannel = null;
-    broadcastedRoles = {};
-    console.log("Broadcast channel closed");
-  }
-}
-
-
-function leaveGame(gid) {
-  localStorage.removeItem("pid-shared");
-  // ⚠️ DO NOT remove game-shared - other players in other windows need it!
-  // localStorage.removeItem("game-shared");
-  localStorage.removeItem("gid-shared");
-  closeBroadcastChannel();
-  showPlayerView();
-}
-
-document.getElementById("modBtn").onclick = function() {
-  document.getElementById("modTab").classList.add("active");
-  document.getElementById("playerTab").classList.remove("active");
-  document.getElementById("modBtn").classList.add("active");
-  document.getElementById("playerBtn").classList.remove("active");
-  
-  var params = new URLSearchParams(window.location.search);
-  var gid = params.get("game");
-  if(gid && !gameState) {
-    var gameKey = "game-"+gid;
-    var gdata = localStorage.getItem(gameKey);
-    if(gdata) {
-      gameState = JSON.parse(gdata);
-      var pool = POOLS[gameState.count];
-      showSetup(pool);
-      subscribeToPlayers();
+function renderModPlay() {
+  var g = gameState;
+  var alive = 0, aliveEvil = 0, aliveVillage = 0, aliveNeutral = 0;
+  for (var pid in g.players) {
+    var p = g.players[pid];
+    if (!p.dead) {
+      alive++;
+      var t = ROLES[p.role].t;
+      if (t === "evil" || t === "vampire") aliveEvil++;
+      else if (t === "village") aliveVillage++;
+      else aliveNeutral++;
     }
   }
-};
 
-document.getElementById("playerBtn").onclick = function() {
-  document.getElementById("playerTab").classList.add("active");
-  document.getElementById("modTab").classList.remove("active");
-  document.getElementById("playerBtn").classList.add("active");
-  document.getElementById("modBtn").classList.remove("active");
-  showPlayerView();
-};
+  var html = "";
+  var phaseClass = g.phase === "night" ? "phase-night" : "phase-day";
+  var phaseIcon = g.phase === "night" ? "🌙" : "☀️";
+  var phaseText = g.phase === "night" ? "NIGHT PHASE" : "DAY PHASE";
+  html += "<div class='phase-banner " + phaseClass + "'>" + phaseIcon + " " + phaseText + "<span class='day-counter'>Day " + g.day + "</span></div>";
 
-function initPage() {
-  if(window.pageInitialized) return;
-  window.pageInitialized = true;
-  
-  for(var i = 6; i <= 14; i++) {
-    (function(n) {
-      var b = document.createElement("button");
-      b.className = "btn";
-      b.textContent = n;
-      b.onclick = function() {
-        if(gameState) {
-          if(!confirm("End current game and start new one?")) return;
-          localStorage.removeItem("game-"+gameState.id);
-        }
-        document.querySelectorAll(".btn").forEach(function(x){x.classList.remove("active");});
-        b.classList.add("active");
-        setupGame(n);
-      };
-      document.getElementById("btnRow").appendChild(b);
-    })(i);
+  // Win checker
+  var winMsg = checkWinCondition(aliveEvil, aliveVillage, aliveNeutral, alive);
+  if (winMsg) {
+    html += "<div class='card'><div class='win-check " + winMsg.team + "'><strong>" + winMsg.title + "</strong><br>" + winMsg.text + "</div></div>";
   }
-  
+
+  html += "<div class='card'>";
+  html += "<div style='display:flex;justify-content:space-between;align-items:center;'>";
+  html += "<h3>Players (" + alive + " alive)</h3>";
+  html += "<button class='action-btn' id='toggleReveal'>" + (g.revealed ? "🙈 Hide Roles" : "👁 Show Roles") + "</button>";
+  html += "</div>";
+
+  html += "<div class='summary' style='margin-top:8px;'>";
+  html += "<span class='tag tag-evil'>Evil alive: " + aliveEvil + "</span>";
+  html += "<span class='tag tag-village'>Village alive: " + aliveVillage + "</span>";
+  if (aliveNeutral > 0) html += "<span class='tag tag-neutral'>Neutral alive: " + aliveNeutral + "</span>";
+  html += "</div>";
+
+  html += "<div class='players-grid'>";
+  for (var pid in g.players) {
+    var p = g.players[pid];
+    var r = ROLES[p.role];
+    html += "<div class='player-tile" + (p.dead ? " dead" : "") + "'>";
+    html += "<div class='player-tile-emoji'>" + (g.revealed ? r.e : "❔") + "</div>";
+    html += "<div style='flex:1;min-width:0;'>";
+    html += "<div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
+    if (g.revealed) {
+      html += "<div class='player-tile-role'><span class='tag tag-" + r.t + "'>" + r.t.substr(0,3).toUpperCase() + "</span>" + r.n + "</div>";
+    } else {
+      html += "<div class='player-tile-role player-tile-hidden'>hidden</div>";
+    }
+    html += "</div>";
+    html += "<button class='" + (p.dead ? "player-tile-revive" : "player-tile-kill") + "' data-pid='" + pid + "'>" + (p.dead ? "revive" : "kill") + "</button>";
+    html += "</div>";
+  }
+  html += "</div>";
+  html += "</div>";
+
+  // Night walker
+  if (g.phase === "night") {
+    var nightRoles = [];
+    for (var i = 0; i < g.roles.length; i++) {
+      var r = ROLES[g.roles[i]];
+      if (r.no < 99) nightRoles.push({key: g.roles[i], no: r.no});
+    }
+    // Include only unique night orders (some roles share slot 5), sort by no.
+    nightRoles.sort(function (a, b) { return a.no - b.no; });
+
+    html += "<div class='card'>";
+    html += "<h3>🌙 Night Walker</h3>";
+    html += "<p style='font-size:12px;color:#666;margin-bottom:8px;'>Call each role in order. Tap Next when done. Some roles die and don't wake.</p>";
+    var step = g.nightStep || 0;
+    html += "<div class='night-order'>";
+    for (var i = 0; i < nightRoles.length; i++) {
+      var nr = nightRoles[i];
+      var rr = ROLES[nr.key];
+      var pTaken = false;
+      // Find any living player with this role
+      for (var pid2 in g.players) {
+        if (g.players[pid2].role === nr.key && !g.players[pid2].dead) { pTaken = true; break; }
+      }
+      var cls = "night-step";
+      if (i < step) cls += " done";
+      else if (i === step) cls += " current";
+      html += "<div class='" + cls + "'>";
+      html += "<strong>" + rr.e + " " + rr.n + "</strong> — " + (NIGHT_ACTIONS[nr.no] || rr.d);
+      if (!pTaken) html += " <em style='color:#888;'>(no living player)</em>";
+      html += "</div>";
+    }
+    html += "</div>";
+    html += "<div style='margin-top:12px;'>";
+    html += "<button class='action-btn primary' id='nextStep'>▶ Next Role</button>";
+    html += "<button class='action-btn' id='resetStep'>↻ Reset</button>";
+    html += "<button class='action-btn warn' id='toDay'>☀️ End Night → Day</button>";
+    html += "</div>";
+    html += "</div>";
+  } else {
+    html += "<div class='card'>";
+    html += "<h3>☀️ Day Phase</h3>";
+    html += "<p style='color:#555;font-size:13px;'>Village debates, accuses, and votes. Use the <em>kill</em> button above to mark the lynched player. Then advance to night.</p>";
+    html += "<div style='margin-top:12px;'>";
+    html += "<button class='action-btn primary' id='toNight'>🌙 End Day → Night " + (g.day + 1) + "</button>";
+    html += "</div>";
+    html += "</div>";
+  }
+
+  html += "<div class='card'>";
+  html += "<button class='action-btn danger' id='endBtn'>✕ End Game</button>";
+  html += "</div>";
+  return html;
+}
+function attachModPlayHandlers() {
+  var btn;
+  document.querySelectorAll(".player-tile-kill, .player-tile-revive").forEach(function (b) {
+    b.onclick = function () { togglePlayerDead(b.getAttribute("data-pid")); };
+  });
+  if (btn = document.getElementById("toggleReveal")) btn.onclick = toggleReveal;
+  if (btn = document.getElementById("nextStep")) btn.onclick = advanceNightStep;
+  if (btn = document.getElementById("resetStep")) btn.onclick = resetNightStep;
+  if (btn = document.getElementById("toDay")) btn.onclick = nextPhase;
+  if (btn = document.getElementById("toNight")) btn.onclick = nextPhase;
+  if (btn = document.getElementById("endBtn")) btn.onclick = endGame;
+}
+
+function checkWinCondition(evil, village, neutral, total) {
+  if (total === 0) return {team: "neutral", title: "Everyone is dead", text: "Game over — no winners."};
+  if (evil === 0) return {team: "", title: "🎉 Village wins!", text: "All evil players have been eliminated."};
+  if (village === 0 && neutral === 0) return {team: "evil", title: "🐺 Evil wins!", text: "The village has fallen."};
+  if (evil >= village + neutral) return {team: "evil", title: "🐺 Evil dominates!", text: "Evil equals/outnumbers everyone else. Village cannot win."};
+  return null;
+}
+
+// ============================================================
+// PLAYER VIEW RENDERING
+// ============================================================
+async function renderPlayer() {
+  var view = document.getElementById("playerView");
+  view.innerHTML = "<div class='card'><div class='lobby-status'><span class='waiting-dots'>Loading</span></div></div>";
+
   var params = new URLSearchParams(window.location.search);
-  if(params.get("g") || params.get("game")) {
-    setTimeout(function(){
-      document.getElementById("playerTab").classList.add("active");
-      document.getElementById("modTab").classList.remove("active");
-      document.getElementById("playerBtn").classList.add("active");
-      document.getElementById("modBtn").classList.remove("active");
-      showPlayerView();
-    }, 50);
+  var gid = params.get("g") || params.get("game");
+
+  if (!gid) {
+    view.innerHTML = "<div class='card'><div class='info'>Ask your moderator for a game link. It should look like <code>?g=uw-...</code></div></div>";
+    return;
   }
+
+  var g = await loadGameForPlayer(gid);
+  if (!g) {
+    view.innerHTML = "<div class='card'><div class='error'>❌ Game not found or ended. Ask moderator for a new link.</div></div>";
+    return;
+  }
+
+  openBroadcast(gid);
+
+  var pid = localStorage.getItem("uw-pid-" + gid);
+  var players = await sbGetPlayers(gid);
+  var me = null;
+  if (pid) me = players.find ? players.find(function(p){return p.player_id===pid;}) : null;
+
+  if (!me) {
+    // Not joined — show name form
+    view.innerHTML = "<div class='card'>" +
+      "<h3>👤 Join the Game</h3>" +
+      "<p style='color:#666;font-size:12px;margin-bottom:10px;'>" + players.length + "/" + g.count + " players joined.</p>" +
+      "<input type='text' class='player-name-input' id='pname' placeholder='Enter your name' maxlength='24'>" +
+      "<div><button class='action-btn primary big' id='joinBtn'>🎭 Join Game</button></div>" +
+      "</div>";
+    var jb = document.getElementById("joinBtn");
+    var input = document.getElementById("pname");
+    jb.onclick = function () { joinGame(gid); };
+    input.onkeydown = function (e) { if (e.key === "Enter") jb.click(); };
+    input.focus();
+    // Poll: refresh join count while waiting
+    setTimeout(function () { if (!localStorage.getItem("uw-pid-" + gid)) renderPlayer(); }, 4000);
+    return;
+  }
+
+  // Show role
+  var role = ROLES[me.role];
+  if (!role) {
+    view.innerHTML = "<div class='card'><div class='error'>Unknown role: " + me.role + "</div></div>";
+    return;
+  }
+  var cardCls = "role-card-" + (role.t === "vampire" ? "vampire" : role.t);
+  var teamLabel = role.t === "evil" ? "🔴 EVIL SIDE" :
+                  role.t === "village" ? "🟢 VILLAGE SIDE" :
+                  role.t === "vampire" ? "🩸 VAMPIRE" :
+                  "🟣 NEUTRAL";
+
+  var html = "<div class='role-card " + cardCls + "'>";
+  html += "<div style='font-size:14px;opacity:0.9;'>👤 " + escapeHtml(me.name) + "</div>";
+  html += "<div class='role-card-big-emoji'>" + role.e + "</div>";
+  html += "<h2>" + role.n + "</h2>";
+  html += "<div class='team-badge'>" + teamLabel + "</div>";
+  html += "<div class='short-desc'>" + role.d + "</div>";
+  html += "<div class='long-desc'>" + role.ld + "</div>";
+  html += "<button class='action-btn' style='background:#fff;color:#333;margin-top:14px;' id='leaveBtn'>🚪 Leave Game</button>";
+  html += "</div>";
+  view.innerHTML = html;
+  document.getElementById("leaveBtn").onclick = function () { leaveGameFromPlayer(gid); };
 }
 
-// Initialize page UI
-if(document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initPage);
-} else {
-  initPage();
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function showTab(which) {
+  document.getElementById("modBtn").classList.toggle("active", which === "mod");
+  document.getElementById("playerBtn").classList.toggle("active", which === "player");
+  document.getElementById("modTab").classList.toggle("active", which === "mod");
+  document.getElementById("playerTab").classList.toggle("active", which === "player");
+  if (which === "mod") renderMod();
+  else renderPlayer();
 }
+function bindTabs() {
+  var m = document.getElementById("modBtn");
+  var p = document.getElementById("playerBtn");
+  if (m) m.onclick = function () { showTab("mod"); };
+  if (p) p.onclick = function () { showTab("player"); };
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  try {
+    bindTabs();
+    var params = new URLSearchParams(window.location.search);
+    var gid = params.get("g") || params.get("game");
+
+    var currentId = localStorage.getItem("uw-current");
+    if (currentId && !gid) {
+      var saved = loadLocal(currentId);
+      // Only resume as moderator if this device saved the game itself.
+      // (Player devices set uw-current too, but never save the full game.)
+      if (saved && saved.roles) {
+        gameState = saved;
+        isModerator = true;
+        openBroadcast(currentId);
+        startPolling();
+        refreshFromServer();
+        renderMod();
+        return;
+      }
+    }
+
+    if (gid) showTab("player");
+    else showTab("mod");
+  } catch (err) {
+    console.error("init error:", err);
+    var mv = document.getElementById("modView");
+    if (mv) mv.innerHTML = "<div class='card'><div class='error'>Startup error: " + (err && err.message || err) + "</div></div>";
+  }
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
   </script>
 </body>
 </html>
