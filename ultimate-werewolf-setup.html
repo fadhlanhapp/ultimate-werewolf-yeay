@@ -176,22 +176,185 @@ if (!initSupabase()) {
 // ============================================================
 // ROLE DATA
 // ============================================================
-var ROLES = {werewolf:{n:"Werewolf",t:"evil",w:-9,no:1,d:"Kill a villager each night.",ld:"Coordinate kills with the pack. Vote scatter early, then align. Eliminate information roles first.",e:"🐺"},alphawolf:{n:"Alpha Wolf",t:"evil",w:-9,no:2,d:"Once per game, convert a villager to werewolf.",ld:"Leader of the wolves. Once per game convert a villager to another wolf.",e:"👑🐺"},wolfcub:{n:"Wolf Cub",t:"evil",w:-8,no:1,d:"If killed, werewolves get double kill next night.",ld:"If lynched, the pack kills two the next night.",e:"🐶"},minion:{n:"Minion",t:"evil",w:-6,no:3,d:"Knows werewolves. Wins with evil.",ld:"Traitor inside village knowing all wolves. They don't know you.",e:"🤝"},sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, learn if target is Seer.",ld:"Hunt the Seer for the wolf team.",e:"🔮"},sorcerer:{n:"Sorcerer",t:"evil",w:-7,no:27,d:"Evil seer: learn role (werewolf only), other seer, or nothing.",ld:"Selective seer — feed the wolves.",e:"🧙"},shaman:{n:"Shaman",t:"evil",w:-5,no:19,d:"Each night, gain werewolf powers.",ld:"Join the wolves' kills each night.",e:"🧙‍♂️"},wolfhound:{n:"Wolf Hound",t:"evil",w:-4,no:99,d:"Knows one werewolf. Wins with evil.",ld:"Spy who knows one wolf.",e:"🐕"},dreamwolf:{n:"Dream Wolf",t:"evil",w:-8,no:1,d:"Replaces dead werewolf (don't wake until one dies).",ld:"Dormant wolf that wakes when the first wolf dies.",e:"😴🐺"},lonewolf:{n:"Lone Wolf",t:"evil",w:-7,no:1,d:"Werewolf that wins only if last wolf alive.",ld:"You only win alone as the last evil.",e:"🐺"},blackwolf:{n:"Black Wolf",t:"evil",w:-8,no:28,d:"Spellcaster + Werewolf combined.",ld:"Kills at night; once per game silences one player.",e:"⚫🐺"},bigbadwolf:{n:"Big Bad Wolf",t:"evil",w:-9,no:29,d:"Kill adjacent players or any combination.",ld:"Kill any combination of adjacent players.",e:"😈🐺"},bogeyman:{n:"Bogeyman",t:"evil",w:-6,no:30,d:"If wolves can't decide, you decide. Win if all night-active die.",ld:"Tiebreaker for wolf kills. Wins if all night-active players die.",e:"👹"},fruitbrute:{n:"Fruit Brute",t:"evil",w:-7,no:31,d:"Last wolf: can't feed, but must kill all villagers.",ld:"Powerful desperate last wolf. Must kill each night.",e:"🍃🐺"},wolfman:{n:"Wolf Man",t:"evil",w:-8,no:1,d:"Appears as villager to Seers, secretly evil.",ld:"Deceptive wolf that reads as villager.",e:"🧛‍♂️"},whitewolf:{n:"White Wolf",t:"evil",w:-10,no:32,d:"Wake with wolves nightly. Every other night, kill anyone.",ld:"Solo win — last player standing.",e:"⚪🐺"},amnesiac:{n:"Amnesiac",t:"evil",w:0,no:99,d:"Random role each game. Wins with original team.",ld:"Fake role given at start. True role revealed later.",e:"❓"},vampire:{n:"Vampire",t:"vampire",w:-8,no:33,d:"Attack a player each night. They die if nominated next day.",ld:"Bite one; if they're nominated the next day they die.",e:"🧛"},seer:{n:"Seer",t:"village",w:7,no:5,d:"Each night, learn one player's true role.",ld:"Most powerful info role. Share carefully; wolves target you.",e:"🔍"},mysticseer:{n:"Mystic Seer",t:"village",w:9,no:5,d:"Learn true role of one, alignment of another.",ld:"Enhanced Seer — role + alignment info per night.",e:"🌟"},appseer:{n:"Apprentice Seer",t:"village",w:4,no:99,d:"Becomes Seer if Seer dies.",ld:"Backup Seer; activates when Seer dies.",e:"📚"},beholder:{n:"Beholder",t:"village",w:5,no:34,d:"First night, learn who the Seer is.",ld:"Only knows the Seer; protect them if possible.",e:"👁️"},mentalist:{n:"Mentalist",t:"village",w:6,no:7,d:"Learn if two players are same team.",ld:"Compare two players' alignments each night.",e:"🧠"},auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, learn alignment (good/evil).",ld:"Learn one player's alignment each night.",e:"✨"},empath:{n:"Empath",t:"village",w:4,no:20,d:"Learn if neighbors are good or evil.",ld:"Alignment of both immediate neighbors.",e:"💫"},pi:{n:"PI",t:"village",w:3,no:9,d:"Inspect 3 adjacent players: learn if any is evil.",ld:"Yes/no evil check on 3 adjacent seats.",e:"🕵️"},revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Once per game, flip a card and reveal role.",ld:"One-time public role reveal.",e:"💎"},witch:{n:"Witch",t:"village",w:4,no:10,d:"Once each: heal someone OR kill someone.",ld:"Two one-shot potions: heal + kill.",e:"🧙‍♀️"},doctor:{n:"Doctor",t:"village",w:5,no:21,d:"Protect one player each night from death.",ld:"Vary targets. Protecting yourself once is fair.",e:"⚕️"},hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When killed, take someone down with you.",ld:"Death shot: pick a target when you die.",e:"🏹"},huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, also when voted out.",ld:"Nightly shot + revenge shot on lynch.",e:"🏹"},bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Protect one from werewolves each night.",ld:"Block wolf kill by revealing yourself.",e:"🛡️"},priest:{n:"Priest",t:"village",w:3,no:13,d:"First night protect one. Then alternate nights.",ld:"Protect on odd nights only.",e:"🙏"},spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once per game, silence a player next day.",ld:"One-time day silence.",e:"✋"},cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: link two lovers (die together).",ld:"Two lovers die together.",e:"💘"},mason:{n:"Mason",t:"village",w:2,no:99,d:"Know other Masons.",ld:"Confirmed trust circle on night 1.",e:"🪨"},prince:{n:"Prince",t:"village",w:3,no:99,d:"First vote doesn't eliminate you. Role revealed.",ld:"One-time vote immunity, then role revealed.",e:"👑"},toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive one werewolf kill until next day.",ld:"Survive first wolf attack; die the day after.",e:"💪"},diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If eaten by wolves, they skip next kill.",ld:"Wolves lose a night if they eat you.",e:"🦠"},drunk:{n:"Drunk",t:"village",w:4,no:99,d:"Don't know your role. Learn it on day 3.",ld:"Blind role until day 3.",e:"🍷"},paranoid:{n:"Paranoid",t:"village",w:1,no:99,d:"You think everyone is a werewolf.",ld:"Roleplay: everyone is a wolf.",e:"😰"},gypsy:{n:"Gypsy",t:"village",w:2,no:22,d:"Each night, guess one player's role.",ld:"Guess a role; mod signals hits.",e:"🔮"},medium:{n:"Medium",t:"village",w:2,no:23,d:"Contact the dead at night for clues.",ld:"Talk to the dead each night.",e:"👻"},jailer:{n:"Jailer",t:"village",w:3,no:24,d:"Jail one player - blocks their night actions.",ld:"Blocks night actions; wolves can still kill jailed.",e:"⛓️"},pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"Cannot vote during day. Wins with village.",ld:"No voting allowed.",e:"☮️"},old_man:{n:"Old Man",t:"village",w:2,no:99,d:"Weak. Reveal when targeted.",ld:"Reveal on wolf attack, then die.",e:"👴"},arsonist:{n:"Arsonist",t:"village",w:3,no:25,d:"Each night, douse one player with kerosene.",ld:"Doused + lynched = they burn AND you learn their role.",e:"🔥"},vigilante:{n:"Vigilante",t:"village",w:2,no:26,d:"Once per game, eliminate one player.",ld:"One-shot night kill.",e:"🎯"},count:{n:"The Count",t:"village",w:2,no:99,d:"First night, learn # of werewolves in each half.",ld:"Split-table wolf count on night 1.",e:"🎩"},villageIdiot:{n:"Village Idiot",t:"village",w:1,no:99,d:"Must vote every day phase.",ld:"Cannot abstain from voting.",e:"🤪"},insomniac:{n:"Insomniac",t:"village",w:3,no:99,d:"Learn which neighbors woke during night.",ld:"See who acted next to you.",e:"😴"},martyr:{n:"Martyr",t:"village",w:4,no:99,d:"Take the place of a killed player before reveal.",ld:"Die in someone else's place before reveal.",e:"⚰️"},mayor:{n:"Mayor",t:"village",w:3,no:99,d:"Your vote counts twice when you reveal.",ld:"Reveal for double vote power.",e:"🎖️"},oldhag:{n:"Old Hag",t:"village",w:4,no:35,d:"Each night, choose player who must leave next day.",ld:"Curse one player to sit out next day.",e:"🧓"},thing:{n:"Thing",t:"village",w:1,no:99,d:"Each night, tap adjacent player.",ld:"Silent tap on a neighbor.",e:"👆"},villager:{n:"Villager",t:"village",w:1,no:99,d:"Find and eliminate werewolves.",ld:"No powers. Analyze behavior and vote carefully.",e:"👨‍🌾"},fortuneteller:{n:"Fortune Teller",t:"village",w:3,no:36,d:"Know exact roles of inspected players.",ld:"Perfect role reads each night.",e:"🔮"},amulet:{n:"Amulet of Protection",t:"village",w:5,no:99,d:"Can't die. Pass to another player each day or destroyed.",ld:"Death immunity; pass each day.",e:"💍"},lycan:{n:"Lycan",t:"village",w:-1,no:99,d:"Appear as werewolf to Seers, but you're village.",ld:"You read as wolf to Seers.",e:"🌙"},troublemaker:{n:"Troublemaker",t:"neutral",w:0,no:16,d:"Stir trouble: next day has 2 day-kill attempts.",ld:"Death triggers double lynching.",e:"😈"},doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Copy role night 1. Gain when they die.",ld:"Copy a role night 1; inherit their new role on death.",e:"👥"},madbomber:{n:"Mad Bomber",t:"neutral",w:-2,no:99,d:"If eliminated, chain explosion kills others.",ld:"Voted out = neighbors die too.",e:"💣"},curse:{n:"Curse",t:"neutral",w:-3,no:99,d:"If werewolves eat you, become werewolf.",ld:"Wolf kill converts you.",e:"⚫"},cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Recruit one player each night. Win if all cultists.",ld:"Recruit to cult; win when all living are in.",e:"⛪"},fool:{n:"Fool",t:"neutral",w:-2,no:99,d:"Win if voted out during day phase.",ld:"Win by being lynched.",e:"🤡"},jester:{n:"Jester",t:"neutral",w:-1,no:99,d:"Win if voted out during day.",ld:"Win by being lynched.",e:"🎭"},hoodlum:{n:"Hoodlum",t:"neutral",w:-1,no:99,d:"Win if two indicated players die while you're alive.",ld:"Two secret targets must die while you live.",e:"🚬"},tanner:{n:"Tanner",t:"neutral",w:2,no:99,d:"Win if you are killed.",ld:"Your death = your win.",e:"👔"},wildchild:{n:"Wild Child",t:"neutral",w:0,no:99,d:"Become werewolf if role-model dies.",ld:"Pick a model; convert on their death.",e:"👶"},sasquatch:{n:"Sasquatch",t:"neutral",w:-1,no:99,d:"Become werewolf if day ends without killing.",ld:"No lynch = you convert.",e:"🦍"},leprechaun:{n:"Leprechaun",t:"neutral",w:1,no:37,d:"Redirect werewolf attacks to adjacent players.",ld:"Shift the wolf kill to a neighbor.",e:"🍀"},bloodymary:{n:"Bloody Mary",t:"neutral",w:-1,no:99,d:"If killed, kill someone from the killing team nightly.",ld:"Revenge ghost after death.",e:"🩸"},chupacabra:{n:"Chupacabra",t:"neutral",w:-2,no:38,d:"Each night target a wolf = they die. Otherwise nothing.",ld:"Auto-kill on wolves; whiff on non-wolves.",e:"🦇"},nostradamus:{n:"Nostradamus",t:"neutral",w:1,no:99,d:"Predict winner on night 1. Solo win if right & alive.",ld:"Guess the winning team on night 1.",e:"📜"},direwolf:{n:"Dire Wolf",t:"neutral",w:-2,no:99,d:"Choose companion night 1. Die if they die.",ld:"Bound to a companion — die together.",e:"👹"},ghost:{n:"Ghost",t:"neutral",w:0,no:99,d:"Die night 1, then send letter clues from beyond.",ld:"Auto-die night 1; write one clue letter.",e:"👼"},orator:{n:"Orator",t:"village",w:2,no:40,d:"Once per game, eliminate two players in one day.",ld:"One-time double-lynch power.",e:"🎤"},lawyer:{n:"Lawyer",t:"village",w:3,no:41,d:"Select one at night. If voted out next day, save them.",ld:"Overturn a lynch by nominating a defender-client.",e:"⚖️"},gossip:{n:"Gossip",t:"village",w:2,no:42,d:"Learn 2-3 random keywords from night discussions.",ld:"Fragmentary night intelligence.",e:"💬"},advocate:{n:"Advocate",t:"village",w:2,no:43,d:"Once per game, save someone from lynch.",ld:"One-time lynch veto.",e:"📣"},demagogue:{n:"Demagogue",t:"neutral",w:-1,no:44,d:"Prevent consensus. Solo win if no lynch for 5 days.",ld:"Chaos agent — win if voting stays split for 5 days.",e:"🗣️"},whistleblower:{n:"Whistleblower",t:"village",w:3,no:45,d:"Public accusation: reveal one suspected evil role at night.",ld:"Public accusation each night — reputation stakes.",e:"🔔"},accuser:{n:"Accuser",t:"village",w:1,no:46,d:"Your nominations count double during day votes.",ld:"Double-weight lynching votes.",e:"👉"},defender:{n:"Defender",t:"village",w:1,no:47,d:"Each day, one player gains vote immunity.",ld:"Grant lynch-immunity to one player per day.",e:"🛡️"},gadfly:{n:"Gadfly",t:"neutral",w:0,no:48,d:"Solo win by surviving to game end.",ld:"Survive — that's the whole goal.",e:"🪰"},chronicler:{n:"Chronicler",t:"village",w:2,no:49,d:"Once per game, reveal a voting-pattern analysis.",ld:"Expose coordinated wolf voting blocs once per game.",e:"📊"},propagandist:{n:"Propagandist",t:"evil",w:-2,no:50,d:"Spread anonymous false rumors once per day.",ld:"Plant misdirection in day discussion.",e:"📰"},conspirator:{n:"Conspirator",t:"evil",w:-3,no:51,d:"Knows wolves, coordinates through voting.",ld:"Silent wolf coordinator with full intel.",e:"🤐"}};
+var ROLES = {
+// ============ EVIL / WOLF TEAM ============
+werewolf:{n:"Werewolf",t:"evil",w:-6,no:1,d:"Each night, prowl with the pack and devour one villager.",ld:"When the moon rises, you slip from your bed and hunt beside your kin. Speak lightly during the day, vote scattered early, then coordinate silently as suspicion grows. Your greatest enemies are information roles — Seer, Fortune Teller, Doctor — hunt them first before their light reveals your den. Betray no tell, and the village will devour itself.",e:"🐺"},
+alphawolf:{n:"Alpha Wolf",t:"evil",w:-7,no:2,d:"Leader of the pack. Once per game, convert a villager into a fellow wolf.",ld:"You are the beast that leads. Every night you feed with the pack, but once during the game you may sink your fangs into a villager and turn them — permanently swelling your ranks and shattering the village's mathematics. Use it when suspicion falls on a wolf and the game hangs in balance. Reveal too soon and the village will impale you before you can bite.",e:"👑"},
+wolfcub:{n:"Wolf Cub",t:"evil",w:-6,no:1,d:"Small and vulnerable — but if lynched, the pack kills TWO the next night.",ld:"You are the pup the pack will die to protect. Your greatest weapon is your fragility: if the village foolishly lynches you, the wolves grow enraged and tear apart two victims the following night instead of one. Bait the village, let them think you're the easy kill — and watch the pack feast.",e:"🐶"},
+minion:{n:"Minion",t:"evil",w:-5,no:3,d:"You know every werewolf. They do not know you.",ld:"You are the whisper in the wolves' shadow — a traitor in the village's heart. You see them, but they see only a villager. Coordinate through voting patterns and strategic sacrifices: throw a suspicious vote at a wolf early to build trust, then guide the mob toward Seers and Doctors. Die for the pack. The wolves' win is your win, even if you never speak a word to them.",e:"🤝"},
+sorceress:{n:"Sorceress",t:"evil",w:-3,no:4,d:"Each night, point at a player — learn whether they are the Seer.",ld:"Your dark magic senses the Seer's aura from across the table. Each night you may point at one player and learn if they carry the Seer's gift. Feed this to the wolves and they will devour the village's brightest light before it can illuminate the truth.",e:"🔮"},
+sorcerer:{n:"Sorcerer",t:"evil",w:-4,no:27,d:"Corrupted seer — each night, learn if target is a wolf, a Seer, or nothing.",ld:"You wield twisted sight. Each night, you inspect one player and learn: they are a werewolf, they are the Seer, or your vision clouds and you learn nothing. Wolves know your face; you become their informant. Choose targets to give the pack the confirmation they need without accidentally exposing wolf identity to the village.",e:"🧙"},
+shaman:{n:"Shaman",t:"evil",w:-4,no:19,d:"Dark magic user — join the werewolves' kill each night.",ld:"You are magic bent to evil. From the very first night, you rise with the pack and take part in every kill — your spellcraft blends with their fangs. Blend in during the day as a mystic villager and use the wolves' cover to strike.",e:"🧙‍♂️"},
+wolfhound:{n:"Wolf Hound",t:"evil",w:-3,no:99,d:"An evil spy who knows ONE werewolf.",ld:"You are a hound at the wolves' heel — you learn the identity of one werewolf on the first night, but they don't know your face. Coordinate through voting patterns and subtle defenses. If your wolf falls, you must invent a new alliance on the fly. Wins with the wolves.",e:"🐕"},
+dreamwolf:{n:"Dream Wolf",t:"evil",w:-6,no:1,d:"Sleeper wolf — activates only when the first werewolf dies.",ld:"You dream in the shadow of the pack, hidden even from the wolves themselves. You do not wake, do not kill, do not know the others. But the moment the first werewolf falls, your eyes snap open and you take their place in the hunt. The village kills a wolf and finds another has risen — chaos.",e:"😴"},
+lonewolf:{n:"Lone Wolf",t:"evil",w:-5,no:1,d:"A wolf who wins ONLY if the last surviving evil is you.",ld:"You are pack, but not truly. Every night you kill with the wolves — but you win only if you are the last evil standing. Sometimes that means betraying your kin, letting them fall to buy your survival. A wolf with a knife pointed inward. Chaotic and dangerous — even to your own team.",e:"🐺"},
+blackwolf:{n:"Black Wolf",t:"evil",w:-6,no:28,d:"A werewolf AND spellcaster — once per game, silence a player for a full day.",ld:"You combine two powers: at night you feed with the pack, but once during the game you may cast a spell of silence on any player, sealing their lips for an entire day phase. Use it to silence an accuser building momentum against a wolf, or to gag a Seer before they reveal.",e:"⚫"},
+bigbadwolf:{n:"Big Bad Wolf",t:"evil",w:-7,no:29,d:"A fearsome wolf — kill adjacent players in combinations, not just one.",ld:"You are the pack's most fearsome. Instead of the usual one kill, you may target any combination of adjacent players in a single night. Wipe out entire flanks of the table when the village foolishly clusters together. Devastating in mid-game when trust groups sit side by side.",e:"😈"},
+bogeyman:{n:"Bogeyman",t:"evil",w:-4,no:30,d:"Break ties for the wolves. Solo-win if every night-active role dies.",ld:"When the pack cannot agree on a victim, you decide for them — the tiebreaker in every kill. Additionally, your solo victory triggers when every player with a night action has died: even the wolves. You benefit from eliminating information roles AND from the wolves eventually devouring themselves.",e:"👹"},
+fruitbrute:{n:"Fruit Brute",t:"evil",w:-4,no:31,d:"Cursed last wolf — must kill every night, or you starve and die.",ld:"You are the last of a cursed lineage. If you become the last werewolf alive, you become powerful — but you MUST kill each and every night. Miss even one and you starve; the curse consumes you. Late-game tension: the village learns to protect all remaining players and you scramble desperately to feed.",e:"🍃"},
+wolfman:{n:"Wolf Man",t:"evil",w:-6,no:1,d:"Appear as an innocent villager to all Seers — secretly a wolf.",ld:"You wear a perfect mask. Every Seer, Fortune Teller, and Aura Seer sees only 'Villager' when they inspect you. Yet you rise with the pack each night and hunt. You are the wolf they will never believe is the wolf. Play the loudest villager at the table.",e:"🧛"},
+whitewolf:{n:"White Wolf",t:"evil",w:-7,no:32,d:"Wake with wolves nightly. Every other night, kill anyone alone. Solo win.",ld:"You are legend and terror combined. You wake with the pack every night to communicate — but on alternating nights, you kill ALONE, choosing any target you wish (even a fellow wolf). Your win is solo: the last player alive. Betray the pack when the timing is right and rise from the massacre triumphant.",e:"⚪"},
+amnesiac:{n:"Amnesiac",t:"evil",w:-1,no:99,d:"You forget your real role. The moderator tells you a fake one at start.",ld:"You awaken with no memory of who you are. The moderator whispers a role to you at the start — but it is a lie. Your true role is hidden. Play the fake convincingly; you win with whatever your true team is. The uncertainty is your torment and your camouflage.",e:"❓"},
+vampire:{n:"Vampire",t:"vampire",w:-4,no:33,d:"Bite one player each night. If they're nominated the next day, they die.",ld:"You are a curse of the night, separate from the wolves entirely. Each night you sink your fangs into one victim. They do not die immediately — but if they are nominated for lynching the following day, they perish instantly from the venom in their veins. An independent evil with your own hunt.",e:"🧛"},
+propagandist:{n:"Propagandist",t:"evil",w:-2,no:50,d:"Once per day, plant an anonymous rumor into village discussion.",ld:"You are the architect of lies. Once per day phase you may whisper a false rumor to the moderator, who will broadcast it anonymously to the village — 'someone heard so-and-so claim to be Seer.' The village cannot trace it back to you. Feed the pack targets by manufacturing suspicion.",e:"📰"},
+conspirator:{n:"Conspirator",t:"evil",w:-3,no:51,d:"Silent wolf commander — you know all wolves; they don't know you.",ld:"You are the invisible general. You see every wolf in the game, but they see only a villager. Guide their strategy through voting theater: vote against a wolf publicly to build trust, then coordinate elimination targets through subtle patterns. When the village hunts obvious wolves, they miss the commander behind the curtain.",e:"🤐"},
 
-// Balanced pools per player count. Village count = total - evil - neutral.
-var POOLS = {
-  6:  {e:["werewolf"],                             v:["seer","hunter","bodyguard","villager"],                                 n:["jester"]},
-  7:  {e:["werewolf","sorceress"],                 v:["seer","hunter","bodyguard","mason"],                                    n:["troublemaker"]},
-  8:  {e:["werewolf","wolfhound"],                 v:["seer","mentalist","bodyguard","revealer","villager"],                   n:["doppelganger"]},
-  9:  {e:["alphawolf","minion","sorceress"],       v:["seer","hunter","bodyguard","mason","orator"],                           n:["wildchild"]},
-  10: {e:["alphawolf","minion","sorceress","shaman"], v:["seer","doctor","hunter","bodyguard","revealer","lawyer"],            n:["cultleader"]},
-  11: {e:["alphawolf","minion","wolfhound","sorceress"], v:["seer","doctor","hunter","bodyguard","mason","advocate","gossip"], n:["wildchild"]},
-  12: {e:["alphawolf","minion","sorceress","wolfhound","shaman"], v:["seer","doctor","hunter","bodyguard","revealer","mason","accuser","villager"], n:["doppelganger"]},
-  13: {e:["alphawolf","minion","sorceress","wolfhound","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","advocate","chronicler"], n:["cultleader"]},
-  14: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower"], n:["wildchild"]},
-  15: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower","witch"], n:["wildchild"]},
-  16: {e:["alphawolf","minion","sorceress","wolfhound","shaman","sorcerer","blackwolf"], v:["seer","doctor","hunter","bodyguard","revealer","mason","priest","orator","whistleblower","witch"], n:["wildchild","cultleader"]}
+// ============ VILLAGE / GOOD TEAM ============
+seer:{n:"Seer",t:"village",w:5,no:5,d:"Each night, learn one player's TRUE role.",ld:"You are the village's brightest torch. Every night you point at one player and the moderator reveals their exact role. But knowledge is a curse: the moment wolves suspect you, they will tear you apart. Share findings as doubts, not certainties. Build allies. Establish a Seer succession. Every night alive is a gift; use it before the pack finds you.",e:"🔍"},
+mysticseer:{n:"Mystic Seer",t:"village",w:6,no:5,d:"Enhanced Seer — learn one player's role AND another's alignment each night.",ld:"You are Seer twice over. Each night you may inspect one player and learn their exact role, AND look at a second and learn only their alignment (good/evil/neutral). Twice the data, twice the responsibility, twice the target on your back.",e:"🌟"},
+appseer:{n:"Apprentice Seer",t:"village",w:3,no:99,d:"A hidden backup — become the Seer the moment the Seer dies.",ld:"You appear as a normal villager, but you carry a secret gift waiting to bloom. The moment the true Seer dies, you inherit their power on the very next night. The village keeps its light even after darkness. Reveal too early and the wolves will simply add you to their list.",e:"📚"},
+beholder:{n:"Beholder",t:"village",w:3,no:34,d:"On night 1, learn who the Seer is.",ld:"You are the Seer's quiet ally. On the first night, the moderator shows you exactly which player is the Seer. You know who to defend, who to trust, who to guide. Reveal your role too early and the wolves target you both — you become a Seer beacon.",e:"👁️"},
+mentalist:{n:"Mentalist",t:"village",w:4,no:7,d:"Each night, learn whether TWO players share the same team.",ld:"You read minds across the table. Each night, point at any two players and learn whether they are on the same team. A yes/no answer, but immensely powerful — pair a suspected wolf with a confirmed villager and watch the truth crystallize.",e:"🧠"},
+auraseer:{n:"Aura Seer",t:"village",w:3,no:6,d:"Each night, sense a player's alignment (good, evil, or neutral).",ld:"You see the colors of souls. Each night you look at one player and learn their team — not their exact role, but whether they are good, evil, or something stranger. Less precise than a Seer, but a valuable second lens.",e:"✨"},
+empath:{n:"Empath",t:"village",w:3,no:20,d:"Each night, sense the alignment of BOTH your neighbors.",ld:"You feel the auras beside you. Each night, learn the alignment of the players immediately to your left and right. If both are good, sit tight; if evil creeps near, sound the alarm. Convince the village to shift seats — become a walking radar.",e:"💫"},
+pi:{n:"Private Investigator",t:"village",w:3,no:9,d:"Inspect 3 adjacent players — learn if ANY of them is evil.",ld:"You investigate in clusters. Each night, point at three consecutive players and the moderator tells you if at least one among them is evil. A binary answer over a triangle of suspicion. Perfect for narrowing wolf hiding spots quickly.",e:"🕵️"},
+revealer:{n:"Revealer",t:"village",w:2,no:8,d:"Once per game, publicly reveal a player's true role for everyone.",ld:"You carry a single crystal that shatters secrets. Once during the game, you may flip a player's card face-up for the entire village to see. A gamble: reveal a wolf and swing the game; reveal a Seer and cost the village their light. Save it for a decisive moment.",e:"💎"},
+witch:{n:"Witch",t:"village",w:4,no:10,d:"Two potions: one to heal (save a night's victim), one to kill (any player).",ld:"You brew in secret. You start with two potions — a golden vial that saves one victim from the wolves' fangs (used AFTER learning who they targeted), and a black vial that slays any player of your choice. Both are one-shot. Timing is everything: save too early, waste the vial; save too late, the wolves outmaneuver you.",e:"🧙‍♀️"},
+doctor:{n:"Doctor",t:"village",w:4,no:21,d:"Each night, protect one player from the wolves' kill.",ld:"You are the village's shield. Each night, choose one player to guard. If the wolves target them, they survive till dawn. Vary your targets — predictable patterns get you eaten. Protecting yourself occasionally is fair play. When someone survives an attack, everyone knows there's a Doctor — and the pack will hunt you next.",e:"⚕️"},
+hunter:{n:"Hunter",t:"village",w:3,no:99,d:"When you die, take one player down with you.",ld:"Your bow is drawn even in death. The moment you die — by wolves, by lynch, by any means — you may fire one final arrow at any living player, killing them instantly. Even the threat of your Hunter shot changes voting behavior. Paradoxically, more valuable alive as a deterrent than dead as a revenge.",e:"🏹"},
+huntress:{n:"Huntress",t:"village",w:3,no:11,d:"Shoot once at night, and once more if voted out.",ld:"You are two arrows. Once during a night phase, you may shoot any player dead. Additionally, if you are lynched during the day, you get one final shot before you fall. Aggressive village firepower — the wolves will prioritize you accordingly.",e:"👩‍🦰"},
+bodyguard:{n:"Bodyguard",t:"village",w:3,no:12,d:"Guard one player each night — reveal yourself to block a wolf kill.",ld:"You choose one player to guard each night. If wolves target your ward, you may reveal yourself as Bodyguard and take the blow — the ward survives, but you die instead. A sacrifice mechanic: use it wisely on high-value targets like a revealed Seer or a lynched-tomorrow suspect.",e:"🛡️"},
+priest:{n:"Priest",t:"village",w:3,no:13,d:"Protect on odd-numbered nights (night 1, 3, 5, …). Rest between.",ld:"You bless in rhythm. On the first night, you may consecrate one player, granting them immunity. Then you rest a night. Then bless again. Alternating cadence — predictable but reliable. Wolves may target you or simply strike on your resting nights.",e:"🙏"},
+spellcaster:{n:"Spellcaster",t:"village",w:1,no:14,d:"Once per game, silence a player for an entire day.",ld:"You know one binding spell. Once during the game, choose a player and seal their tongue: they cannot speak, vote, or accuse for the next day phase. Silence a suspected wolf before they can defend themselves, or gag a chaos-inducer at a critical moment.",e:"✋"},
+cupid:{n:"Cupid",t:"village",w:3,no:15,d:"Night 1: designate two lovers. If one dies, the other dies too.",ld:"On the first night only, you point at two players and bind their fates. From that moment, if either dies — by lynch, by wolf, by any cause — the other's heart shatters and they die too. Bind wisely: two villagers grants stability; a wolf and villager creates chaos; two wolves is a gift to the village.",e:"💘"},
+mason:{n:"Mason",t:"village",w:2,no:99,d:"Wake on night 1 with the other Masons. You know each other.",ld:"You are part of a sacred order. On the first night, you and any other Masons open your eyes together and confirm each other's identities — an instant trust circle. From that moment, you know at least one confirmed ally in the village. Guard the secret; wolves lynching a Mason kills a known-good.",e:"🪨"},
+prince:{n:"Prince",t:"village",w:3,no:99,d:"First time you're voted for lynch — immune. But your role reveals.",ld:"You wear royal armor once. The first day the village votes to lynch you, the vote fails — your role is publicly revealed as Prince and you survive. From that point on, everyone knows you're a townsperson (a huge village win). But you also become a wolf target.",e:"👑"},
+toughguy:{n:"Tough Guy",t:"village",w:3,no:99,d:"Survive the first wolf attack — but you'll die the following day.",ld:"You are hard to kill, but not immortal. When wolves first target you, you survive the night. However, come the next dusk, your wounds catch up and you die anyway. One extra day to help the village — use your final speech to accuse and inform.",e:"💪"},
+diseased:{n:"Diseased",t:"village",w:3,no:99,d:"If wolves eat you, they sicken and skip the following night's kill.",ld:"Your blood is poison to the pack. If they choose to feed on you, they become ill and lose the next night's kill entirely. The village gains a free night of safety at the cost of your life — a superb passive protection.",e:"🦠"},
+drunk:{n:"Drunk",t:"village",w:2,no:99,d:"You don't know your real role. On day 3, the moderator tells you.",ld:"You wake groggy with no memory of your card. For the first two days you play blind — you don't know your powers, so you can't use them (or you fake being a villager). On the morning of day 3, the moderator whispers your true role and you finally awaken to your gift.",e:"🍷"},
+paranoid:{n:"Paranoid",t:"village",w:0,no:99,d:"Roleplay demands: you believe EVERYONE is a werewolf.",ld:"You suspect all. You must vocally suspect every player at some point, spreading distrust like a plague. You're actually a villager — but your paranoia may accidentally reveal wolves. Or accidentally lynch your friends. A comedy of errors and information.",e:"😰"},
+gypsy:{n:"Gypsy",t:"village",w:2,no:22,d:"Each night, guess a player's role. The mod signals if you're right.",ld:"You read fortunes in the fire. Each night, you name a player and guess their role aloud (to the moderator). If correct, the moderator gives a subtle signal — a nod, a candle relit. Your accuracy grows over rounds as you triangulate.",e:"🔮"},
+medium:{n:"Medium",t:"village",w:2,no:23,d:"Each night, commune with one dead player for a clue.",ld:"You speak to the fallen. Each night, choose a dead player; the moderator relays one whispered clue from them. The dead see all — but they can only whisper riddles, not names. Slow-building intelligence that pays off in late game.",e:"👻"},
+jailer:{n:"Jailer",t:"village",w:3,no:24,d:"Each night, jail one player. They cannot act, but wolves can still kill them.",ld:"You keep a cell in your basement. Each night, drag one player behind bars — they cannot perform any night action (Seers can't see, killers can't kill). But the wolves still know where they are and can eat a jailed player. A double-edged blade.",e:"⛓️"},
+pacifist:{n:"Pacifist",t:"village",w:-1,no:99,d:"You may not vote during any day. Wins with village.",ld:"You have taken a vow. You cannot vote during any day phase — your finger stays down when the mob raises theirs. You can still speak, accuse, and reason; you just cannot cast a ballot. A handicapped ally, but an eloquent one.",e:"☮️"},
+old_man:{n:"Old Man",t:"village",w:2,no:99,d:"If wolves target you, you reveal your role publicly, then die.",ld:"You are old and frail. If the wolves attack you at night, you gasp your final words and reveal your role to the entire village before dying. Everyone learns 'Old Man died' — a small but real information transfer from beyond.",e:"👴"},
+arsonist:{n:"Arsonist",t:"village",w:3,no:25,d:"Each night, douse a player in kerosene. If lynched, they burn AND you learn their role.",ld:"You paint the night in accelerant. Each night, choose a player and douse them with flammable liquid. Nothing happens — until they are lynched during a day phase. Then they combust: they die AND the moderator tells you their exact role first. Combines information with drama.",e:"🔥"},
+vigilante:{n:"Vigilante",t:"village",w:2,no:26,d:"Once per game, at night, execute any player of your choice.",ld:"You are the village's private judge. Once during the game, on any night, you may kill any player. A single silver bullet. Miss and you help the wolves; hit and you may be the decisive strike. Carries emotional weight — you must be certain.",e:"🎯"},
+count:{n:"The Count",t:"village",w:2,no:99,d:"Night 1: learn how many wolves are in each half of the table.",ld:"You count from the shadows. On the very first night, the moderator splits the table in two and tells you exactly how many wolves sit in each half. Powerful geographic intel — combined with alignments from Seers, wolves become findable within one night.",e:"🎩"},
+villageIdiot:{n:"Village Idiot",t:"village",w:1,no:99,d:"You MUST cast a vote every single day phase. No abstaining.",ld:"You have opinions and you WILL be heard. You are compelled to vote every day, even when unsure. This forces information into the day: your patterns matter. A trusted Idiot's vote is credibility gold; a compromised one is a wolf tell.",e:"🤪"},
+insomniac:{n:"Insomniac",t:"village",w:2,no:99,d:"You learn each morning which neighbors woke up during the night.",ld:"You never truly sleep. Each morning, the moderator tells you which of your immediate neighbors took a night action — Seers investigating, Doctors saving, wolves killing. Meta-knowledge: you know which seats are active without knowing who.",e:"😴"},
+martyr:{n:"Martyr",t:"village",w:3,no:99,d:"When a player would die at night, you may take their place before reveal.",ld:"You throw yourself into fate's path. When the moderator is about to reveal a night's death, you may declare — you die instead, silently, and the original victim never knows they were targeted. Sacrifice for the village's most vital player.",e:"⚰️"},
+mayor:{n:"Mayor",t:"village",w:3,no:99,d:"Reveal to double your vote weight for the rest of the game.",ld:"You wear the chain of office. At any point during the game, you may publicly reveal yourself as Mayor — from that moment, your vote counts as two. Reveal too early and wolves eat you; too late and the village lynches its own leader.",e:"🎖️"},
+oldhag:{n:"Old Hag",t:"village",w:3,no:35,d:"Each night, curse a player to sit out of the next day's discussion.",ld:"You mutter incantations. Each night, choose one player and curse them — during the next day phase they must physically leave the table (or fall silent). They cannot vote, speak, or accuse. Silence a wolf, or silence someone you suspect of scheming.",e:"🧓"},
+thing:{n:"Thing",t:"village",w:1,no:99,d:"Each night, silently tap a neighbor's shoulder — a wordless signal.",ld:"You are strange and mostly harmless. Each night, secretly tap one of your immediate neighbors. They know they've been tapped, but not by whom. A pure communication toy — establish signals with allies without alerting the pack.",e:"👆"},
+villager:{n:"Villager",t:"village",w:1,no:99,d:"No powers. Vote, accuse, survive, and expose the wolves.",ld:"You are the salt of the earth — no gifts, no visions, no spells. Only your wits and your voice. Watch voting patterns like a hawk. Note who defends whom. Note who stays silent. The wolves live and die by their tells; be the villager who sees them.",e:"👨‍🌾"},
+fortuneteller:{n:"Fortune Teller",t:"village",w:4,no:36,d:"Each night, learn one player's EXACT role — never fails.",ld:"Your crystal never lies. Each night, choose one player and learn their exact role with pinpoint accuracy. You are the Seer's more powerful cousin — never fooled, never misled by Lycans or Wolf Men. Correspondingly, you are the pack's top-priority target.",e:"🔮"},
+amulet:{n:"Amulet Bearer",t:"village",w:3,no:99,d:"You cannot die while holding the amulet. Pass it each day, or lose it.",ld:"You carry an ancient talisman. As long as you hold the amulet, no attack — wolf, lynch, or otherwise — can kill you. But you must pass it to another living player at the end of each day, and it can only be worn once by any given person. Circulate immunity across the village.",e:"💍"},
+lycan:{n:"Lycan",t:"village",w:-1,no:99,d:"You appear as a WEREWOLF to all Seers — but you're truly good.",ld:"You bear a curse without evil. Every Seer, Fortune Teller, and Aura Seer that inspects you sees only 'werewolf.' The village will hunt you. Your only hope is to convince them you're falsely accused before your own team lynches you. Roleplay a saint.",e:"🌙"},
+orator:{n:"Orator",t:"village",w:2,no:40,d:"Once per game, your speech triggers TWO lynchings in a single day.",ld:"Your voice moves crowds. Once during the game, mid-day, unleash a powerful oration — the village will vote TWICE, eliminating two players in a single day phase instead of one. Save it for a moment of maximum chaos.",e:"🎤"},
+lawyer:{n:"Lawyer",t:"village",w:3,no:41,d:"Each night, pick a client. If they're voted out next day, they survive.",ld:"You are institutional protection. Each night you select one client — if they receive the most votes the following day, the lynching is overturned and the next-highest instead. Wolves must burn votes on unimportant targets or expose their coordination.",e:"⚖️"},
+gossip:{n:"Gossip",t:"village",w:2,no:42,d:"Each night, learn 2-3 random keywords from ongoing night discussions.",ld:"You eavesdrop through walls. Each night, the moderator gives you 2-3 random keywords or phrases from the night's role-communications ('kill', 'protect', 'seer', 'vision'). Patterns emerge over nights — 'salve' and 'brew' repeatedly = a Witch exists. Slow-burn intel.",e:"💬"},
+advocate:{n:"Advocate",t:"village",w:2,no:43,d:"Once per game, veto a lynch — force a runoff between the top two.",ld:"You may intervene once. When votes are tallied and someone is about to be lynched, you may stand and veto — the vote becomes a sudden-death runoff between the top TWO vote-getters. A single, powerful save.",e:"📣"},
+whistleblower:{n:"Whistleblower",t:"village",w:3,no:45,d:"Each night, publicly accuse a player of being a specific evil role.",ld:"You risk your reputation. Each night, name one player and publicly declare their role ('I say Alice is the werewolf'). If right, your credibility soars. If wrong, you are marked as unreliable — or possibly evil. High stakes.",e:"🔔"},
+accuser:{n:"Accuser",t:"village",w:2,no:46,d:"When you nominate a player for lynch, your accusation counts as TWO votes.",ld:"Your finger carries weight. When you nominate a player for lynching during a day, your accusation counts as two votes toward that lynching. You are a swing hammer — use silence to build unpredictability, then break a coordinated wolf vote.",e:"👉"},
+defender:{n:"Defender",t:"village",w:2,no:47,d:"Each day, grant one player immunity from being lynched.",ld:"You are a public shield. Each day phase, announce one player as defended. Any votes cast against them that day are nullified. Wolves must either eat you at night or waste day votes on unprotected targets.",e:"🛡️"},
+chronicler:{n:"Chronicler",t:"village",w:2,no:49,d:"Once per game, reveal a full analysis of voting patterns.",ld:"You record every vote in secret ledgers. Once during the game, publicly reveal your analysis: 'Players X, Y, Z voted together on days 2, 4, and 6.' Statistical evidence of wolf coordination. Devastating late-game when wolves have grown careless.",e:"📊"},
+
+// ============ NEW WIKI ROLES ============
+piper:{n:"Flute Player",t:"neutral",w:-3,no:52,d:"Each night, charm two players. Solo-win when ALL living players are charmed.",ld:"Your enchanted melody creeps through the village. Each night, point at two players — they are secretly charmed (they don't know who or why). Charmed players know each other but keep it hidden. Your solo victory: charm every last living player. Neither wolves nor village win if you complete your song.",e:"🎼"},
+fox:{n:"Fox",t:"village",w:3,no:53,d:"Each night, sniff 3 players. Learn if any wolf is among them.",ld:"Your keen nose finds evil in threes. Each night, point at three players. If any among them is a wolf, the moderator nods. If none are wolves, you lose your power forever — a used-up fox. A single big investigation, then a normal villager.",e:"🦊"},
+bearTamer:{n:"Bear Tamer",t:"village",w:3,no:99,d:"Each morning, your bear growls if a wolf sits immediately beside you.",ld:"Your bear senses evil at close range. Every morning, the moderator announces whether your bear growled during the night — meaning at least one of your two immediate neighbors is a wolf. If a wolf neighbor dies, your bear goes silent. Position becomes information.",e:"🐻"},
+twoSisters:{n:"Two Sisters",t:"village",w:2,no:99,d:"There are TWO of you. You wake on night 1 and confirm each other.",ld:"You are bound by blood. On the first night, the two Sisters open their eyes together and lock in mutual trust. Your ally is confirmed for the rest of the game — no matter what suspicions arise. If you both survive to the end, you play in perfect coordination.",e:"👭"},
+twoBrothers:{n:"Two Brothers",t:"village",w:2,no:99,d:"There are TWO of you. You wake on night 1 and confirm each other.",ld:"Brotherhood is stronger than the wolves' teeth. Like the Sisters — on night 1, you and your brother lock eyes and know each other. A confirmed pair moving through the game as one voice.",e:"👬"},
+stutteringJudge:{n:"Stuttering Judge",t:"village",w:3,no:99,d:"Once per game, silently signal the mod — that day gets a SECOND lynch vote.",ld:"You wield the gavel of chaos. Once during the entire game, you may signal the moderator (with a pre-agreed sign) during any day. That day's lynch proceeds as normal — and then a SECOND full vote occurs, potentially killing another player before nightfall. Save it for a critical wolf pileup.",e:"⚖️"},
+scandalmonger:{n:"Scandalmonger",t:"village",w:2,no:54,d:"Each night, mark a player. Next day, votes AGAINST them count double.",ld:"You are the village's cruel gossip. Each night, choose one player to smear. During the following day, any votes cast against them count double — an unfair thumb on the scale. Use it to make sure a suspected wolf actually falls.",e:"📢"},
+servant:{n:"Devoted Servant",t:"village",w:2,no:99,d:"When a player is lynched, you may sacrifice yourself and steal their role.",ld:"You are utterly devoted — to power. The moment a player is voted out and their card is about to be revealed, you may leap forward: your card is discarded and you become that role instead, permanently. You could inherit a Seer's sight from a wrongfully-lynched Seer, or a wolf's fangs from an executed wolf.",e:"🎩"},
+ancient:{n:"Ancient",t:"village",w:3,no:99,d:"Survive the first wolf attack. But if the VILLAGE lynches you, they lose all powers.",ld:"You are older than the village itself. The first time wolves attack you, you survive — your ancient bones will not break so easily. But if the village makes the mistake of lynching you, they are cursed: every remaining villager loses their special powers for the rest of the game. Villagers must protect you or fall together.",e:"🏛️"},
+angel:{n:"Angel",t:"neutral",w:-1,no:99,d:"Solo-win if you are lynched on day 1 or killed on night 1.",ld:"You are a fallen angel yearning for the fall. Your goal: die on the very first day, either by wolf attack or by village lynch. Achieve it and you ascend, winning solo. If you survive night 1 and day 1, you become a normal villager for the rest of the game — a consolation of mere existence.",e:"👼"},
+wolfSniffer:{n:"Wolf Sniffer",t:"village",w:3,no:55,d:"Each night, point at a player — learn how many wolves sit adjacent to them.",ld:"Your nose reads werewolf density. Each night, point at any player and the moderator tells you the number of wolves sitting immediately beside them (0, 1, or 2). Triangulate through the village to isolate the pack.",e:"👃"},
+actor:{n:"Actor",t:"village",w:3,no:56,d:"Each night, choose one of 3 face-up role cards. You gain its ability that night.",ld:"You are chameleon and thespian. At game start, three role cards are placed face-up in front of you (village-only). Each night, pick one — you may use that role's ability for that night only. The next night, pick from the two remaining. Versatile, cinematic, hard to predict.",e:"🎭"},
+thief:{n:"Thief",t:"village",w:2,no:99,d:"Night 1: choose from 2 unused role cards to become your true role.",ld:"You steal identities. At game start, two extra role cards are set face-down. On the first night, you look at both and choose one to become permanently. Sometimes you draw two villagers and become a villager (unlucky). Sometimes you inherit a Seer's sight. Gamble.",e:"🥷"},
+ninja:{n:"Ninja",t:"village",w:3,no:57,d:"Once per game, silently kill any player at night — even without the wolves.",ld:"You are a shadow of steel. Once during the game, on any night, you may silently assassinate any player of your choice. The kill is not attributed to the wolves — the village will wonder who struck. Use it to remove a confirmed wolf without exposing your hand.",e:"🥷"},
+groupie:{n:"Groupie",t:"neutral",w:-2,no:99,d:"Night 1: pick your idol. Follow their team — but if they die, so do you.",ld:"You worship one person. On night 1, choose any player as your idol. Your win condition becomes theirs — you win when their team wins. But if your idol dies for any reason, your heart breaks and you die alongside them.",e:"🎤"},
+cursed:{n:"Cursed",t:"village",w:0,no:99,d:"If wolves attack you, you become a wolf instead of dying.",ld:"You carry a dormant infection. If the wolves target you at night, you don't die — you transform into a werewolf and join their team forever. The wolves must decide: is converting you worth giving up a kill?",e:"🌑"},
+
+// ============ NEUTRAL / CHAOS TEAM ============
+troublemaker:{n:"Troublemaker",t:"neutral",w:-1,no:16,d:"When you die, the NEXT day features TWO lynching votes.",ld:"You are chaos personified. Whenever you die — by any means — the following day phase runs TWO lynching votes instead of one. Your death cascades into more death. Roleplay dangerously; you win harder when the village learns to fear killing you.",e:"😈"},
+doppelganger:{n:"Doppelganger",t:"neutral",w:-2,no:17,d:"Night 1: shadow another player. If they die, you inherit their role.",ld:"You are a mimic. On night 1, choose one player secretly. From that moment, if they die at any point, you instantly transform into their role and continue as them (with their team). Choose a strong role to steal, or a wolf to inherit the pack.",e:"👥"},
+madbomber:{n:"Mad Bomber",t:"neutral",w:-3,no:99,d:"If lynched, both of your immediate neighbors die too.",ld:"You are a walking bomb. If the village lynches you, you detonate: both of your immediate neighbors die along with you in the blast. Roleplay unpredictably — the village will hesitate to vote you out, giving you cover.",e:"💣"},
+curse:{n:"Cursed One",t:"neutral",w:-2,no:99,d:"If wolves eat you at night, you rise as a werewolf instead of dying.",ld:"You are cursed. If wolves target you, you don't die — you transform and join their pack. The wolves must weigh: is recruiting worth losing a kill? Sometimes they prefer to leave you alive rather than gain a fanged ally.",e:"⚫"},
+cultleader:{n:"Cult Leader",t:"neutral",w:0,no:18,d:"Each night, recruit a player. Solo-win when every living player is in your cult.",ld:"You build a religion of secrets. Each night, choose a player to recruit — the moderator informs them they are now in your cult (they know you exist but not who you are). Your solo victory: recruit every remaining living player. A third-way win.",e:"⛪"},
+fool:{n:"Fool",t:"neutral",w:-1,no:99,d:"Solo-win if the village lynches you during a day.",ld:"You seek destruction on their terms. Your victory: be voted out and lynched by the village during any day phase. Draw attention, act suspicious, invite the accusation. Death by fang doesn't count — only their vote.",e:"🤡"},
+jester:{n:"Jester",t:"neutral",w:-1,no:99,d:"Solo-win if the village lynches you.",ld:"You dance for their execution. Like the Fool: win when the village votes to hang you. Act erratically, provoke, entertain — until they can't resist voting for the clown.",e:"🎭"},
+hoodlum:{n:"Hoodlum",t:"neutral",w:-2,no:99,d:"You are given two secret marks. Solo-win if both die while you're alive.",ld:"You are a hitman for the shadows. At game start, the moderator whispers two player names to you — your marks. You win if BOTH of them die while you're still alive. You don't kill them yourself; you just need the game to do the work.",e:"🚬"},
+tanner:{n:"Tanner",t:"neutral",w:1,no:99,d:"Solo-win if you die by ANY means.",ld:"You hate the leather trade and yourself. Your victory: die. Any death — lynch, wolves, potions, anything. Play recklessly, provoke everyone, ensure someone kills you before the game ends.",e:"👔"},
+wildchild:{n:"Wild Child",t:"neutral",w:-1,no:99,d:"Night 1: pick a role-model. If they die, you become a werewolf.",ld:"You watch one player with feral eyes. On night 1, choose your role-model. If they survive to the end, you win with the village. If they die at any point, you transform into a werewolf and join the pack. Your fate depends on someone else's survival.",e:"👶"},
+sasquatch:{n:"Sasquatch",t:"neutral",w:-1,no:99,d:"If a day ends WITHOUT a lynch, you transform into a werewolf.",ld:"You lurk at the treeline. If the village fails to lynch anyone on any given day (skipped or tied vote), your feral nature awakens — you transform into a werewolf and join the pack. Inaction converts you.",e:"🦍"},
+leprechaun:{n:"Leprechaun",t:"neutral",w:1,no:37,d:"Each night, redirect a werewolf attack to an adjacent target.",ld:"You are mischief incarnate. When the wolves choose a victim, you may redirect the kill to one of the target's immediate neighbors instead. You don't stop deaths — you scramble their pattern. Chaos, but a specific kind.",e:"🍀"},
+bloodymary:{n:"Bloody Mary",t:"neutral",w:-2,no:99,d:"When you die, kill one player from the team that killed you every night thereafter.",ld:"Death does not end you. When you die by any team's hand, you become a vengeful spirit. Each subsequent night, the moderator kills a random living member of the team that killed you. Your revenge grinds on until the game ends.",e:"🩸"},
+chupacabra:{n:"Chupacabra",t:"neutral",w:-2,no:38,d:"Each night, target a wolf — they die. Miss and nothing happens.",ld:"You are a myth that hunts myths. Each night, point at a player. If they are a wolf, they die instantly — no defense, no doctor can save them. If not, nothing happens (except now you know one player is definitely not a wolf).",e:"🦇"},
+nostradamus:{n:"Nostradamus",t:"neutral",w:1,no:99,d:"Night 1: predict the winning team. Solo-win if you're right AND alive.",ld:"You see the ending. On the first night, whisper your prophecy to the moderator: which team will win? If you predict correctly AND survive to game's end, you win solo — regardless of which team actually won.",e:"📜"},
+direwolf:{n:"Dire Wolf",t:"neutral",w:-2,no:99,d:"Night 1: pick a companion. If they die, you die too.",ld:"You bind yourself to another. On night 1, choose any player as your companion (they don't know). From that moment, if your companion dies for any reason, you drop dead too. Play to keep them alive — even if they're a wolf.",e:"👹"},
+ghost:{n:"Ghost",t:"neutral",w:0,no:99,d:"You die on night 1 automatically. Then leave one clue letter for the village.",ld:"You are already fading. You die automatically on night 1 — no discussion. But you write one clue letter (chosen with the moderator) that is delivered to the village later in the game. Even from beyond, you guide.",e:"👼"},
+demagogue:{n:"Demagogue",t:"neutral",w:-2,no:44,d:"Solo-win if the village fails to lynch anyone for 5 consecutive days.",ld:"You are the poison of consensus. Every day the village fails to lynch anyone (tie vote, skipped, chaos) counts toward your victory. Reach 5 days without a lynch and you win solo. Sabotage every vote, defend every accused, sow every doubt.",e:"🗣️"},
+gadfly:{n:"Gadfly",t:"neutral",w:-1,no:48,d:"Solo-win by simply surviving to the end of the game.",ld:"You are a critic and a survivor. You don't care who wins — you only care that you're alive when the dust settles. Question every accusation, defend every suspect, blend in as chaos. Peripheral survival is the goal.",e:"🪰"}
 };
+
+// Supported player counts
+var SUPPORTED_COUNTS = [6,7,8,9,10,11,12,13,14,15,16];
+
+// Balance constraint: total weight of all roles must be between -3 and +3
+var MIN_BALANCE = -3;
+var MAX_BALANCE = 3;
+
+// Roles that must appear as one of the wolves (at least one)
+var CORE_WOLVES = ["werewolf", "alphawolf", "bigbadwolf", "wolfcub"];
+
+// How many of each team, for a given player count
+function teamComposition(count) {
+  var evilCount, neutralCount;
+  if (count <= 6)      { evilCount = 1; neutralCount = 0; }
+  else if (count <= 7) { evilCount = 2; neutralCount = 0; }
+  else if (count <= 8) { evilCount = 2; neutralCount = 1; }
+  else if (count <= 10){ evilCount = 3; neutralCount = 1; }
+  else if (count <= 12){ evilCount = 3; neutralCount = 1; }
+  else if (count <= 13){ evilCount = 4; neutralCount = 1; }
+  else                 { evilCount = 4; neutralCount = 2; }
+  return {evilCount: evilCount, villageCount: count - evilCount - neutralCount, neutralCount: neutralCount};
+}
+
+// Generate a randomized, balanced setup. Retries until balance is within [MIN_BALANCE, MAX_BALANCE].
+function generateBalancedSetup(count) {
+  var comp = teamComposition(count);
+  var allEvil = [], allVillage = [], allNeutral = [];
+  for (var k in ROLES) {
+    var t = ROLES[k].t;
+    if (t === "evil" || t === "vampire") allEvil.push(k);
+    else if (t === "village") allVillage.push(k);
+    else if (t === "neutral") allNeutral.push(k);
+  }
+
+  for (var attempt = 0; attempt < 500; attempt++) {
+    var evil = [];
+    // Always start with a core wolf
+    var coreWolf = CORE_WOLVES[Math.floor(Math.random() * CORE_WOLVES.length)];
+    evil.push(coreWolf);
+    // Fill remaining evil slots
+    var otherEvils = shuffle(allEvil.filter(function (r) { return r !== coreWolf; }));
+    for (var i = 0; i < comp.evilCount - 1 && i < otherEvils.length; i++) evil.push(otherEvils[i]);
+
+    var village = shuffle(allVillage).slice(0, comp.villageCount);
+    var neutral = shuffle(allNeutral).slice(0, comp.neutralCount);
+
+    var all = evil.concat(village).concat(neutral);
+    var balance = calcBalance(all);
+    if (balance >= MIN_BALANCE && balance <= MAX_BALANCE) {
+      return {e: evil, v: village, n: neutral, balance: balance, attempts: attempt + 1};
+    }
+  }
+
+  // Fallback: relaxed constraint — take best-effort
+  var evil = [CORE_WOLVES[0]];
+  var otherEvils = shuffle(allEvil.filter(function (r) { return r !== CORE_WOLVES[0]; }));
+  for (var i = 0; i < comp.evilCount - 1; i++) evil.push(otherEvils[i]);
+  return {
+    e: evil,
+    v: shuffle(allVillage).slice(0, comp.villageCount),
+    n: shuffle(allNeutral).slice(0, comp.neutralCount),
+    balance: null,
+    attempts: 500
+  };
+}
 
 // Full night order table
 var NIGHT_ACTIONS = {
@@ -211,7 +374,9 @@ var NIGHT_ACTIONS = {
   41:"Lawyer defends a client",42:"Gossip eavesdrops",43:"Advocate prepares defense",
   44:"Demagogue plans chaos",45:"Whistleblower selects target",46:"Accuser sharpens vote",
   47:"Defender picks tomorrow's shield",48:"Gadfly stays alive",49:"Chronicler records",
-  50:"Propagandist plants rumor",51:"Conspirator signals wolves"
+  50:"Propagandist plants rumor",51:"Conspirator signals wolves",
+  52:"Flute Player charms two",53:"Fox sniffs a trio",54:"Scandalmonger marks a target",
+  55:"Wolf Sniffer counts adjacent wolves",56:"Actor picks tonight's borrowed role",57:"Ninja may strike silently"
 };
 
 // ============================================================
@@ -261,6 +426,13 @@ function sbInsertPlayer(p) {
     body: JSON.stringify(p)
   }).then(function (r) { return r.ok ? r.json() : null; });
 }
+function sbUpdatePlayerRole(id, role) {
+  return fetch(SUPABASE_URL + "/rest/v1/players?id=eq." + encodeURIComponent(id), {
+    method: "PATCH",
+    headers: Object.assign({}, HEADERS, {"Prefer": "return=minimal"}),
+    body: JSON.stringify({role: role})
+  }).catch(function(){});
+}
 function sbDeletePlayer(id) {
   return fetch(SUPABASE_URL + "/rest/v1/players?id=eq." + encodeURIComponent(id), {method: "DELETE", headers: HEADERS}).catch(function(){});
 }
@@ -304,22 +476,22 @@ function loadLocal(id) {
 // GAME LIFECYCLE (MODERATOR)
 // ============================================================
 function createGame(count) {
-  if (!POOLS[count]) { alert("Unsupported player count: " + count); return; }
-  var pool = POOLS[count];
-  var roles = pool.e.concat(pool.v).concat(pool.n || []);
-  // Shuffle once at creation — persists as the assignment order.
+  if (SUPPORTED_COUNTS.indexOf(count) === -1) { alert("Unsupported player count: " + count); return; }
+  var setup = generateBalancedSetup(count);
+  var roles = setup.e.concat(setup.v).concat(setup.n);
   var shuffled = shuffle(roles);
   var id = "uw-" + Date.now().toString(36) + "-" + Math.random().toString(36).substr(2, 4);
   gameState = {
     id: id, count: count,
-    roles: shuffled,           // ← shuffled order = assignment order
-    displayRoles: roles.slice(),// ← original order for the mod's summary card
-    evil: pool.e.length, village: pool.v.length, neutral: (pool.n || []).length,
-    balance: calcBalance(roles),
-    players: {},               // pid → {id, name, role, dead}
-    phase: "lobby",            // lobby | night | day | ended
+    roles: shuffled,
+    displayRoles: roles.slice(),
+    evil: setup.e.length, village: setup.v.length, neutral: setup.n.length,
+    balance: setup.balance !== null ? setup.balance : calcBalance(roles),
+    balanceOk: setup.balance !== null,
+    players: {},
+    phase: "lobby",
     day: 0,
-    revealed: false,           // are roles shown in mod's player list?
+    revealed: true,             // roles always visible to moderator
     createdAt: Date.now()
   };
   isModerator = true;
@@ -330,19 +502,48 @@ function createGame(count) {
   renderMod();
 }
 
-function rerollRoles() {
+async function rerollRoles() {
   if (!gameState) return;
-  if (Object.keys(gameState.players).length > 0) {
-    if (!confirm("Reroll will kick all joined players (they'll need to rejoin with a NEW link). Continue?")) return;
+  if (gameState.phase !== "lobby") { alert("Can only reroll during lobby (before Start)."); return; }
+  var joined = Object.keys(gameState.players).length;
+  if (joined > 0) {
+    if (!confirm("Reroll will randomly reassign all " + joined + " joined players to NEW roles. The share link stays the same. Continue?")) return;
   }
-  var count = gameState.count;
-  // Full teardown → new id so old link stops working (no confusion).
-  var oldId = gameState.id;
-  sbDeleteAllPlayers(oldId);
-  sbDeleteGame(oldId);
-  localStorage.removeItem("uw-game-" + oldId);
-  stopPolling(); closeBroadcast();
-  createGame(count);
+
+  // Generate a genuinely different setup — retry up to 10 times if we happen to roll the same roles.
+  var oldSig = (gameState.roles || []).slice().sort().join(",");
+  var setup, newRoles, newSig, tries = 0;
+  do {
+    setup = generateBalancedSetup(gameState.count);
+    newRoles = shuffle(setup.e.concat(setup.v).concat(setup.n));
+    newSig = newRoles.slice().sort().join(",");
+    tries++;
+  } while (newSig === oldSig && tries < 10);
+
+  gameState.roles = newRoles;
+  gameState.displayRoles = setup.e.concat(setup.v).concat(setup.n);
+  gameState.evil = setup.e.length;
+  gameState.village = setup.v.length;
+  gameState.neutral = setup.n.length;
+  gameState.balance = setup.balance !== null ? setup.balance : calcBalance(newRoles);
+  gameState.balanceOk = setup.balance !== null;
+  saveLocal();
+
+  // Push new roles list to Supabase so future joiners get correct pool.
+  await sbInsertGame(gameState).catch(function () {});
+
+  // Reassign already-joined players to new roles in insert order.
+  var players = await sbGetPlayers(gameState.id);
+  var pool = newRoles.slice();
+  for (var i = 0; i < players.length && pool.length > 0; i++) {
+    var newRole = pool.shift();
+    var oldPid = players[i].id;
+    await sbUpdatePlayerRole(oldPid, newRole);
+  }
+
+  await refreshFromServer();
+  broadcast({type: "roles-rerolled"});
+  renderMod();
 }
 
 function startGame() {
@@ -571,7 +772,7 @@ function renderMod() {
 
 function renderModStart() {
   var buttons = "";
-  var counts = Object.keys(POOLS).sort(function (a, b) { return +a - +b; });
+  var counts = SUPPORTED_COUNTS.map(String);
   for (var i = 0; i < counts.length; i++) {
     buttons += "<button class='count-btn' data-count='" + counts[i] + "'>" + counts[i] + "</button>";
   }
@@ -617,37 +818,51 @@ function renderModLobby() {
   if (navigator.share) html += "<button class='action-btn' id='shareBtn'>📤 Share</button>";
   html += "</div>";
 
-  // Player list (names only in lobby)
+  // Player list — mod always sees roles
   html += "<h4>Joined Players (" + joined + "/" + g.count + ")</h4>";
   if (joined === 0) {
     html += "<div class='lobby-status'><span class='waiting-dots'>Waiting for players to join</span></div>";
   } else {
     html += "<div class='players-grid'>";
-    var i = 1;
     for (var pid in g.players) {
       var p = g.players[pid];
+      var r = ROLES[p.role];
       html += "<div class='player-tile'>";
-      html += "<div class='player-tile-emoji'>" + i + "️⃣</div>";
-      html += "<div><div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
-      html += "<div class='player-tile-role player-tile-hidden'>role hidden</div></div>";
+      html += "<div class='player-tile-emoji'>" + r.e + "</div>";
+      html += "<div style='flex:1;min-width:0;'><div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
+      html += "<div class='player-tile-role'><span class='tag tag-" + r.t + "'>" + r.t.substr(0,3).toUpperCase() + "</span>" + r.n + "</div></div>";
       html += "</div>";
-      i++;
     }
     html += "</div>";
   }
 
-  // Setup preview (roles list, hidden by default)
-  html += "<div class='toggle-row' style='margin-top:16px;'>";
-  html += "<button class='action-btn' id='togglePreview'>" + (g.showPreview ? "Hide" : "Show") + " role list (spoilers)</button>";
+  // Setup card list — always visible so moderator knows the full role sheet
+  html += "<h4>🎴 Roles in this game</h4>";
+  html += "<div style='background:#f9f9f9;border-radius:8px;padding:8px;'>";
+  var display = g.displayRoles || g.roles;
+  for (var k = 0; k < display.length; k++) {
+    var rr = ROLES[display[k]];
+    html += "<div class='role-row'><div class='role-emoji'>" + rr.e + "</div>";
+    html += "<div><div class='role-name'><span class='tag tag-" + rr.t + "'>" + rr.t.toUpperCase().substr(0,3) + "</span>" + rr.n + "</div>";
+    html += "<div class='role-desc'>" + rr.d + "</div></div></div>";
+  }
   html += "</div>";
-  if (g.showPreview) {
-    html += "<div style='background:#f9f9f9;border-radius:8px;padding:8px;margin-top:8px;'>";
-    var display = g.displayRoles || g.roles;
-    for (var k = 0; k < display.length; k++) {
-      var r = ROLES[display[k]];
-      html += "<div class='role-row'><div class='role-emoji'>" + r.e + "</div>";
-      html += "<div><div class='role-name'><span class='tag tag-" + r.t + "'>" + r.t.toUpperCase().substr(0,3) + "</span>" + r.n + "</div>";
-      html += "<div class='role-desc'>" + r.d + "</div></div></div>";
+
+  // Night order preview — moderator sees exactly which roles wake and in what order
+  var previewNightRoles = [];
+  for (var k = 0; k < g.roles.length; k++) {
+    var rr = ROLES[g.roles[k]];
+    if (rr.no < 99) previewNightRoles.push(g.roles[k]);
+  }
+  previewNightRoles.sort(function (a, b) { return ROLES[a].no - ROLES[b].no; });
+  if (previewNightRoles.length > 0) {
+    html += "<h4>🌙 Nightly Wake-up Order</h4>";
+    html += "<p style='font-size:11px;color:#666;margin-bottom:8px;'>Call these roles in this order every night. Roles not listed here sleep through the night.</p>";
+    html += "<div class='night-order'>";
+    for (var k = 0; k < previewNightRoles.length; k++) {
+      var rk = previewNightRoles[k];
+      var rr = ROLES[rk];
+      html += "<div class='night-step'><strong>" + rr.no + ". " + rr.e + " " + rr.n + "</strong> — " + (NIGHT_ACTIONS[rr.no] || rr.d) + "</div>";
     }
     html += "</div>";
   }
@@ -701,11 +916,7 @@ function renderModPlay() {
   }
 
   html += "<div class='card'>";
-  html += "<div style='display:flex;justify-content:space-between;align-items:center;'>";
   html += "<h3>Players (" + alive + " alive)</h3>";
-  html += "<button class='action-btn' id='toggleReveal'>" + (g.revealed ? "🙈 Hide Roles" : "👁 Show Roles") + "</button>";
-  html += "</div>";
-
   html += "<div class='summary' style='margin-top:8px;'>";
   html += "<span class='tag tag-evil'>Evil alive: " + aliveEvil + "</span>";
   html += "<span class='tag tag-village'>Village alive: " + aliveVillage + "</span>";
@@ -717,14 +928,10 @@ function renderModPlay() {
     var p = g.players[pid];
     var r = ROLES[p.role];
     html += "<div class='player-tile" + (p.dead ? " dead" : "") + "'>";
-    html += "<div class='player-tile-emoji'>" + (g.revealed ? r.e : "❔") + "</div>";
+    html += "<div class='player-tile-emoji'>" + r.e + "</div>";
     html += "<div style='flex:1;min-width:0;'>";
     html += "<div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
-    if (g.revealed) {
-      html += "<div class='player-tile-role'><span class='tag tag-" + r.t + "'>" + r.t.substr(0,3).toUpperCase() + "</span>" + r.n + "</div>";
-    } else {
-      html += "<div class='player-tile-role player-tile-hidden'>hidden</div>";
-    }
+    html += "<div class='player-tile-role'><span class='tag tag-" + r.t + "'>" + r.t.substr(0,3).toUpperCase() + "</span>" + r.n + "</div>";
     html += "</div>";
     html += "<button class='" + (p.dead ? "player-tile-revive" : "player-tile-kill") + "' data-pid='" + pid + "'>" + (p.dead ? "revive" : "kill") + "</button>";
     html += "</div>";
@@ -734,35 +941,60 @@ function renderModPlay() {
 
   // Night walker
   if (g.phase === "night") {
+    // Build list of night roles WITH the player who has each. Skip dead players.
+    // Include a dedicated "Everyone close eyes" step at start and "Everyone open eyes" at end.
     var nightRoles = [];
     for (var i = 0; i < g.roles.length; i++) {
       var r = ROLES[g.roles[i]];
-      if (r.no < 99) nightRoles.push({key: g.roles[i], no: r.no});
+      if (r.no >= 99) continue;
+      // Find living player who has this role
+      var holder = null;
+      for (var pid2 in g.players) {
+        if (g.players[pid2].role === g.roles[i] && !g.players[pid2].dead) { holder = g.players[pid2]; break; }
+      }
+      // Skip if role isn't held by any living player
+      if (!holder) continue;
+      // Skip alpha wolf convert step on night 2+ (only relevant once, mod tracks manually)
+      if (r.no === 2 && g.day > 1) continue;
+      // Skip Cupid on night 2+ (lovers linked on night 1 only)
+      if (nr_isNight1Only(g.roles[i]) && g.day > 1) continue;
+      nightRoles.push({key: g.roles[i], no: r.no, role: r, holder: holder});
     }
-    // Include only unique night orders (some roles share slot 5), sort by no.
     nightRoles.sort(function (a, b) { return a.no - b.no; });
 
     html += "<div class='card'>";
-    html += "<h3>🌙 Night Walker</h3>";
-    html += "<p style='font-size:12px;color:#666;margin-bottom:8px;'>Call each role in order. Tap Next when done. Some roles die and don't wake.</p>";
+    html += "<h3>🌙 Night Walker — Day " + g.day + "</h3>";
+    html += "<p style='font-size:12px;color:#666;margin-bottom:10px;'>Call each role in order. Speak the wake instruction; tap ▶ Next when they've acted. Dead players are skipped automatically.</p>";
     var step = g.nightStep || 0;
+
     html += "<div class='night-order'>";
+    // Opening step
+    var openCls = "night-step" + (step === 0 ? " current" : (step > 0 ? " done" : ""));
+    html += "<div class='" + openCls + "'>";
+    html += "<strong>🌑 Everyone close your eyes</strong> — Wait until every player is quiet, heads down.";
+    html += "</div>";
+
     for (var i = 0; i < nightRoles.length; i++) {
       var nr = nightRoles[i];
-      var rr = ROLES[nr.key];
-      var pTaken = false;
-      // Find any living player with this role
-      for (var pid2 in g.players) {
-        if (g.players[pid2].role === nr.key && !g.players[pid2].dead) { pTaken = true; break; }
-      }
+      var stepIdx = i + 1;
       var cls = "night-step";
-      if (i < step) cls += " done";
-      else if (i === step) cls += " current";
+      if (stepIdx < step) cls += " done";
+      else if (stepIdx === step) cls += " current";
+      var wakeText = NIGHT_ACTIONS[nr.no] || nr.role.d;
       html += "<div class='" + cls + "'>";
-      html += "<strong>" + rr.e + " " + rr.n + "</strong> — " + (NIGHT_ACTIONS[nr.no] || rr.d);
-      if (!pTaken) html += " <em style='color:#888;'>(no living player)</em>";
+      html += "<div><strong>" + nr.role.e + " " + nr.role.n + "</strong> — <em>" + escapeHtml(nr.holder.name) + "</em></div>";
+      html += "<div style='font-size:11px;color:#555;margin-top:4px;'>📢 " + wakeText + ". <span style='color:#888;'>(" + nr.role.d + ")</span></div>";
       html += "</div>";
     }
+
+    // Closing step
+    var closeIdx = nightRoles.length + 1;
+    var closeCls = "night-step";
+    if (step > closeIdx) closeCls += " done";
+    else if (step === closeIdx) closeCls += " current";
+    html += "<div class='" + closeCls + "'>";
+    html += "<strong>🌅 Everyone open your eyes</strong> — Announce any night deaths, then move to Day.";
+    html += "</div>";
     html += "</div>";
     html += "<div style='margin-top:12px;'>";
     html += "<button class='action-btn primary' id='nextStep'>▶ Next Role</button>";
@@ -797,6 +1029,10 @@ function attachModPlayHandlers() {
   if (btn = document.getElementById("toNight")) btn.onclick = nextPhase;
   if (btn = document.getElementById("endBtn")) btn.onclick = endGame;
 }
+
+// Roles that only wake on night 1 (subsequent nights, skip them).
+var NIGHT1_ONLY = {cupid:1, doppelganger:1, beholder:1, mason:1, twosisters:1, threebrothers:1, count:1, nostradamus:1, direwolf:1, wildchild:1};
+function nr_isNight1Only(key) { return !!NIGHT1_ONLY[key]; }
 
 function checkWinCondition(evil, village, neutral, total) {
   if (total === 0) return {team: "neutral", title: "Everyone is dead", text: "Game over — no winners."};
@@ -875,7 +1111,26 @@ async function renderPlayer() {
   html += "</div>";
   view.innerHTML = html;
   document.getElementById("leaveBtn").onclick = function () { leaveGameFromPlayer(gid); };
+
+  // Poll every 5s so a moderator reroll updates the player's card automatically.
+  if (playerPollTimer) clearTimeout(playerPollTimer);
+  playerPollTimer = setTimeout(async function checkForChanges() {
+    var latest = await sbGetPlayers(gid);
+    var latestMe = latest.find ? latest.find(function(p){return p.player_id===pid;}) : null;
+    if (!latestMe) {
+      localStorage.removeItem("uw-pid-" + gid);
+      renderPlayer();
+      return;
+    }
+    if (latestMe.role !== me.role) {
+      renderPlayer();  // role changed — re-render (re-arms poll)
+      return;
+    }
+    // No change — schedule next check without re-rendering.
+    playerPollTimer = setTimeout(checkForChanges, 5000);
+  }, 5000);
 }
+var playerPollTimer = null;
 
 // ============================================================
 // TAB SWITCHING
