@@ -507,10 +507,11 @@ async function rerollRoles() {
   if (gameState.phase !== "lobby") { alert("Can only reroll during lobby (before Start)."); return; }
   var joined = Object.keys(gameState.players).length;
   if (joined > 0) {
-    if (!confirm("Reroll will randomly reassign all " + joined + " joined players to NEW roles. The share link stays the same. Continue?")) return;
+    alert("Cannot reroll: " + joined + " player(s) have already joined and been assigned roles.\n\nEnd the game and start a new one if you want a different setup, or wait until the game starts.");
+    return;
   }
 
-  // Generate a genuinely different setup — retry up to 10 times if we happen to roll the same roles.
+  // Roll a genuinely different set of roles. Try up to 10 times to differ from current.
   var oldSig = (gameState.roles || []).slice().sort().join(",");
   var setup, newRoles, newSig, tries = 0;
   do {
@@ -529,20 +530,8 @@ async function rerollRoles() {
   gameState.balanceOk = setup.balance !== null;
   saveLocal();
 
-  // Push new roles list to Supabase so future joiners get correct pool.
+  // Push the new role pool to Supabase so anyone who joins from now on draws from it.
   await sbInsertGame(gameState).catch(function () {});
-
-  // Reassign already-joined players to new roles in insert order.
-  var players = await sbGetPlayers(gameState.id);
-  var pool = newRoles.slice();
-  for (var i = 0; i < players.length && pool.length > 0; i++) {
-    var newRole = pool.shift();
-    var oldPid = players[i].id;
-    await sbUpdatePlayerRole(oldPid, newRole);
-  }
-
-  await refreshFromServer();
-  broadcast({type: "roles-rerolled"});
   renderMod();
 }
 
@@ -843,8 +832,10 @@ function renderModLobby() {
   for (var k = 0; k < display.length; k++) {
     var rr = ROLES[display[k]];
     html += "<div class='role-row'><div class='role-emoji'>" + rr.e + "</div>";
-    html += "<div><div class='role-name'><span class='tag tag-" + rr.t + "'>" + rr.t.toUpperCase().substr(0,3) + "</span>" + rr.n + "</div>";
-    html += "<div class='role-desc'>" + rr.d + "</div></div></div>";
+    html += "<div style='flex:1;'><div class='role-name'><span class='tag tag-" + rr.t + "'>" + rr.t.toUpperCase().substr(0,3) + "</span>" + rr.n + "</div>";
+    html += "<div class='role-desc' style='font-weight:bold;margin-top:4px;'>" + rr.d + "</div>";
+    html += "<div class='role-desc' style='margin-top:6px;line-height:1.6;'>" + rr.ld + "</div>";
+    html += "</div></div>";
   }
   html += "</div>";
 
@@ -862,7 +853,11 @@ function renderModLobby() {
     for (var k = 0; k < previewNightRoles.length; k++) {
       var rk = previewNightRoles[k];
       var rr = ROLES[rk];
-      html += "<div class='night-step'><strong>" + rr.no + ". " + rr.e + " " + rr.n + "</strong> — " + (NIGHT_ACTIONS[rr.no] || rr.d) + "</div>";
+      html += "<div class='night-step'>";
+      html += "<div><strong>" + rr.no + ". " + rr.e + " " + rr.n + "</strong></div>";
+      html += "<div style='font-size:12px;color:#333;margin-top:4px;font-weight:bold;'>📢 " + (NIGHT_ACTIONS[rr.no] || rr.d) + "</div>";
+      html += "<div style='font-size:11px;color:#555;margin-top:4px;line-height:1.6;'>" + rr.ld + "</div>";
+      html += "</div>";
     }
     html += "</div>";
   }
@@ -927,11 +922,13 @@ function renderModPlay() {
   for (var pid in g.players) {
     var p = g.players[pid];
     var r = ROLES[p.role];
-    html += "<div class='player-tile" + (p.dead ? " dead" : "") + "'>";
+    var tip = r.n + " — " + r.d + "\n\n" + r.ld;
+    html += "<div class='player-tile" + (p.dead ? " dead" : "") + "' title=\"" + escapeHtml(tip) + "\">";
     html += "<div class='player-tile-emoji'>" + r.e + "</div>";
     html += "<div style='flex:1;min-width:0;'>";
     html += "<div class='player-tile-name'>" + escapeHtml(p.name) + "</div>";
     html += "<div class='player-tile-role'><span class='tag tag-" + r.t + "'>" + r.t.substr(0,3).toUpperCase() + "</span>" + r.n + "</div>";
+    html += "<div style='font-size:10px;color:#666;margin-top:4px;line-height:1.4;'>" + r.d + "</div>";
     html += "</div>";
     html += "<button class='" + (p.dead ? "player-tile-revive" : "player-tile-kill") + "' data-pid='" + pid + "'>" + (p.dead ? "revive" : "kill") + "</button>";
     html += "</div>";
@@ -983,7 +980,9 @@ function renderModPlay() {
       var wakeText = NIGHT_ACTIONS[nr.no] || nr.role.d;
       html += "<div class='" + cls + "'>";
       html += "<div><strong>" + nr.role.e + " " + nr.role.n + "</strong> — <em>" + escapeHtml(nr.holder.name) + "</em></div>";
-      html += "<div style='font-size:11px;color:#555;margin-top:4px;'>📢 " + wakeText + ". <span style='color:#888;'>(" + nr.role.d + ")</span></div>";
+      html += "<div style='font-size:12px;color:#333;margin-top:6px;font-weight:bold;'>📢 " + wakeText + ".</div>";
+      html += "<div style='font-size:11px;color:#666;margin-top:4px;font-style:italic;'>" + nr.role.d + "</div>";
+      html += "<div style='font-size:11px;color:#555;margin-top:6px;line-height:1.6;'>" + nr.role.ld + "</div>";
       html += "</div>";
     }
 
