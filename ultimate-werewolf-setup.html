@@ -109,12 +109,14 @@
     .rip-entry.rip-vampire { border-left: 4px solid #8e0000; }
     .rip-head { display: flex; gap: 10px; align-items: center; }
     .rip-emoji { font-size: 26px; min-width: 34px; text-align: center; }
-    .rip-name { font-weight: bold; font-size: 14px; color: #1a1a1a; }
-    .rip-short { font-size: 12px; color: #555; margin-top: 2px; }
+    .rip-name { font-weight: bold; font-size: 15px; color: #1a1a1a; }
+    .rip-short { font-size: 13px; color: #333; margin-top: 4px; line-height: 1.5; }
+    .rip-hint { font-size: 10px; color: #888; margin-top: 6px; font-style: italic; }
     .rip-caret { color: #999; transition: transform 0.2s; margin-left: 8px; }
     .rip-entry.open .rip-caret { transform: rotate(180deg); }
     .rip-long { font-size: 12px; color: #444; line-height: 1.6; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd; display: none; }
     .rip-entry.open .rip-long { display: block; }
+    .rip-entry.open .rip-hint { display: none; }
     .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 16px;
       padding: 40px 30px; margin: 20px 0; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
       animation: slideUp 0.6s ease; }
@@ -892,7 +894,7 @@ function renderModLobby() {
       html += "<div class='night-step'>";
       html += "<div><strong>" + rr.no + ". " + rr.e + " " + rr.n + "</strong></div>";
       html += "<div style='font-size:12px;color:#333;margin-top:4px;font-weight:bold;'>📢 " + (NIGHT_ACTIONS[rr.no] || rr.d) + "</div>";
-      html += "<div style='font-size:11px;color:#555;margin-top:4px;line-height:1.6;'>" + rr.ld + "</div>";
+      html += "<div style='font-size:11px;color:#666;margin-top:4px;'>" + rr.d + "</div>";
       html += "</div>";
     }
     html += "</div>";
@@ -1226,8 +1228,7 @@ function renderModPlay() {
       html += "<div class='" + cls + "'>";
       html += "<div><strong>" + nr.role.e + " " + nr.role.n + "</strong> — <em>" + escapeHtml(nr.holder.name) + "</em></div>";
       html += "<div style='font-size:12px;color:#333;margin-top:6px;font-weight:bold;'>📢 " + wakeText + ".</div>";
-      html += "<div style='font-size:11px;color:#666;margin-top:4px;font-style:italic;'>" + nr.role.d + "</div>";
-      html += "<div style='font-size:11px;color:#555;margin-top:6px;line-height:1.6;'>" + nr.role.ld + "</div>";
+      html += "<div style='font-size:11px;color:#666;margin-top:4px;'>" + nr.role.d + "</div>";
       html += "</div>";
     }
 
@@ -1423,6 +1424,7 @@ function renderRolesInPlay(roles) {
       html += "<div style='flex:1;'>";
       html += "<div class='rip-name'>" + e.role.n + badge + "</div>";
       html += "<div class='rip-short'>" + e.role.d + "</div>";
+      html += "<div class='rip-hint'>tap for full strategy ▾</div>";
       html += "</div>";
       html += "<span class='rip-caret'>▾</span>";
       html += "</div>";
