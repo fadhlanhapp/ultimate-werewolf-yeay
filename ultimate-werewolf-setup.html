@@ -1305,9 +1305,12 @@ function checkWinCondition(evil, village, neutral, total) {
 // ============================================================
 // PLAYER VIEW RENDERING
 // ============================================================
-async function renderPlayer() {
+async function renderPlayer(noFlash) {
   var view = document.getElementById("playerView");
-  view.innerHTML = "<div class='card'><div class='lobby-status'><span class='waiting-dots'>Loading</span></div></div>";
+  // Only show loading spinner on cold entry — not on silent poll-triggered re-renders.
+  if (!noFlash) {
+    view.innerHTML = "<div class='card'><div class='lobby-status'><span class='waiting-dots'>Loading</span></div></div>";
+  }
 
   var params = new URLSearchParams(window.location.search);
   var gid = params.get("g") || params.get("game");
@@ -1334,7 +1337,7 @@ async function renderPlayer() {
     // Not joined — show name form
     view.innerHTML = "<div class='card'>" +
       "<h3>👤 Join the Game</h3>" +
-      "<p style='color:#666;font-size:12px;margin-bottom:10px;'>" + players.length + "/" + g.count + " players joined.</p>" +
+      "<p style='color:#666;font-size:12px;margin-bottom:10px;' id='joinCountDisplay'>" + players.length + "/" + g.count + " players joined.</p>" +
       "<input type='text' class='player-name-input' id='pname' placeholder='Enter your name' maxlength='24'>" +
       "<div><button class='action-btn primary big' id='joinBtn'>🎭 Join Game</button></div>" +
       "</div>";
@@ -1343,8 +1346,15 @@ async function renderPlayer() {
     jb.onclick = function () { joinGame(gid); };
     input.onkeydown = function (e) { if (e.key === "Enter") jb.click(); };
     input.focus();
-    // Poll: refresh join count while waiting
-    setTimeout(function () { if (!localStorage.getItem("uw-pid-" + gid)) renderPlayer(); }, 4000);
+    // Lightweight poll: only update the join count — no page re-render, no Loading flash.
+    if (playerPollTimer) clearTimeout(playerPollTimer);
+    playerPollTimer = setTimeout(async function pollJoinCount() {
+      if (localStorage.getItem("uw-pid-" + gid)) return; // already joined — stop
+      var pp = await sbGetPlayers(gid);
+      var el = document.getElementById("joinCountDisplay");
+      if (el && pp && pp.length !== undefined) el.textContent = pp.length + "/" + g.count + " players joined.";
+      if (!localStorage.getItem("uw-pid-" + gid)) playerPollTimer = setTimeout(pollJoinCount, 4000);
+    }, 4000);
     return;
   }
 
@@ -1382,16 +1392,41 @@ async function renderPlayer() {
 
   // Poll every 5s so a moderator reroll updates the player's card automatically.
   if (playerPollTimer) clearTimeout(playerPollTimer);
+  var pollMisses = 0;
   playerPollTimer = setTimeout(async function checkForChanges() {
+    // Skip if player tab is not active (user switched to Moderator tab).
+    var playerTab = document.getElementById("playerTab");
+    if (playerTab && !playerTab.classList.contains("active")) {
+      playerPollTimer = setTimeout(checkForChanges, 5000);
+      return;
+    }
+
     var latest = await sbGetPlayers(gid);
-    var latestMe = latest.find ? latest.find(function(p){return p.player_id===pid;}) : null;
+
+    // Empty response: could be a transient network error.
+    // Require 3 consecutive empty polls before treating it as a genuine kick.
+    if (!latest || latest.length === 0) {
+      pollMisses++;
+      if (pollMisses < 3) {
+        playerPollTimer = setTimeout(checkForChanges, 5000);
+        return;
+      }
+      // 3 misses in a row — game likely ended.
+      localStorage.removeItem("uw-pid-" + gid);
+      renderPlayer();
+      return;
+    }
+    pollMisses = 0; // reset on successful response
+
+    var latestMe = latest.find(function(p){return p.player_id===pid;});
     if (!latestMe) {
+      // Server has players but this player isn't among them — legitimately removed.
       localStorage.removeItem("uw-pid-" + gid);
       renderPlayer();
       return;
     }
     if (latestMe.role !== me.role) {
-      renderPlayer();  // role changed — re-render (re-arms poll)
+      renderPlayer(true);  // role changed — re-render without Loading flash
       return;
     }
     // No change — schedule next check without re-rendering.
