@@ -22,6 +22,16 @@ test('QR helper renders the exact URL passed by the moderator lobby', () => {
   assert.match(html, /qr\.addData\s*\(\s*url\s*\)/);
 });
 
+test('QR panel is vertically centered with centered instruction copy', () => {
+  const qrPanelRule = html.match(/\.qr-panel\{[^}]+\}/)?.[0];
+  const qrCopyRule = html.match(/\.qr-copy\{[^}]+\}/)?.[0];
+  assert.ok(qrPanelRule, 'expected a base .qr-panel CSS rule');
+  assert.ok(qrCopyRule, 'expected a base .qr-copy CSS rule');
+  assert.match(qrPanelRule, /flex-direction:\s*column/);
+  assert.match(qrPanelRule, /align-items:\s*center/);
+  assert.match(qrCopyRule, /text-align:\s*center/);
+});
+
 test('QR panel copy uses readable ink in its base styling', () => {
   const qrCopyRule = html.match(/\.qr-copy\{[^}]+\}/)?.[0];
   assert.ok(qrCopyRule, 'expected a base .qr-copy CSS rule');
