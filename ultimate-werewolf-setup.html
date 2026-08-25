@@ -546,7 +546,9 @@ var isModerator = false;
 // ============================================================
 var HEADERS = {"Content-Type": "application/json"};
 function api(path, options) {
-  return fetch(API_BASE + path, Object.assign({headers: HEADERS}, options || {}));
+  var init = Object.assign({}, options || {});
+  if (init.body) init.headers = HEADERS;
+  return fetch(API_BASE + path, init);
 }
 function sbInsertGame(g) {
   return api("/games", {method: "POST", body: JSON.stringify({
