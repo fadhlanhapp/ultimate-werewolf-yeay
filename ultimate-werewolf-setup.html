@@ -8,7 +8,6 @@
     :root{--cream:#ffe9ce;--paper:#ffffff;--ink:#000000;--violet:#8a53ff;--coral:#fd4b38;--yellow:#ffd80c;--lime:#3ccb09;--indigo:#0500a3;--slate:#666;--mist:#ddd;--near:#101010;--radius-card:15px;--radius-control:5px;--ring:0 0 0 2px var(--yellow);--font:'Quicksand',ui-rounded,'Trebuchet MS',sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--font);font-size:14px;line-height:1.4;color:var(--ink);background:var(--cream);min-height:100vh;padding:28px 16px 60px;letter-spacing:.012em}
-    body:before{content:'NIGHT GUIDE';display:block;position:fixed;right:12px;top:18px;background:var(--violet);color:var(--paper);font-size:11px;font-weight:800;padding:8px 12px;border-radius:var(--radius-control);transform:rotate(7deg);z-index:-1}
     h1{font-size:clamp(38px,8vw,72px);line-height:1;font-weight:800;letter-spacing:.012em;color:var(--indigo);margin-bottom:6px}
     .subtitle{font-size:16px;color:var(--slate);font-weight:600;margin-bottom:28px}.container{width:100%;max-width:860px;margin:auto}
     .tabs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}.tab-btn,.action-btn,.count-btn{font:700 16px var(--font);cursor:pointer;min-height:44px;border:2px solid var(--ink);border-radius:var(--radius-control);background:var(--paper);color:var(--ink);padding:10px 20px;transition:background .15s,color .15s,transform .15s;box-shadow:var(--ring)}
@@ -22,7 +21,7 @@
     .share-box{background:var(--violet);border:2px solid var(--ink);border-radius:var(--radius-card);padding:18px;margin:14px 0;color:var(--paper)}.share-link{background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:10px;font-family:monospace;font-size:11px;word-break:break-all;margin-bottom:8px;border-radius:var(--radius-control)}
     .player-name-input{font:400 16px var(--font);padding:12px;border:1px solid var(--near);border-radius:var(--radius-control);width:100%;max-width:320px;margin-bottom:12px;color:var(--near);background:var(--paper)}.player-name-input:focus{border-width:2px;outline:none}
     .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin:14px 0}.player-tile{background:var(--paper);border:2px solid var(--ink);border-radius:var(--radius-card);padding:14px;display:flex;align-items:center;gap:10px}.player-tile.dead{opacity:.55;background:var(--mist)}.player-tile.dead .player-tile-name{text-decoration:line-through;color:var(--slate)}.player-tile-emoji{font-size:24px}.player-tile-name{font-weight:800;font-size:14px}.player-tile-role{font-size:11px;color:var(--slate)}.player-tile-hidden{color:var(--slate);font-style:italic}.player-tile-kill,.player-tile-revive{border:2px solid var(--ink);color:var(--ink);border-radius:var(--radius-control);padding:3px 8px;font-size:11px;cursor:pointer;margin-left:auto}.player-tile-kill{background:var(--coral)}.player-tile-revive{background:var(--lime)}
-    .swap-overlay{position:fixed;inset:0;background:var(--cream);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}.swap-modal{background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--radius-card);max-width:560px;width:100%;margin-bottom:40px}.swap-header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:2px solid var(--cream)}.swap-header button{background:transparent;border:0;font-size:26px;color:var(--ink);cursor:pointer;padding:0 6px}.swap-body{padding:22px}.swap-footer{display:flex;gap:8px;justify-content:flex-end;padding:16px 22px;border-top:2px solid var(--cream);background:var(--yellow);border-radius:0 0 var(--radius-card) var(--radius-card)}.swap-summary{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px;background:var(--cream);border-radius:var(--radius-control)}.swap-side{flex:1;min-width:0}.swap-lbl{font-size:11px;color:var(--slate);text-transform:uppercase;font-weight:800}.swap-role{font-size:14px;margin-top:2px}.swap-arrow{font-size:22px;color:var(--violet);padding:0 6px}.swap-preview-card{background:var(--violet);color:var(--paper);border:2px solid var(--ink);padding:14px;margin-top:12px;border-radius:var(--radius-card)}
+    .swap-overlay{position:fixed;inset:0;background:rgba(16,16,16,.42);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}.swap-modal{background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--radius-card);max-width:560px;width:100%;margin:auto;box-shadow:var(--ring)}.swap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--cream)}.swap-header button{background:var(--paper);border:2px solid var(--ink);border-radius:var(--radius-control);font-size:22px;color:var(--ink);cursor:pointer;min-width:44px;min-height:44px}.swap-body{padding:16px}.swap-body label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.swap-body select{width:100%;padding:12px;font:600 15px var(--font);border:2px solid var(--ink);border-radius:var(--radius-control);background:var(--paper);color:var(--ink);min-height:48px}.swap-body select:focus{outline:2px solid var(--yellow);outline-offset:2px}.swap-role-search{width:100%;padding:12px;font:600 15px var(--font);border:2px solid var(--ink);border-radius:var(--radius-control);background:var(--paper);color:var(--ink);min-height:48px}.swap-role-search:focus{outline:2px solid var(--yellow);outline-offset:2px}.swap-role-list{max-height:280px;overflow-y:auto;margin-top:10px;padding-right:4px}.swap-role-group-label{font-size:11px;text-transform:uppercase;font-weight:800;color:var(--slate);padding:8px 2px 5px}.swap-role-option{display:flex;align-items:center;width:100%;text-align:left;gap:8px;padding:10px 12px;margin-bottom:6px;border:2px solid var(--mist);border-radius:var(--radius-control);background:var(--paper);color:var(--ink);font:600 14px var(--font);cursor:pointer;min-height:44px}.swap-role-option:hover,.swap-role-option.selected{border-color:var(--violet);background:var(--cream)}.swap-role-option[hidden]{display:none}.swap-role-group[hidden]{display:none}.swap-footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 16px;border-top:2px solid var(--cream);background:var(--paper);border-radius:0 0 var(--radius-card) var(--radius-card)}.swap-summary{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px;background:var(--cream);border-radius:var(--radius-control)}.swap-side{flex:1;min-width:0}.swap-lbl{font-size:11px;color:var(--slate);text-transform:uppercase;font-weight:800}.swap-role{font-size:14px;margin-top:2px}.swap-arrow{font-size:22px;color:var(--violet);padding:0 6px}.swap-preview-card{background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:14px;margin-top:12px;border-radius:var(--radius-card)}
     .rip-entry{border:2px solid var(--ink);border-radius:var(--radius-card);padding:12px;margin-bottom:8px;cursor:pointer;background:var(--paper)}.rip-entry:hover{background:var(--yellow)}.rip-entry.rip-evil,.rip-entry.rip-village,.rip-entry.rip-neutral,.rip-entry.rip-vampire{border-left-width:8px}.rip-entry.rip-evil{border-left-color:var(--coral)}.rip-entry.rip-village{border-left-color:var(--lime)}.rip-entry.rip-neutral{border-left-color:var(--violet)}.rip-entry.rip-vampire{border-left-color:var(--yellow)}.rip-head{display:flex;gap:10px;align-items:center}.rip-emoji{font-size:26px;min-width:34px;text-align:center}.rip-name{font-weight:800;font-size:16px}.rip-short{font-size:14px;margin-top:4px;line-height:1.4}.rip-hint{font-size:11px;color:var(--slate);margin-top:6px;font-style:italic}.rip-caret{color:var(--violet);margin-left:8px}.rip-entry.open .rip-caret{transform:rotate(180deg)}.rip-long{font-size:13px;color:var(--slate);line-height:1.6;margin-top:10px;padding-top:10px;border-top:2px dashed var(--cream);display:none}.rip-entry.open .rip-long{display:block}.role-card{background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--radius-card);padding:40px 30px;margin:20px 0;text-align:center;box-shadow:var(--ring)}.role-card-evil,.role-card-village,.role-card-neutral,.role-card-vampire{background:var(--paper)}.role-card-big-emoji{font-size:90px;margin:20px 0}.role-card h2{font-size:clamp(30px,6vw,50px);color:var(--indigo);margin:12px 0;font-weight:800}.role-card .team-badge{display:inline-block;font-size:12px;padding:8px 18px;background:var(--yellow);color:var(--ink);border:2px solid var(--ink);border-radius:144px;margin:8px 0 16px;font-weight:800}.role-card .short-desc{font-size:16px;margin:12px 0;font-weight:700;line-height:1.5}.role-card .long-desc{font-size:13px;margin:20px 0 12px;line-height:1.7;text-align:left;background:var(--cream);border:2px solid var(--ink);padding:14px;border-radius:var(--radius-card)}
     .warning,.info,.error{border:2px solid var(--ink);border-radius:var(--radius-control);padding:10px 14px;margin:10px 0;font-size:13px;color:var(--ink)}.warning{background:var(--yellow)}.info{background:var(--violet);color:var(--paper)}.error{background:var(--coral)}.phase-banner{text-align:center;padding:18px;border:2px solid var(--ink);border-radius:var(--radius-card);margin-bottom:18px;font-size:22px;font-weight:800}.phase-night{background:var(--indigo);color:var(--paper)}.phase-day{background:var(--yellow);color:var(--ink)}.phase-lobby{background:var(--violet);color:var(--paper)}.day-counter{display:inline-block;background:var(--paper);padding:4px 12px;border-radius:144px;margin-left:10px;font-size:14px;color:var(--ink)}.lobby-status{background:var(--lime);border:2px solid var(--ink);padding:20px;text-align:center;border-radius:var(--radius-card);color:var(--ink);font-size:15px}.waiting-dots::after{content:'...';animation:pulse 1.5s infinite}.win-check{padding:12px;background:var(--lime);border:2px solid var(--ink);margin:10px 0;border-radius:var(--radius-control);font-size:14px}.win-check.evil{background:var(--coral)}.win-check.neutral{background:var(--violet);color:var(--paper)}.toggle-row{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}@media(max-width:600px){body{padding:20px 12px 40px}.card{padding:20px}.role-card{padding:28px 18px}.role-card-big-emoji{font-size:70px}.players-grid{grid-template-columns:1fr 1fr}.tabs{gap:8px}.tab-btn{flex:1;padding:10px 12px}}
@@ -836,11 +835,12 @@ function renderModLobby() {
   // Setup card list — always visible so moderator knows the full role sheet
   html += "<h4>🎴 Roles in this game</h4>";
   html += "<div class='info' style='margin-bottom:10px;'>💡 Tap <strong>🔄 Change Role</strong> on any card below to swap it for a different role. Players who joined get reassigned automatically.</div>";
-  html += "<div style='background:#f9f9f9;border-radius:8px;padding:10px;'>";
+  html += "<div class='role-sheet'>";
+  html += "<div id='roleChangePanel' class='role-change-panel' hidden></div>";
   var display = g.displayRoles || g.roles;
   for (var k = 0; k < display.length; k++) {
     var rr = ROLES[display[k]];
-    html += "<div class='role-row-v2' data-role-index='" + k + "' style='background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:8px;'>";
+    html += "<div class='role-row-v2' data-role-index='" + k + "'>";
     html += "<div style='display:flex;gap:12px;align-items:flex-start;'>";
     html += "<div class='role-emoji' style='font-size:32px;'>" + rr.e + "</div>";
     html += "<div style='flex:1;min-width:0;'>";
@@ -850,7 +850,7 @@ function renderModLobby() {
     html += "</div>";
     html += "</div>";
     // Full-width, bold Change button below the description so it can't be missed
-    html += "<button class='action-btn' style='margin-top:10px;width:100%;background:#667eea;color:#fff;border-color:#667eea;font-size:13px;' data-swap-index='" + k + "'>🔄 Change This Role</button>";
+    html += "<button class='action-btn role-change-btn' data-swap-index='" + k + "'>🔄 Change This Role</button>";
     html += "</div>";
   }
   html += "</div>";
@@ -903,7 +903,7 @@ function attachModLobbyHandlers() {
   document.querySelectorAll("[data-swap-index]").forEach(function (b) {
     b.onclick = function (ev) { ev.stopPropagation(); openRoleChanger(+b.getAttribute("data-swap-index")); };
   });
-  // If a swap was in progress (e.g., resume after refresh), re-open the modal.
+  // Resume an unfinished swap inside the role sheet after refresh.
   if (gameState.changing && !document.getElementById("swapModalOverlay")) showSwapModal();
 }
 
@@ -915,50 +915,56 @@ function openRoleChanger(index) {
   showSwapModal();
 }
 
-// Build and inject the modal into <body>. Modal is position:fixed so scrolling
-// the page underneath does NOT dismiss it, and the moderator view can freely
-// re-render without touching the modal.
+// Build a compact fixed dialog without changing the page URL or scroll position.
 function showSwapModal() {
-  hideSwapModal(); // remove any stale one
+  hideSwapModal();
   var overlay = document.createElement("div");
   overlay.id = "swapModalOverlay";
   overlay.className = "swap-overlay";
   overlay.innerHTML = renderSwapModalShell();
   document.body.appendChild(overlay);
-  document.body.style.overflow = "hidden"; // prevent bg scroll
-
-  // Populate the preview area (in-place, no full re-render)
   renderSwapPreviewInto(document.getElementById("swapPreview"));
-
-  var sel = document.getElementById("swapRoleSelect");
-  if (sel) {
-    sel.onchange = function () {
+  wireRolePicker();
+  var ap = document.getElementById("swapApplyBtn"); if (ap) ap.onclick = applyRoleChange;
+  var cx = document.getElementById("swapCancelBtn"); if (cx) cx.onclick = cancelRoleChange;
+  var xb = document.getElementById("swapCloseX"); if (xb) xb.onclick = cancelRoleChange;
+  overlay.onclick = function (ev) { if (ev.target === overlay) cancelRoleChange(); };
+  document.addEventListener("keydown", swapEscHandler);
+}
+function wireRolePicker() {
+  var search = document.getElementById("swapRoleSearch");
+  var list = document.getElementById("swapRoleList");
+  if (!search || !list) return;
+  function filterRoles() {
+    var query = search.value.toLowerCase().trim();
+    list.querySelectorAll(".swap-role-group").forEach(function (group) {
+      var visible = 0;
+      group.querySelectorAll(".swap-role-option").forEach(function (button) {
+        var match = !query || button.textContent.toLowerCase().indexOf(query) !== -1;
+        button.hidden = !match;
+        if (match) visible++;
+      });
+      group.hidden = visible === 0;
+    });
+  }
+  search.oninput = filterRoles;
+  list.querySelectorAll(".swap-role-option").forEach(function (button) {
+    button.onclick = function () {
       if (!gameState || !gameState.changing) return;
-      gameState.changing.selectedKey = sel.value || null;
+      gameState.changing.selectedKey = button.getAttribute("data-role-key");
+      list.querySelectorAll(".swap-role-option").forEach(function (item) { item.classList.toggle("selected", item === button); });
       saveLocal();
       renderSwapPreviewInto(document.getElementById("swapPreview"));
       var ap = document.getElementById("swapApplyBtn");
-      if (ap) {
-        ap.disabled = !gameState.changing.selectedKey;
-        ap.style.opacity = gameState.changing.selectedKey ? "1" : "0.5";
-        ap.style.cursor = gameState.changing.selectedKey ? "pointer" : "not-allowed";
-      }
+      if (ap) { ap.disabled = false; ap.style.opacity = "1"; ap.style.cursor = "pointer"; }
     };
-  }
-  var ap = document.getElementById("swapApplyBtn"); if (ap) ap.onclick = applyRoleChange;
-  var cx = document.getElementById("swapCancelBtn"); if (cx) cx.onclick = cancelRoleChange;
-  var xb = document.getElementById("swapCloseX");     if (xb) xb.onclick = cancelRoleChange;
-
-  // Click on the backdrop area (outside the modal box) also cancels.
-  overlay.onclick = function (ev) { if (ev.target === overlay) cancelRoleChange(); };
-  // Escape to close
-  document.addEventListener("keydown", swapEscHandler);
+  });
+  filterRoles();
 }
 function swapEscHandler(ev) { if (ev.key === "Escape") cancelRoleChange(); }
 function hideSwapModal() {
   var m = document.getElementById("swapModalOverlay");
   if (m) m.remove();
-  document.body.style.overflow = "";
   document.removeEventListener("keydown", swapEscHandler);
 }
 
@@ -992,26 +998,28 @@ function renderSwapModalShell() {
 
   html += "<div class='swap-body'>";
   html += "<label style='font-size:12px;color:#555;display:block;margin-bottom:6px;'>Choose a new role to swap in:</label>";
-  html += "<select id='swapRoleSelect' size='1' style='width:100%;padding:10px;font-size:14px;font-family:Georgia;border:1px solid #ccc;border-radius:6px;'>";
-  html += "<option value=''>— select a role —</option>";
+  html += "<input id='swapRoleSearch' class='swap-role-search' type='search' placeholder='Search roles…' autocomplete='off'>";
+  html += "<div id='swapRoleList' class='swap-role-list'>";
   for (var t = 0; t < teamOrder.length; t++) {
     var tk = teamOrder[t];
     if (!groups[tk].length) continue;
-    html += "<optgroup label='" + teamLabels[tk] + "'>";
+    html += "<div class='swap-role-group' data-role-group='" + tk + "'>";
+    html += "<div class='swap-role-group-label'>" + teamLabels[tk] + "</div>";
     groups[tk].sort(function (a, b) { return a.r.n.localeCompare(b.r.n); });
     for (var i = 0; i < groups[tk].length; i++) {
       var entry = groups[tk][i];
       var sel = selected === entry.key ? " selected" : "";
-      html += "<option value='" + entry.key + "'" + sel + ">" + entry.r.e + " " + entry.r.n + " (w:" + entry.r.w + ")</option>";
+      html += "<button type='button' class='swap-role-option" + (selected === entry.key ? " selected" : "") + "' data-role-key='" + entry.key + "'>" + entry.r.e + " " + entry.r.n + " <span style='margin-left:auto;color:var(--slate);font-size:11px;'>w:" + entry.r.w + "</span></button>";
     }
-    html += "</optgroup>";
+    html += "</div>";
   }
-  // Clocktower cast, one optgroup per edition (Townsfolk/Outsider = good, Minion/Demon = evil).
+  // Clocktower cast, grouped by edition with the same persistent picker behavior.
   for (var b = 0; b < botcOrder.length; b++) {
     var ed = botcOrder[b];
     var list = botcGroups[ed];
     if (!list.length) continue;
-    html += "<optgroup label='🕰️ Clocktower · " + ed + "'>";
+    html += "<div class='swap-role-group' data-role-group='clocktower-" + b + "'>";
+    html += "<div class='swap-role-group-label'>🕰️ Clocktower · " + ed + "</div>";
     list.sort(function (a, b) {
       // Sort good (village) before evil, then alphabetically within each.
       var ea = a.r.t === "evil" ? 1 : 0, eb = b.r.t === "evil" ? 1 : 0;
@@ -1022,12 +1030,11 @@ function renderSwapModalShell() {
       var entry = list[i];
       var sel = selected === entry.key ? " selected" : "";
       var side = entry.r.t === "evil" ? "🔴" : "🟢";
-      html += "<option value='" + entry.key + "'" + sel + ">" + side + " " + entry.r.e + " " + entry.r.n + " (w:" + entry.r.w + ")</option>";
+      html += "<button type='button' class='swap-role-option" + (selected === entry.key ? " selected" : "") + "' data-role-key='" + entry.key + "'>" + side + " " + entry.r.e + " " + entry.r.n + " <span style='margin-left:auto;color:var(--slate);font-size:11px;'>w:" + entry.r.w + "</span></button>";
     }
-    html += "</optgroup>";
+    html += "</div>";
   }
-  html += "</select>";
-
+  html += "</div>";
   html += "<div id='swapPreview' style='margin-top:14px;'></div>";
   html += "</div>";
 

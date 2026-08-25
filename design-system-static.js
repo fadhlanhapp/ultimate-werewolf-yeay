@@ -8,7 +8,10 @@ for (const token of ['--cream:#ffe9ce', '--paper:#ffffff', '--ink:#000000', '--v
 }
 assert(!css.includes('gradient'), 'Gathr UI must not use gradients');
 assert(!css.match(/box-shadow:\s*(?!var\(--ring\))/), 'Gathr UI must use the yellow ring only');
-assert(css.includes('.role-card-evil,.role-card-village,.role-card-neutral,.role-card-vampire{background:var(--paper)'), 'role card alignment classes must share one neutral background');
+assert(css.includes('.swap-overlay{position:fixed'), 'role changes must use a fixed popup overlay');
+assert(css.includes('.swap-modal{'), 'role changer dialog is required');
+assert(source.includes('overlay.id = "swapModalOverlay"'), 'stable swap overlay id is required');
+assert(source.includes('function showSwapModal()'), 'swap open behavior must remain');
 for (const id of ['modBtn', 'playerBtn', 'modTab', 'playerTab', 'modView', 'playerView']) {
   assert(source.includes(`id="${id}"`), `missing stable selector ${id}`);
 }
