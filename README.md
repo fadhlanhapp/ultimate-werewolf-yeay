@@ -4,7 +4,7 @@ A self-contained digital moderator and private role dealer for Ultimate Werewolf
 
 ## Play
 
-Open the deployed site root; it redirects to `ultimate-werewolf-setup.html`. The moderator creates a game and shares the generated link with players.
+Open [gathr.lol/ultimate-werewolf-yeay/](https://gathr.lol/ultimate-werewolf-yeay/). The moderator creates a game and shares the generated link with players.
 
 ## Local development
 
