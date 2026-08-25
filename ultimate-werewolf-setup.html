@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ultimate Werewolf</title>
-  <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Georgia', serif; font-size: 14px; color: #1a1a1a;
@@ -189,21 +188,7 @@
 // ============================================================
 // CONFIG
 // ============================================================
-var SUPABASE_URL = "https://ratzaaofhzddtzvytwle.supabase.co";
-var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdHphYW9maHpkZHR6dnl0d2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTA3OTAsImV4cCI6MjA5NDM4Njc5MH0.Q9ZngA_jHY6u1bXRqD51mA-my7wcID01zQS1BRznkZk";
-var supabase = null;
-
-function initSupabase() {
-  if (window.supabase && window.supabase.createClient) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    return true;
-  }
-  return false;
-}
-if (!initSupabase()) {
-  var retries = 0;
-  var t = setInterval(function () { retries++; if (initSupabase() || retries >= 30) clearInterval(t); }, 100);
-}
+var API_BASE = "https://api.gathr.lol/ultimate-werewolf";
 
 // ============================================================
 // ROLE DATA
@@ -557,56 +542,45 @@ var bc = null;              // BroadcastChannel
 var isModerator = false;
 
 // ============================================================
-// SUPABASE HELPERS (REST API - works even before SDK loads)
+// SHARED-STORE API HELPERS
 // ============================================================
-var HEADERS = {
-  "Content-Type": "application/json",
-  "Authorization": "Bearer " + SUPABASE_KEY,
-  "apikey": SUPABASE_KEY
-};
-
+var HEADERS = {"Content-Type": "application/json"};
+function api(path, options) {
+  return fetch(API_BASE + path, Object.assign({headers: HEADERS}, options || {}));
+}
 function sbInsertGame(g) {
-  return fetch(SUPABASE_URL + "/rest/v1/games", {
-    method: "POST",
-    headers: Object.assign({}, HEADERS, {"Prefer": "resolution=merge-duplicates,return=minimal"}),
-    body: JSON.stringify({
-      id: g.id, count: g.count, roles: JSON.stringify(g.roles),
-      evil: g.evil, village: g.village, neutral: g.neutral, balance: g.balance
-    })
-  });
+  return api("/games", {method: "POST", body: JSON.stringify({
+    id: g.id, count: g.count, roles: JSON.stringify(g.roles),
+    evil: g.evil, village: g.village, neutral: g.neutral, balance: g.balance
+  })});
 }
 function sbGetGame(id) {
-  return fetch(SUPABASE_URL + "/rest/v1/games?id=eq." + encodeURIComponent(id), {headers: HEADERS})
-    .then(function (r) { return r.ok ? r.json() : []; })
-    .then(function (arr) { return arr && arr[0] || null; });
+  return api("/games/" + encodeURIComponent(id))
+    .then(function (r) { return r.ok ? r.json() : null; });
 }
 function sbDeleteGame(id) {
-  return fetch(SUPABASE_URL + "/rest/v1/games?id=eq." + encodeURIComponent(id), {method: "DELETE", headers: HEADERS}).catch(function(){});
+  return api("/games/" + encodeURIComponent(id), {method: "DELETE"}).catch(function(){});
 }
 function sbGetPlayers(gid) {
-  return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + encodeURIComponent(gid) + "&order=id.asc", {headers: HEADERS})
+  return api("/games/" + encodeURIComponent(gid) + "/players")
     .then(function (r) { return r.ok ? r.json() : []; })
     .catch(function () { return []; });
 }
 function sbInsertPlayer(p) {
-  return fetch(SUPABASE_URL + "/rest/v1/players", {
-    method: "POST",
-    headers: Object.assign({}, HEADERS, {"Prefer": "return=representation"}),
-    body: JSON.stringify(p)
+  return api("/games/" + encodeURIComponent(p.game_id) + "/players", {
+    method: "POST", body: JSON.stringify(p)
   }).then(function (r) { return r.ok ? r.json() : null; });
 }
 function sbUpdatePlayerRole(id, role) {
-  return fetch(SUPABASE_URL + "/rest/v1/players?id=eq." + encodeURIComponent(id), {
-    method: "PATCH",
-    headers: Object.assign({}, HEADERS, {"Prefer": "return=minimal"}),
-    body: JSON.stringify({role: role})
+  return api("/players/" + encodeURIComponent(id), {
+    method: "PATCH", body: JSON.stringify({role: role})
   }).catch(function(){});
 }
 function sbDeletePlayer(id) {
-  return fetch(SUPABASE_URL + "/rest/v1/players?id=eq." + encodeURIComponent(id), {method: "DELETE", headers: HEADERS}).catch(function(){});
+  return api("/players/" + encodeURIComponent(id), {method: "DELETE"}).catch(function(){});
 }
 function sbDeleteAllPlayers(gid) {
-  return fetch(SUPABASE_URL + "/rest/v1/players?game_id=eq." + encodeURIComponent(gid), {method: "DELETE", headers: HEADERS}).catch(function(){});
+  return api("/games/" + encodeURIComponent(gid) + "/players", {method: "DELETE"}).catch(function(){});
 }
 
 // ============================================================

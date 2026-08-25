@@ -54,6 +54,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.hermes/
 *.sublime-*
 *.iml
 
