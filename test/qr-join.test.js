@@ -22,6 +22,13 @@ test('QR helper renders the exact URL passed by the moderator lobby', () => {
   assert.match(html, /qr\.addData\s*\(\s*url\s*\)/);
 });
 
+test('QR panel copy uses readable ink in its base styling', () => {
+  const qrCopyRule = html.match(/\.qr-copy\{[^}]+\}/)?.[0];
+  assert.ok(qrCopyRule, 'expected a base .qr-copy CSS rule');
+  assert.match(qrCopyRule, /color:\s*var\(--ink\)/);
+  assert.doesNotMatch(qrCopyRule, /color:\s*var\(--paper\)/);
+});
+
 test('existing moderator copy link remains present', () => {
   assert.match(html, /id=["']copyBtn["']/);
   assert.match(html, /copyToClipboard\s*\(\s*url\s*\)/);
