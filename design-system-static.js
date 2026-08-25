@@ -7,7 +7,7 @@ for (const token of ['--cream:#ffe9ce', '--paper:#ffffff', '--ink:#000000', '--v
   assert(css.includes(token), `missing Gathr token ${token}`);
 }
 assert(!css.includes('gradient'), 'Gathr UI must not use gradients');
-assert(!css.match(/box-shadow:\s*(?!var\(--ring\))/), 'Gathr UI must use the yellow ring only');
+assert(!css.match(/box-shadow:\s*(?!(?:var\(--ring\)|none))/), 'Gathr UI must use only the yellow ring when elevated');
 assert(css.includes('.swap-overlay{position:fixed'), 'role changes must use a fixed popup overlay');
 assert(css.includes('.swap-modal{'), 'role changer dialog is required');
 assert(source.includes('overlay.id = "swapModalOverlay"'), 'stable swap overlay id is required');
